@@ -15,7 +15,6 @@ interface DatabaseConfig extends PoolConfig {
 }
 
 // Configuración del pool de conexiones
-// Configuración del pool de conexiones
 const dbConfig: DatabaseConfig = {
   host: env.PGHOST,
   port: env.PGPORT,

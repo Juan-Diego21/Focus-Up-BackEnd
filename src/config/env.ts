@@ -19,6 +19,15 @@ interface Env {
   PGUSER: string;
   PGPASSWORD: string;
   PGSSLMODE: string;
+
+  // JWT Configuration
+  JWT_SECRET: string;
+  JWT_REFRESH_SECRET: string;
+  JWT_ACCESS_EXPIRES_IN: string;
+  JWT_REFRESH_EXPIRES_IN: string;
+
+  // Bcrypt Configuration
+  BCRYPT_SALT_ROUNDS: number;
 }
 
 // Validar y exportar variables de entorno con tipado
@@ -35,6 +44,17 @@ export const env: Env = {
   PGUSER: process.env.PGUSER || "",
   PGPASSWORD: process.env.PGPASSWORD || "",
   PGSSLMODE: process.env.PGSSLMODE || "require",
+
+  // JWT Configuration
+  JWT_SECRET: process.env.JWT_SECRET || "fallback-secret-change-in-production",
+  JWT_REFRESH_SECRET:
+    process.env.JWT_REFRESH_SECRET ||
+    "fallback-refresh-secret-change-in-production",
+  JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
+
+  // Bcrypt Configuration
+  BCRYPT_SALT_ROUNDS: parseInt(process.env.BCRYPT_SALT_ROUNDS || "12"),
 };
 
 // Debug: Verificar que las variables se cargan

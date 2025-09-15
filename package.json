@@ -7,7 +7,9 @@
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
     "build": "tsc",
     "start": "node dist/app.js",
-    "test:db": "ts-node src/scripts/test-db.ts"
+    "test:db": "ts-node src/scripts/test-connection.ts",
+    "test:security": "ts-node src/scripts/test-security-complete.ts",
+    "test:user": "ts-node src/scripts/test-user-repo.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

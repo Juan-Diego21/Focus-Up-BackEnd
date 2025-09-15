@@ -1,10 +1,12 @@
+import bcrypt from "bcryptjs";
 import { UserCreateInput, UserUpdateInput, User } from "../types/User";
 import { userRepository } from "../repositories/UserRepository";
 import { ValidationUtils } from "../utils/validation";
-import bcrypt from "bcryptjs";
 
 export class UserService {
-  private static readonly SALT_ROUNDS = 12;
+  private static readonly SALT_ROUNDS = parseInt(
+    process.env.BCRYPT_SALT_ROUNDS || "12"
+  );
 
   // Hash de contraseña
   private static async hashPassword(password: string): Promise<string> {
@@ -19,7 +21,7 @@ export class UserService {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  // Crear un nuevo usuario con validaciones
+  // Crear un nuevo usuario con validaciones Y hash de contraseña
   async createUser(
     userData: UserCreateInput
   ): Promise<{ success: boolean; user?: User; error?: string }> {
@@ -73,17 +75,23 @@ export class UserService {
         sanitizedData.nombre_usuario
       );
       if (usernameExists) {
-        return { success: false, error: "El nombre de usuario ya está en uso" };
+        return {
+          success: false,
+          error: "El nombre de usuario ya está en uso",
+        };
       }
 
       // Hash de la contraseña antes de crear el usuario
       const hashedPassword = await UserService.hashPassword(
         sanitizedData.contrasena
       );
-      sanitizedData.contrasena = hashedPassword;
 
-      // Crear usuario
-      const user = await userRepository.create(sanitizedData);
+      // Crear usuario con contraseña hasheada
+      const user = await userRepository.create({
+        ...sanitizedData,
+        contrasena: hashedPassword,
+      });
+
       return { success: true, user };
     } catch (error) {
       console.error("Error en UserService.createUser:", error);
@@ -127,7 +135,7 @@ export class UserService {
     }
   }
 
-  // Actualizar usuario
+  // Actualizar usuario con hash de contraseña si se proporciona
   async updateUser(
     id: number,
     updateData: UserUpdateInput
@@ -223,7 +231,7 @@ export class UserService {
     }
   }
 
-  // Verificar credenciales de login
+  // Verificar credenciales con comparación de hash
   async verifyCredentials(
     email: string,
     password: string
@@ -231,6 +239,7 @@ export class UserService {
     try {
       const user = await userRepository.findByEmail(email);
       if (!user) {
+        // Mismo mensaje para no revelar si el usuario existe
         return { success: false, error: "Credenciales inválidas" };
       }
 
@@ -243,7 +252,9 @@ export class UserService {
         return { success: false, error: "Credenciales inválidas" };
       }
 
-      return { success: true, user };
+      // No devolver la contraseña en el objeto user
+      const { contrasena: _, ...userWithoutPassword } = user;
+      return { success: true, user: userWithoutPassword as User };
     } catch (error) {
       console.error("Error en UserService.verifyCredentials:", error);
       return { success: false, error: "Error al verificar credenciales" };
