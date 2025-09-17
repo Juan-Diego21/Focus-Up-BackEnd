@@ -3,9 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { env } from "./config/env";
-
-// Importar rutas (las crearemos después)
-// import userRoutes from './routes/userRoutes';
+import routes from "./routes"; // Importar rutas principales
 
 // Crear aplicación Express
 const app = express();
@@ -22,7 +20,7 @@ app.use(
   cors({
     origin:
       env.NODE_ENV === "production"
-        ? "https://tu-dominio-frontend.com"
+        ? "https://frontend.com"
         : ["http://localhost:3000", "http://127.0.0.1:3000"],
     credentials: true,
   })
@@ -40,29 +38,31 @@ app.use(express.urlencoded({ extended: true }));
 // ======================
 // RUTAS DE LA API
 // ======================
-
-// Ruta de salud para testing
-app.get(`${env.API_PREFIX}/health`, (req, res) => {
-  res.status(200).json({
-    status: "OK",
-    message: "Focus Up API is running successfully",
-    timestamp: new Date().toISOString(),
-    environment: env.NODE_ENV,
-  });
-});
-
-// Aquí montaremos las rutas principales después
-// app.use(`${env.API_PREFIX}/users`, userRoutes);
+app.use(env.API_PREFIX, routes);
 
 // ======================
-// MANEJO DE RUTAS NO ENCONTRADAS
+// MANEJO DE ERRORES GLOBAL
 // ======================
-app.use("*", (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Route not found: ${req.originalUrl}`,
-  });
-});
+app.use(
+  (
+    error: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    console.error("Error global:", error);
+
+    res.status(error.status || 500).json({
+      success: false,
+      message: "Error interno del servidor",
+      error:
+        env.NODE_ENV === "development"
+          ? error.message
+          : "Internal server error",
+      timestamp: new Date(),
+    });
+  }
+);
 
 // ======================
 // INICIAR SERVIDOR
@@ -75,6 +75,7 @@ app.listen(PORT, () => {
   console.log(
     `🌐 Health check: http://localhost:${PORT}${env.API_PREFIX}/health`
   );
+  console.log(`👥 Users API: http://localhost:${PORT}${env.API_PREFIX}/users`);
 });
 
 // Exportar app para testing
