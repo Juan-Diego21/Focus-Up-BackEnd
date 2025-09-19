@@ -2,8 +2,11 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import "reflect-metadata";
+import routes from "./routes";
 import { env } from "./config/env";
-import routes from "./routes"; // Importar rutas principales
+import { swaggerSpec, swaggerUi, swaggerUiOptions } from "./config/swagger";
+import { initializeDatabase, AppDataSource } from "./config/ormconfig";
 
 // Crear aplicación Express
 const app = express();
@@ -41,6 +44,21 @@ app.use(express.urlencoded({ extended: true }));
 app.use(env.API_PREFIX, routes);
 
 // ======================
+// DOCUMENTACIÓN SWAGGER
+// ======================
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, swaggerUiOptions)
+);
+
+// Ruta para obtener la especificación Swagger en JSON
+app.get("/api-docs.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
+
+// ======================
 // MANEJO DE ERRORES GLOBAL
 // ======================
 app.use(
@@ -69,13 +87,19 @@ app.use(
 // ======================
 const PORT = env.PORT;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Focus Up API server is running on port ${PORT}`);
-  console.log(`📍 Environment: ${env.NODE_ENV}`);
-  console.log(
-    `🌐 Health check: http://localhost:${PORT}${env.API_PREFIX}/health`
-  );
-  console.log(`👥 Users API: http://localhost:${PORT}${env.API_PREFIX}/users`);
+app.listen(PORT, async () => {
+  try {
+    await initializeDatabase();
+    console.log(`🚀 Focus Up API server is running on port ${PORT}`);
+    console.log(`📍 Environment: ${env.NODE_ENV}`);
+    console.log(
+      `🌐 Health check: http://localhost:${PORT}${env.API_PREFIX}/health`
+    );
+    console.log(`📊 TypeORM connected: ${AppDataSource.isInitialized}`);
+  } catch (error) {
+    console.error("❌ Failed to start server:", error);
+    process.exit(1);
+  }
 });
 
 // Exportar app para testing

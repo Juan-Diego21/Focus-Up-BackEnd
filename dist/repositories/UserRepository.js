@@ -1,101 +1,114 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userRepository = exports.UserRepository = void 0;
-const database_1 = __importDefault(require("../config/database"));
-const User_1 = require("../models/User");
+const ormconfig_1 = require("../config/ormconfig");
+const User_entity_1 = require("../models/User.entity");
 class UserRepository {
+    constructor() {
+        this.repository = ormconfig_1.AppDataSource.getRepository(User_entity_1.UserEntity);
+    }
     async create(userInput) {
-        const user = User_1.UserModel.fromInput(userInput);
-        const query = `
-      INSERT INTO Usuario (
-        nombre_usuario, pais, genero, fecha_nacimiento, 
-        horario_fav, correo, contrasena, id_objetivo_estudio,
-        fecha_creacion, fecha_actualizacion
-      ) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING *
-    `;
-        const params = [
-            user.nombre_usuario,
-            user.pais,
-            user.genero,
-            user.fecha_nacimiento,
-            user.horario_fav,
-            user.correo,
-            user.contrasena,
-            user.id_objetivo_estudio,
-            user.fecha_creacion,
-            user.fecha_actualizacion
-        ];
-        const result = await database_1.default.query(query, params);
-        return result.rows[0];
+        const user = this.repository.create({
+            nombreUsuario: userInput.nombre_usuario,
+            pais: userInput.pais,
+            genero: userInput.genero,
+            fechaNacimiento: userInput.fecha_nacimiento,
+            horarioFav: userInput.horario_fav,
+            correo: userInput.correo.toLowerCase(),
+            contrasena: userInput.contrasena,
+            idObjetivoEstudio: userInput.id_objetivo_estudio,
+        });
+        const savedUser = await this.repository.save(user);
+        return this.mapToUserDTO(savedUser);
     }
     async findById(id) {
-        const query = 'SELECT * FROM Usuario WHERE id_usuario = $1';
-        const result = await database_1.default.query(query, [id]);
-        return result.rows[0] || null;
+        const user = await this.repository.findOne({
+            where: { idUsuario: id },
+        });
+        return user ? this.mapToUserDTO(user) : null;
     }
     async findByEmail(email) {
-        const query = 'SELECT * FROM Usuario WHERE correo = $1';
-        const result = await database_1.default.query(query, [email]);
-        return result.rows[0] || null;
+        const user = await this.repository.findOne({
+            where: { correo: email.toLowerCase() },
+        });
+        return user ? this.mapToUserDTO(user) : null;
     }
     async findByUsername(username) {
-        const query = 'SELECT * FROM Usuario WHERE nombre_usuario = $1';
-        const result = await database_1.default.query(query, [username]);
-        return result.rows[0] || null;
+        const user = await this.repository.findOne({
+            where: { nombreUsuario: username },
+        });
+        return user ? this.mapToUserDTO(user) : null;
     }
     async update(id, updates) {
-        const fields = [];
-        const values = [];
-        let paramCount = 1;
-        Object.entries(updates).forEach(([key, value]) => {
-            if (value !== undefined) {
-                fields.push(`${key} = $${paramCount}`);
-                values.push(value);
-                paramCount++;
-            }
-        });
-        if (fields.length === 0) {
-            throw new Error('No hay campos para actualizar');
+        const updateData = {};
+        if (updates.nombre_usuario !== undefined)
+            updateData.nombreUsuario = updates.nombre_usuario;
+        if (updates.pais !== undefined)
+            updateData.pais = updates.pais;
+        if (updates.genero !== undefined)
+            updateData.genero = updates.genero;
+        if (updates.fecha_nacimiento !== undefined)
+            updateData.fechaNacimiento = updates.fecha_nacimiento;
+        if (updates.horario_fav !== undefined)
+            updateData.horarioFav = updates.horario_fav;
+        if (updates.correo !== undefined)
+            updateData.correo = updates.correo.toLowerCase();
+        if (updates.contrasena !== undefined)
+            updateData.contrasena = updates.contrasena;
+        if (updates.id_objetivo_estudio !== undefined)
+            updateData.idObjetivoEstudio = updates.id_objetivo_estudio;
+        const result = await this.repository.update(id, updateData);
+        if (result.affected && result.affected > 0) {
+            return this.findById(id);
         }
-        values.push(id);
-        const query = `
-      UPDATE Usuario 
-      SET ${fields.join(', ')}, fecha_actualizacion = NOW()
-      WHERE id_usuario = $${paramCount}
-      RETURNING *
-    `;
-        const result = await database_1.default.query(query, values);
-        return result.rows[0] || null;
+        return null;
+    }
+    async delete(id) {
+        const result = await this.repository.update(id, {});
+        return result.affected !== undefined && result.affected > 0;
     }
     async findAll() {
-        const query = 'SELECT * FROM Usuario ORDER BY fecha_creacion DESC';
-        const result = await database_1.default.query(query);
-        return result.rows;
+        const users = await this.repository.find();
+        return users.map((user) => this.mapToUserDTO(user));
     }
     async emailExists(email, excludeUserId) {
-        let query = 'SELECT COUNT(*) FROM Usuario WHERE correo = $1';
-        const params = [email];
+        const queryBuilder = this.repository
+            .createQueryBuilder("user")
+            .where("user.correo = :email", { email: email.toLowerCase() });
         if (excludeUserId) {
-            query += ' AND id_usuario != $2';
-            params.push(excludeUserId);
+            queryBuilder.andWhere("user.idUsuario != :excludeUserId", {
+                excludeUserId,
+            });
         }
-        const result = await database_1.default.query(query, params);
-        return parseInt(result.rows[0].count) > 0;
+        const count = await queryBuilder.getCount();
+        return count > 0;
     }
     async usernameExists(username, excludeUserId) {
-        let query = 'SELECT COUNT(*) FROM Usuario WHERE nombre_usuario = $1';
-        const params = [username];
+        const queryBuilder = this.repository
+            .createQueryBuilder("user")
+            .where("user.nombreUsuario = :username", { username });
         if (excludeUserId) {
-            query += ' AND id_usuario != $2';
-            params.push(excludeUserId);
+            queryBuilder.andWhere("user.idUsuario != :excludeUserId", {
+                excludeUserId,
+            });
         }
-        const result = await database_1.default.query(query, params);
-        return parseInt(result.rows[0].count) > 0;
+        const count = await queryBuilder.getCount();
+        return count > 0;
+    }
+    mapToUserDTO(entity) {
+        return {
+            id_usuario: entity.idUsuario,
+            nombre_usuario: entity.nombreUsuario,
+            pais: entity.pais,
+            genero: entity.genero,
+            fecha_nacimiento: entity.fechaNacimiento,
+            horario_fav: entity.horarioFav,
+            correo: entity.correo,
+            contrasena: entity.contrasena,
+            id_objetivo_estudio: entity.idObjetivoEstudio,
+            fecha_creacion: entity.fechaCreacion,
+            fecha_actualizacion: entity.fechaActualizacion,
+        };
     }
 }
 exports.UserRepository = UserRepository;

@@ -8,8 +8,9 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "test:db": "ts-node src/scripts/test-connection.ts",
-    "test:security": "ts-node src/scripts/test-security-complete.ts",
-    "test:user": "ts-node src/scripts/test-user-repo.ts"
+    "test:integration": "ts-node src/scripts/test-integration.ts",
+    "test:orm": "ts-node src/scripts/test-integration.ts",
+    "test:routes": "ts-node src/scripts/debug-routes.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -19,7 +20,10 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "pg": "^8.16.3"
+    "reflect-metadata": "^0.2.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "typeorm": "^0.3.26"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -27,9 +31,11 @@
     "@types/express": "^4.17.19",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.9",
-    "@types/node": "^20.8.0",
-    "@types/pg": "^8.15.5",
+    "@types/node": "^20.19.16",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.9.2"
   }
 }
