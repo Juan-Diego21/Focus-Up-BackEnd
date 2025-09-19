@@ -1,0 +1,4 @@
+# Asegúrate de que el archivo .env esté en .gitignore
+echo ".env" >> .gitignore
+echo ".env.local" >> .gitignore
+echo ".env.*" >> .gitignore
