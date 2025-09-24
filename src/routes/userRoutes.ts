@@ -1,25 +1,257 @@
-import { Router } from 'express';
-import { userController } from '../controllers/UserController';
-import { validateUserCreate, validateUserUpdate } from '../middleware/validation';
+import { Router } from "express";
+import { userController } from "../controllers/UserController";
+import {
+  validateUserCreate,
+  validateUserUpdate,
+} from "../middleware/validation";
 
 const router = Router();
 
 // GET /api/v1/users - Obtener todos los usuarios
-router.get('/', userController.getAllUsers.bind(userController));
+router.get("/", userController.getAllUsers.bind(userController));
+
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Obtener todos los usuarios
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios obtenida exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       401:
+ *         description: No autorizado
+ */
 
 // GET /api/v1/users/:id - Obtener usuario por ID
-router.get('/:id', userController.getUserById.bind(userController));
+router.get("/:id", userController.getUserById.bind(userController));
 
-// GET /api/v1/users/email/:email - Obtener usuario por email  
-router.get('/email/:email', userController.getUserByEmail.bind(userController));
+/**
+ * @swagger
+ * /users/{id}:
+ *   get:
+ *     summary: Obtener usuario por ID
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *     responses:
+ *       200:
+ *         description: Usuario encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       404:
+ *         description: Usuario no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No autorizado
+ */
+
+// GET /api/v1/users/email/:email - Obtener usuario por email
+router.get("/email/:email", userController.getUserByEmail.bind(userController));
+
+/**
+ * @swagger
+ * /users/email/{email}:
+ *   get:
+ *     summary: Obtener un usuario por email
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Email del usuario
+ *     responses:
+ *       200:
+ *         description: Usuario encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       404:
+ *         description: Usuario no encontrado
+ *       401:
+ *         description: No autorizado
+ */
 
 // POST /api/v1/users - Crear nuevo usuario ← ESTA RUTA ES LA QUE FALLA
-router.post('/', validateUserCreate, userController.createUser.bind(userController));
+router.post(
+  "/",
+  validateUserCreate,
+  userController.createUser.bind(userController)
+);
 
-// PUT /api/v1/users/:id - Actualizar usuario
-router.put('/:id', validateUserUpdate, userController.updateUser.bind(userController));
+/**
+ * @swagger
+ * /users:
+ *   post:
+ *     summary: Crear un nuevo usuario
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - nombre_usuario
+ *               - correo
+ *               - contrasena
+ *               - fecha_nacimiento
+ *             properties:
+ *               nombre_usuario:
+ *                 type: string
+ *                 example: "johndoe"
+ *               correo:
+ *                 type: string
+ *                 format: email
+ *                 example: "john@example.com"
+ *               contrasena:
+ *                 type: string
+ *                 format: password
+ *                 example: "SecurePassword123"
+ *               fecha_nacimiento:
+ *                 type: string
+ *                 format: date
+ *                 example: "1990-01-01"
+ *               pais:
+ *                 type: string
+ *                 example: "Colombia"
+ *               genero:
+ *                 type: string
+ *                 enum: [Masculino, Femenino, Otro, Prefiero no decir]
+ *                 example: "Masculino"
+ *     responses:
+ *       201:
+ *         description: Usuario creado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Datos de entrada inválidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+// PUT /api/v1/users/:id - Actualizar usuario por id
+router.put(
+  "/:id",
+  validateUserUpdate,
+  userController.updateUser.bind(userController)
+);
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   put:
+ *     summary: Actualizar un usuario por ID
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       200:
+ *         description: Usuario actualizado exitosamente
+ *       400:
+ *         description: Error en la solicitud
+ *       404:
+ *         description: Usuario no encontrado
+ *       401:
+ *         description: No autorizado
+ */
 
 // POST /api/v1/users/login - Login de usuario
-router.post('/login', userController.login.bind(userController));
+router.post("/login", userController.login.bind(userController));
+
+/**
+ * @swagger
+ * /users/login:
+ *   post:
+ *     summary: Iniciar sesión de usuario
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "john@example.com"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "SecurePassword123"
+ *     responses:
+ *       200:
+ *         description: Login exitoso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/User'
+ *                     accessToken:
+ *                       type: string
+ *                     refreshToken:
+ *                       type: string
+ *       401:
+ *         description: Credenciales inválidas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 
 export default router;
