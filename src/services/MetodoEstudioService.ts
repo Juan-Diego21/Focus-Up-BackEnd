@@ -41,4 +41,5 @@ export const MetodoEstudioService = {
     }
   }
 };
+export default MetodoEstudioService;
 
