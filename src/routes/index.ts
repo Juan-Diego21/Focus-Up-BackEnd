@@ -1,6 +1,5 @@
 import { Router } from "express";
 import userRoutes from "./userRoutes";
-import musicaRoutes from "./musicaRoutes";
 import { env } from "../config/env";
 
 const router = Router();
@@ -45,9 +44,6 @@ router.get("/health", (req, res) => {
 
 // Rutas de usuarios
 router.use("/users", userRoutes);
-
-// Rutas de musica
-router.use("/musica", musicaRoutes);
 
 // Ruta por defecto para manejar endpoints no encontrados
 router.use("*", (req, res) => {
