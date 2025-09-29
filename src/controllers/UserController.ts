@@ -12,61 +12,6 @@ import { JwtPayload } from "../utils/jwt";
  */
 
 export class UserController {
-  /**
-   * @swagger
-   * /users:
-   *   post:
-   *     summary: Crear un nuevo usuario
-   *     tags: [Users]
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             required:
-   *               - nombre_usuario
-   *               - correo
-   *               - contrasena
-   *               - fecha_nacimiento
-   *             properties:
-   *               nombre_usuario:
-   *                 type: string
-   *                 example: "johndoe"
-   *               correo:
-   *                 type: string
-   *                 format: email
-   *                 example: "john@example.com"
-   *               contrasena:
-   *                 type: string
-   *                 format: password
-   *                 example: "SecurePassword123"
-   *               fecha_nacimiento:
-   *                 type: string
-   *                 format: date
-   *                 example: "1990-01-01"
-   *               pais:
-   *                 type: string
-   *                 example: "Colombia"
-   *               genero:
-   *                 type: string
-   *                 enum: [Masculino, Femenino, Otro, Prefiero no decir]
-   *                 example: "Masculino"
-   *     responses:
-   *       201:
-   *         description: Usuario creado exitosamente
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/User'
-   *       400:
-   *         description: Datos de entrada inválidos
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/Error'
-   */
-
   // Crear un nuevo usuario
   async createUser(req: Request, res: Response) {
     try {
@@ -105,59 +50,6 @@ export class UserController {
       res.status(500).json(response);
     }
   }
-
-  /**
-   * @swagger
-   * /users/login:
-   *   post:
-   *     summary: Iniciar sesión de usuario
-   *     tags: [Auth]
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             required:
-   *               - email
-   *               - password
-   *             properties:
-   *               email:
-   *                 type: string
-   *                 format: email
-   *                 example: "john@example.com"
-   *               password:
-   *                 type: string
-   *                 format: password
-   *                 example: "SecurePassword123"
-   *     responses:
-   *       200:
-   *         description: Login exitoso
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 success:
-   *                   type: boolean
-   *                 message:
-   *                   type: string
-   *                 data:
-   *                   type: object
-   *                   properties:
-   *                     user:
-   *                       $ref: '#/components/schemas/User'
-   *                     accessToken:
-   *                       type: string
-   *                     refreshToken:
-   *                       type: string
-   *       401:
-   *         description: Credenciales inválidas
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/Error'
-   */
 
   // Obtener usuario por ID
   async getUserById(req: Request, res: Response) {
@@ -364,38 +256,6 @@ export class UserController {
       res.status(500).json(response);
     }
   }
-
-  /**
-   * @swagger
-   * /users/{id}:
-   *   get:
-   *     summary: Obtener usuario por ID
-   *     tags: [Users]
-   *     security:
-   *       - BearerAuth: []
-   *     parameters:
-   *       - in: path
-   *         name: id
-   *         required: true
-   *         schema:
-   *           type: integer
-   *         description: ID del usuario
-   *     responses:
-   *       200:
-   *         description: Usuario encontrado
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/User'
-   *       404:
-   *         description: Usuario no encontrado
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/Error'
-   *       401:
-   *         description: No autorizado
-   */
 
   // Obtener perfil de usuario autenticado
   async getProfile(req: Request, res: Response) {
