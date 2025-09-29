@@ -1,5 +1,6 @@
 import { Router } from "express";
 import userRoutes from "./userRoutes";
+import musicaRoutes from "./musicaRoutes";
 import { env } from "../config/env";
 import  metodosRutas  from "../routes/metodosRutas";
 
@@ -47,6 +48,9 @@ router.get("/health", (req, res) => {
 router.use("/users", userRoutes);
 //Rutas de metodos de estudio 
 router.use('/metodos', metodosRutas);
+
+// Rutas de musica
+router.use("/musica", musicaRoutes);
 
 // Ruta por defecto para manejar endpoints no encontrados
 router.use("*", (req, res) => {

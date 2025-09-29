@@ -1,18 +1,49 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userService = exports.UserService = void 0;
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const UserRepository_1 = require("../repositories/UserRepository");
 const validation_1 = require("../utils/validation");
 class UserService {
     static async hashPassword(password) {
-        return bcryptjs_1.default.hash(password, this.SALT_ROUNDS);
+        const bcrypt = await Promise.resolve().then(() => __importStar(require("bcryptjs")));
+        return bcrypt.hash(password, this.SALT_ROUNDS);
     }
     static async verifyPassword(plainPassword, hashedPassword) {
-        return bcryptjs_1.default.compare(plainPassword, hashedPassword);
+        const bcrypt = await Promise.resolve().then(() => __importStar(require("bcryptjs")));
+        return bcrypt.compare(plainPassword, hashedPassword);
     }
     async createUser(userData) {
         try {
@@ -49,10 +80,7 @@ class UserService {
             }
             const usernameExists = await UserRepository_1.userRepository.usernameExists(sanitizedData.nombre_usuario);
             if (usernameExists) {
-                return {
-                    success: false,
-                    error: "El nombre de usuario ya está en uso",
-                };
+                return { success: false, error: "El nombre de usuario ya está en uso" };
             }
             const hashedPassword = await UserService.hashPassword(sanitizedData.contrasena);
             const user = await UserRepository_1.userRepository.create({
@@ -97,16 +125,18 @@ class UserService {
     }
     async updateUser(id, updateData) {
         try {
+            if (updateData.contrasena) {
+                if (!validation_1.ValidationUtils.isValidPassword(updateData.contrasena)) {
+                    return {
+                        success: false,
+                        error: "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número",
+                    };
+                }
+                updateData.contrasena = await UserService.hashPassword(updateData.contrasena);
+            }
             if (updateData.correo &&
                 !validation_1.ValidationUtils.isValidEmail(updateData.correo)) {
                 return { success: false, error: "Formato de email inválido" };
-            }
-            if (updateData.contrasena &&
-                !validation_1.ValidationUtils.isValidPassword(updateData.contrasena)) {
-                return {
-                    success: false,
-                    error: "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número",
-                };
             }
             if (updateData.horario_fav &&
                 !validation_1.ValidationUtils.isValidTime(updateData.horario_fav)) {
@@ -124,9 +154,6 @@ class UserService {
             }
             if (sanitizedData.correo) {
                 sanitizedData.correo = sanitizedData.correo.toLowerCase().trim();
-            }
-            if (sanitizedData.contrasena) {
-                sanitizedData.contrasena = await UserService.hashPassword(sanitizedData.contrasena);
             }
             if (sanitizedData.correo) {
                 const emailExists = await UserRepository_1.userRepository.emailExists(sanitizedData.correo, id);
