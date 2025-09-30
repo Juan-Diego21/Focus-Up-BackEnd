@@ -24,7 +24,7 @@ export class UserEntity {
   })
   genero!: string;
 
-  @Column({ name: "fecha_nacimiento", type: "date", nullable: false })
+  @Column({ name: "fecha_nacimiento", type: "date", nullable: true })
   fechaNacimiento!: Date;
 
   @Column({ name: "horario_fav", type: "time", nullable: true })

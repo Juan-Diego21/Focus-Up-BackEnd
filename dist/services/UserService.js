@@ -32,10 +32,17 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userService = exports.UserService = void 0;
 const UserRepository_1 = require("../repositories/UserRepository");
 const validation_1 = require("../utils/validation");
+const UsuarioIntereses_entity_1 = require("../models/UsuarioIntereses.entity");
+const UsuarioDistracciones_entity_1 = require("../models/UsuarioDistracciones.entity");
+const User_entity_1 = require("../models/User.entity");
+const logger_1 = __importDefault(require("../utils/logger"));
 class UserService {
     static async hashPassword(password) {
         const bcrypt = await Promise.resolve().then(() => __importStar(require("bcryptjs")));
@@ -46,7 +53,16 @@ class UserService {
         return bcrypt.compare(plainPassword, hashedPassword);
     }
     async createUser(userData) {
+        const queryRunner = (await Promise.resolve().then(() => __importStar(require("../config/ormconfig")))).AppDataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
         try {
+            if (!validation_1.ValidationUtils.isValidUsername(userData.nombre_usuario)) {
+                return {
+                    success: false,
+                    error: "El nombre de usuario solo puede contener letras, números, guiones bajos (_) y guiones (-), sin espacios"
+                };
+            }
             if (!validation_1.ValidationUtils.isValidEmail(userData.correo)) {
                 return { success: false, error: "Formato de email inválido" };
             }
@@ -71,30 +87,67 @@ class UserService {
                     : undefined,
                 correo: userData.correo.toLowerCase().trim(),
             };
-            const emailExists = await UserRepository_1.userRepository.emailExists(sanitizedData.correo);
+            const emailExists = await queryRunner.manager
+                .createQueryBuilder()
+                .select()
+                .from("usuario", "u")
+                .where("u.correo = :email", { email: sanitizedData.correo })
+                .getCount() > 0;
             if (emailExists) {
                 return {
                     success: false,
                     error: "El correo electrónico ya está registrado",
                 };
             }
-            const usernameExists = await UserRepository_1.userRepository.usernameExists(sanitizedData.nombre_usuario);
+            const usernameExists = await queryRunner.manager
+                .createQueryBuilder()
+                .select()
+                .from("usuario", "u")
+                .where("u.nombre_usuario = :username", { username: sanitizedData.nombre_usuario })
+                .getCount() > 0;
             if (usernameExists) {
                 return { success: false, error: "El nombre de usuario ya está en uso" };
             }
             const hashedPassword = await UserService.hashPassword(sanitizedData.contrasena);
-            const user = await UserRepository_1.userRepository.create({
-                ...sanitizedData,
+            const user = await queryRunner.manager.save(User_entity_1.UserEntity, {
+                nombreUsuario: sanitizedData.nombre_usuario,
+                pais: sanitizedData.pais,
+                genero: sanitizedData.genero,
+                fechaNacimiento: sanitizedData.fecha_nacimiento || undefined,
+                horarioFav: sanitizedData.horario_fav,
+                correo: sanitizedData.correo.toLowerCase(),
                 contrasena: hashedPassword,
             });
-            return { success: true, user };
+            if (userData.intereses && userData.intereses.length > 0) {
+                await this.insertUserInterestsInTransaction(queryRunner, user.idUsuario, userData.intereses);
+            }
+            if (userData.distracciones && userData.distracciones.length > 0) {
+                await this.insertUserDistractionsInTransaction(queryRunner, user.idUsuario, userData.distracciones);
+            }
+            await queryRunner.commitTransaction();
+            return { success: true, user: {
+                    id_usuario: user.idUsuario,
+                    nombre_usuario: user.nombreUsuario,
+                    pais: user.pais,
+                    genero: user.genero,
+                    fecha_nacimiento: user.fechaNacimiento,
+                    horario_fav: user.horarioFav,
+                    correo: user.correo,
+                    contrasena: user.contrasena,
+                    fecha_creacion: user.fechaCreacion,
+                    fecha_actualizacion: user.fechaActualizacion,
+                } };
         }
         catch (error) {
-            console.error("Error en UserService.createUser:", error);
+            await queryRunner.rollbackTransaction();
+            logger_1.default.error("Error en UserService.createUser:", { error: error instanceof Error ? error.message : error, stack: error instanceof Error ? error.stack : undefined });
             return {
                 success: false,
                 error: error instanceof Error ? error.message : "Error interno del servidor",
             };
+        }
+        finally {
+            await queryRunner.release();
         }
     }
     async getUserById(id) {
@@ -106,7 +159,7 @@ class UserService {
             return { success: true, user };
         }
         catch (error) {
-            console.error("Error en UserService.getUserById:", error);
+            logger_1.default.error("Error en UserService.getUserById:", error);
             return { success: false, error: "Error al obtener usuario" };
         }
     }
@@ -119,7 +172,7 @@ class UserService {
             return { success: true, user };
         }
         catch (error) {
-            console.error("Error en UserService.getUserByEmail:", error);
+            logger_1.default.error("Error en UserService.getUserByEmail:", error);
             return { success: false, error: "Error al obtener usuario" };
         }
     }
@@ -180,13 +233,16 @@ class UserService {
             return { success: true, user };
         }
         catch (error) {
-            console.error("Error en UserService.updateUser:", error);
+            logger_1.default.error("Error en UserService.updateUser:", error);
             return { success: false, error: "Error al actualizar usuario" };
         }
     }
-    async verifyCredentials(email, password) {
+    async verifyCredentials(identifier, password) {
         try {
-            const user = await UserRepository_1.userRepository.findByEmail(email);
+            let user = await UserRepository_1.userRepository.findByEmail(identifier);
+            if (!user) {
+                user = await UserRepository_1.userRepository.findByUsername(identifier);
+            }
             if (!user) {
                 return { success: false, error: "Credenciales inválidas" };
             }
@@ -198,7 +254,7 @@ class UserService {
             return { success: true, user: userWithoutPassword };
         }
         catch (error) {
-            console.error("Error en UserService.verifyCredentials:", error);
+            logger_1.default.error("Error en UserService.verifyCredentials:", error);
             return { success: false, error: "Error al verificar credenciales" };
         }
     }
@@ -208,9 +264,51 @@ class UserService {
             return { success: true, users };
         }
         catch (error) {
-            console.error("Error en UserService.getAllUsers:", error);
+            logger_1.default.error("Error en UserService.getAllUsers:", error);
             return { success: false, error: "Error al obtener usuarios" };
         }
+    }
+    async insertUserInterests(userId, interestIds) {
+        const { AppDataSource } = await Promise.resolve().then(() => __importStar(require("../config/ormconfig")));
+        const usuarioInteresesRepo = AppDataSource.getRepository(UsuarioIntereses_entity_1.UsuarioInteresesEntity);
+        const inserts = interestIds.map(interestId => ({
+            usuario: { idUsuario: userId },
+            interes: { idInteres: interestId }
+        }));
+        await usuarioInteresesRepo.save(inserts);
+    }
+    async insertUserDistractions(userId, distractionIds) {
+        const { AppDataSource } = await Promise.resolve().then(() => __importStar(require("../config/ormconfig")));
+        const usuarioDistraccionesRepo = AppDataSource.getRepository(UsuarioDistracciones_entity_1.UsuarioDistraccionesEntity);
+        const inserts = distractionIds.map(distractionId => ({
+            usuario: { idUsuario: userId },
+            distraccion: { idDistraccion: distractionId }
+        }));
+        await usuarioDistraccionesRepo.save(inserts);
+    }
+    async insertUserInterestsInTransaction(queryRunner, userId, interestIds) {
+        const inserts = interestIds.map(interestId => ({
+            idUsuario: userId,
+            idInteres: interestId
+        }));
+        await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into("usuariointereses")
+            .values(inserts)
+            .execute();
+    }
+    async insertUserDistractionsInTransaction(queryRunner, userId, distractionIds) {
+        const inserts = distractionIds.map(distractionId => ({
+            idUsuario: userId,
+            idDistraccion: distractionId
+        }));
+        await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into("usuariodistracciones")
+            .values(inserts)
+            .execute();
     }
 }
 exports.UserService = UserService;

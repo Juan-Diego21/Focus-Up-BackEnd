@@ -144,6 +144,20 @@ router.post(
  *                 type: string
  *                 enum: [Masculino, Femenino, Otro, Prefiero no decir]
  *                 example: "Masculino"
+ *               horario_fav:
+ *                 type: string
+ *                 format: time
+ *                 example: "08:00"
+ *               intereses:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *               distracciones:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2]
  *     responses:
  *       201:
  *         description: Usuario creado exitosamente
@@ -211,15 +225,15 @@ router.post("/login", userController.login.bind(userController));
  *       required: true
  *       content:
  *         application/json:
- *           schema:
- *             type: object
+ *             schema:
+ *               type: object
  *             required:
- *               - email
+ *               - identifier
  *               - password
  *             properties:
- *               email:
+ *               identifier:
  *                 type: string
- *                 format: email
+ *                 description: "Email o nombre de usuario"
  *                 example: "john@example.com"
  *               password:
  *                 type: string

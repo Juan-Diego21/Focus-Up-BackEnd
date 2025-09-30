@@ -21,10 +21,7 @@ app.use(helmet());
 // 2. CORS: Permitir requests desde el frontend
 app.use(
   cors({
-    origin:
-      env.NODE_ENV === "production"
-        ? "https://frontend.com"
-        : ["http://localhost:3000", "http://127.0.0.1:3000"],
+    origin:"*",
     credentials: true,
   })
 );

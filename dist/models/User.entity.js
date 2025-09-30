@@ -35,7 +35,7 @@ __decorate([
     __metadata("design:type", String)
 ], UserEntity.prototype, "genero", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: "fecha_nacimiento", type: "date", nullable: false }),
+    (0, typeorm_1.Column)({ name: "fecha_nacimiento", type: "date", nullable: true }),
     __metadata("design:type", Date)
 ], UserEntity.prototype, "fechaNacimiento", void 0);
 __decorate([

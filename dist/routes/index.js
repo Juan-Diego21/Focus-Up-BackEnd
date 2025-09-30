@@ -7,6 +7,7 @@ const express_1 = require("express");
 const userRoutes_1 = __importDefault(require("./userRoutes"));
 const musicaRoutes_1 = __importDefault(require("./musicaRoutes"));
 const env_1 = require("../config/env");
+const metodosRutas_1 = __importDefault(require("../routes/metodosRutas"));
 const router = (0, express_1.Router)();
 router.get("/health", (req, res) => {
     res.status(200).json({
@@ -17,6 +18,7 @@ router.get("/health", (req, res) => {
     });
 });
 router.use("/users", userRoutes_1.default);
+router.use('/metodos', metodosRutas_1.default);
 router.use("/musica", musicaRoutes_1.default);
 router.use("*", (req, res) => {
     res.status(404).json({

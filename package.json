@@ -23,7 +23,8 @@
     "reflect-metadata": "^0.2.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "typeorm": "^0.3.26"
+    "typeorm": "^0.3.26",
+    "winston": "^3.18.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

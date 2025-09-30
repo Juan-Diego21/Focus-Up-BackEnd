@@ -3,24 +3,26 @@ export interface User {
   nombre_usuario: string;
   pais?: string;
   genero?: "Masculino" | "Femenino" | "Otro" | "Prefiero no decir";
-  fecha_nacimiento: Date;
-  horario_fav?: string; // TIME se maneja como string
+  fecha_nacimiento?: Date;
+  horario_fav?: string;
   correo: string;
   contrasena: string;
-  id_objetivo_estudio?: number;
-  fecha_creacion?: Date;
-  fecha_actualizacion?: Date;
+  fecha_creacion: Date;
+  fecha_actualizacion: Date;
+  intereses?: number[];
+  distracciones?: number[];
 }
 
 export interface UserCreateInput {
   nombre_usuario: string;
   pais?: string;
   genero?: "Masculino" | "Femenino" | "Otro" | "Prefiero no decir";
-  fecha_nacimiento: Date;
+  fecha_nacimiento?: Date;
   horario_fav?: string;
   correo: string;
   contrasena: string;
-  id_objetivo_estudio?: number;
+  intereses?: number[];
+  distracciones?: number[];
 }
 
 export interface UserUpdateInput {

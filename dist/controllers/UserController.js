@@ -1,8 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userController = exports.UserController = void 0;
 const UserService_1 = require("../services/UserService");
 const jwt_1 = require("../utils/jwt");
+const logger_1 = __importDefault(require("../utils/logger"));
 class UserController {
     async createUser(req, res) {
         try {
@@ -26,7 +30,7 @@ class UserController {
             res.status(201).json(response);
         }
         catch (error) {
-            console.error("Error en UserController.createUser:", error);
+            logger_1.default.error("Error en UserController.createUser:", error);
             const response = {
                 success: false,
                 message: "Error interno del servidor",
@@ -66,7 +70,7 @@ class UserController {
             res.status(200).json(response);
         }
         catch (error) {
-            console.error("Error en UserController.getUserById:", error);
+            logger_1.default.error("Error en UserController.getUserById:", error);
             const response = {
                 success: false,
                 message: "Error interno del servidor",
@@ -106,7 +110,7 @@ class UserController {
             res.status(200).json(response);
         }
         catch (error) {
-            console.error("Error en UserController.getUserByEmail:", error);
+            logger_1.default.error("Error en UserController.getUserByEmail:", error);
             const response = {
                 success: false,
                 message: "Error interno del servidor",
@@ -147,7 +151,7 @@ class UserController {
             res.status(200).json(response);
         }
         catch (error) {
-            console.error("Error en UserController.updateUser:", error);
+            logger_1.default.error("Error en UserController.updateUser:", error);
             const response = {
                 success: false,
                 message: "Error interno del servidor",
@@ -159,16 +163,16 @@ class UserController {
     }
     async login(req, res) {
         try {
-            const { email, password } = req.body;
-            if (!email || !password) {
+            const { identifier, password } = req.body;
+            if (!identifier || !password) {
                 const response = {
                     success: false,
-                    message: "Email y contraseña son requeridos",
+                    message: "Identificador (email o nombre de usuario) y contraseña son requeridos",
                     timestamp: new Date(),
                 };
                 return res.status(400).json(response);
             }
-            const result = await UserService_1.userService.verifyCredentials(email, password);
+            const result = await UserService_1.userService.verifyCredentials(identifier, password);
             if (!result.success || !result.user) {
                 const response = {
                     success: false,
@@ -197,7 +201,7 @@ class UserController {
             res.status(200).json(response);
         }
         catch (error) {
-            console.error("Error en UserController.login:", error);
+            logger_1.default.error("Error en UserController.login:", error);
             const response = {
                 success: false,
                 message: "Error interno del servidor",
@@ -229,7 +233,7 @@ class UserController {
             res.status(200).json(response);
         }
         catch (error) {
-            console.error("Error en UserController.getProfile:", error);
+            logger_1.default.error("Error en UserController.getProfile:", error);
             const response = {
                 success: false,
                 message: "Error interno del servidor",
@@ -260,7 +264,7 @@ class UserController {
             res.status(200).json(response);
         }
         catch (error) {
-            console.error("Error en UserController.getAllUsers:", error);
+            logger_1.default.error("Error en UserController.getAllUsers:", error);
             const response = {
                 success: false,
                 message: "Error interno del servidor",
