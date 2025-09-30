@@ -15,9 +15,7 @@ const ormconfig_1 = require("./config/ormconfig");
 const app = (0, express_1.default)();
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
-    origin: env_1.env.NODE_ENV === "production"
-        ? "https://frontend.com"
-        : ["http://localhost:3000", "http://127.0.0.1:3000"],
+    origin: "*",
     credentials: true,
 }));
 app.use((0, morgan_1.default)(env_1.env.NODE_ENV === "production" ? "combined" : "dev"));

@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MetodoEstudio = void 0;
 const typeorm_1 = require("typeorm");
 const Evento_entity_1 = require("../models/Evento.entity");
+
 let MetodoEstudio = class MetodoEstudio {
 };
 exports.MetodoEstudio = MetodoEstudio;

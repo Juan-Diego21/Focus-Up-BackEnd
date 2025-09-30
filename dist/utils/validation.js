@@ -14,6 +14,10 @@ class ValidationUtils {
         const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
         return timeRegex.test(time);
     }
+    static isValidUsername(username) {
+        const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+        return usernameRegex.test(username) && !/\s/.test(username);
+    }
     static sanitizeText(text) {
         return text
             .replace(/</g, "&lt;")

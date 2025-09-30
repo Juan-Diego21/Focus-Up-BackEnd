@@ -41,38 +41,72 @@ const swaggerOptions: swaggerJSDoc.Options = {
       },
       schemas: {
         User: {
-          type: "object",
-          properties: {
-            id_usuario: {
-              type: "integer",
-              description: "ID único del usuario",
-            },
-            nombre_usuario: {
-              type: "string",
-              description: "Nombre de usuario",
-            },
-            correo: {
-              type: "string",
-              format: "email",
-              description: "Email del usuario",
-            },
-            pais: {
-              type: "string",
-              nullable: true,
-              description: "País del usuario",
-            },
-            genero: {
-              type: "string",
-              enum: ["Masculino", "Femenino", "Otro", "Prefiero no decir"],
-              description: "Género del usuario",
-            },
-            fecha_nacimiento: {
-              type: "string",
-              format: "date",
-              description: "Fecha de nacimiento del usuario",
-            },
-          },
-        },
+           type: "object",
+           properties: {
+             id_usuario: {
+               type: "integer",
+               description: "ID único del usuario",
+             },
+             nombre_usuario: {
+               type: "string",
+               description: "Nombre de usuario",
+             },
+             correo: {
+               type: "string",
+               format: "email",
+               description: "Email del usuario",
+             },
+             pais: {
+               type: "string",
+               nullable: true,
+               description: "País del usuario",
+             },
+             genero: {
+               type: "string",
+               enum: ["Masculino", "Femenino", "Otro", "Prefiero no decir"],
+               nullable: true,
+               description: "Género del usuario",
+             },
+             fecha_nacimiento: {
+               type: "string",
+               format: "date",
+               nullable: true,
+               description: "Fecha de nacimiento del usuario",
+             },
+             horario_fav: {
+               type: "string",
+               format: "time",
+               nullable: true,
+               description: "Horario favorito del usuario",
+             },
+             fecha_creacion: {
+               type: "string",
+               format: "date-time",
+               description: "Fecha de creación del usuario",
+             },
+             fecha_actualizacion: {
+               type: "string",
+               format: "date-time",
+               description: "Fecha de actualización del usuario",
+             },
+             intereses: {
+               type: "array",
+               items: {
+                 type: "integer",
+               },
+               nullable: true,
+               description: "IDs de intereses del usuario",
+             },
+             distracciones: {
+               type: "array",
+               items: {
+                 type: "integer",
+               },
+               nullable: true,
+               description: "IDs de distracciones del usuario",
+             },
+           },
+         },
         Error: {
           type: "object",
           properties: {

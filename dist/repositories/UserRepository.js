@@ -12,11 +12,10 @@ class UserRepository {
             nombreUsuario: userInput.nombre_usuario,
             pais: userInput.pais,
             genero: userInput.genero,
-            fechaNacimiento: userInput.fecha_nacimiento,
+            fechaNacimiento: userInput.fecha_nacimiento || undefined,
             horarioFav: userInput.horario_fav,
             correo: userInput.correo.toLowerCase(),
             contrasena: userInput.contrasena,
-            idObjetivoEstudio: userInput.id_objetivo_estudio,
         });
         const savedUser = await this.repository.save(user);
         return this.mapToUserDTO(savedUser);
@@ -105,7 +104,6 @@ class UserRepository {
             horario_fav: entity.horarioFav,
             correo: entity.correo,
             contrasena: entity.contrasena,
-            id_objetivo_estudio: entity.idObjetivoEstudio,
             fecha_creacion: entity.fechaCreacion,
             fecha_actualizacion: entity.fechaActualizacion,
         };

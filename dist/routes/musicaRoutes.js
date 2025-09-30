@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const MusicController_1 = require("../controllers/MusicController");
+const router = (0, express_1.Router)();
+router.get("/", MusicController_1.musicController.getAllCanciones.bind(MusicController_1.musicController));
+router.get("/nombre/:nombre", MusicController_1.musicController.getCancionByNombre.bind(MusicController_1.musicController));
+router.get("/albums", MusicController_1.musicController.getAllAlbums.bind(MusicController_1.musicController));
+router.get("/albums/:id/canciones", MusicController_1.musicController.getCancionesByAlbum.bind(MusicController_1.musicController));
+router.get("/:id", MusicController_1.musicController.getCancionById.bind(MusicController_1.musicController));
+router.get("/albums/:id", MusicController_1.musicController.getAlbumById.bind(MusicController_1.musicController));
+router.get("/albums/nombre/:nombre", MusicController_1.musicController.getAlbumByNombre.bind(MusicController_1.musicController));
+exports.default = router;

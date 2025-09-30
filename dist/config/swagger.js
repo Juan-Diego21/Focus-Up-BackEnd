@@ -68,12 +68,46 @@ const swaggerOptions = {
                         genero: {
                             type: "string",
                             enum: ["Masculino", "Femenino", "Otro", "Prefiero no decir"],
+                            nullable: true,
                             description: "Género del usuario",
                         },
                         fecha_nacimiento: {
                             type: "string",
                             format: "date",
+                            nullable: true,
                             description: "Fecha de nacimiento del usuario",
+                        },
+                        horario_fav: {
+                            type: "string",
+                            format: "time",
+                            nullable: true,
+                            description: "Horario favorito del usuario",
+                        },
+                        fecha_creacion: {
+                            type: "string",
+                            format: "date-time",
+                            description: "Fecha de creación del usuario",
+                        },
+                        fecha_actualizacion: {
+                            type: "string",
+                            format: "date-time",
+                            description: "Fecha de actualización del usuario",
+                        },
+                        intereses: {
+                            type: "array",
+                            items: {
+                                type: "integer",
+                            },
+                            nullable: true,
+                            description: "IDs de intereses del usuario",
+                        },
+                        distracciones: {
+                            type: "array",
+                            items: {
+                                type: "integer",
+                            },
+                            nullable: true,
+                            description: "IDs de distracciones del usuario",
                         },
                     },
                 },

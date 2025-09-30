@@ -8,16 +8,16 @@ const validateUserCreate = (req, res, next) => {
     if (!nombre_usuario || nombre_usuario.trim().length < 3) {
         errors.push("El nombre de usuario debe tener al menos 3 caracteres");
     }
+    if (!validation_1.ValidationUtils.isValidUsername(nombre_usuario)) {
+        errors.push("El nombre de usuario solo puede contener letras, números, guiones bajos (_) y guiones (-), sin espacios");
+    }
     if (!correo || !validation_1.ValidationUtils.isValidEmail(correo)) {
         errors.push("Formato de email inválido");
     }
     if (!contrasena || !validation_1.ValidationUtils.isValidPassword(contrasena)) {
         errors.push("La contraseña debe tener al menos 8 caracteres, una mayúscula y un número");
     }
-    if (!fecha_nacimiento) {
-        errors.push("La fecha de nacimiento es requerida");
-    }
-    else {
+    if (fecha_nacimiento) {
         try {
             const birthDate = new Date(fecha_nacimiento);
             if (isNaN(birthDate.getTime())) {
