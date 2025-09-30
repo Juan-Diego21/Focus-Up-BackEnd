@@ -1,5 +1,6 @@
 import {EventoRepository} from '../repositories/EventoRepository';
 import {} from '../models/Evento.entity';
+import {IEventoCreate } from '../types/IEventoCreate'
 import {MetodoEstudioRepository } from '../repositories/MetodoEstudioRepository'
 
 export const EventoService ={
@@ -15,18 +16,11 @@ export const EventoService ={
             return { success: false, error: 'Error al traer eventos' };
         }
     },
-    async CreateEvento (data:{
-        idMetodo: number;
-        fechaEvento: Date;
-        horaEvento:string;
-        nombreEvento : string;
-        descripcionEvento: string;
-
-    }){
+    async crearEvento (data:IEventoCreate, idMetodo:any){
         try{
             console.log("Creando los eventos con :", data)
 
-            const metodo = await MetodoEstudioRepository.findOneBy({idMetodo:data.idMetodo})
+            const metodo = await MetodoEstudioRepository.findOneBy({idMetodo:idMetodo})
             if(!metodo){
                 return {success:false,
                     error:'Metodo de estudio no valido'
@@ -44,12 +38,12 @@ export const EventoService ={
             return {
                 success: true,
                 message:"Evento creado correcramente ",
-                daa: guardarEvento
+                data: guardarEvento
             }
         }catch (error)
         {console.log('error al crear el evento', error)
             return {
-                succes:false,
+                success:false,
                 error:'error interno al crear evento'
             }
         }
