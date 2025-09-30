@@ -84,3 +84,10 @@ export const validateUserUpdate = (
 
   next();
 };
+export const validationEventCreate= (
+  req: Request,
+  res: Response,
+  next: NextFunction
+)=>{
+  
+}

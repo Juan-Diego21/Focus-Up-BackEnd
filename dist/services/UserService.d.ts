@@ -1,4 +1,4 @@
-import { UserCreateInput, UserUpdateInput, User } from "../types/User";
+import { UserCreateInput, UserUpdateInput, User } from '../types/User';
 export declare class UserService {
     private static readonly SALT_ROUNDS;
     private static hashPassword;

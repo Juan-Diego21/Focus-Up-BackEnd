@@ -3,6 +3,7 @@ import userRoutes from "./userRoutes";
 import musicaRoutes from "./musicaRoutes";
 import { env } from "../config/env";
 import  metodosRutas  from "../routes/metodosRutas";
+import eventosRutas from "../routes/eventosRutas"
 
 const router = Router();
 
@@ -46,6 +47,9 @@ router.get("/health", (req, res) => {
 
 // Rutas de usuarios
 router.use("/users", userRoutes);
+
+//Rutas de Eventos 
+router.use("/eventos", eventosRutas)
 //Rutas de metodos de estudio 
 router.use('/metodos', metodosRutas);
 
