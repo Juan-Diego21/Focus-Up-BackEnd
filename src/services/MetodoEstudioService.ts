@@ -1,6 +1,5 @@
 import { MetodoEstudioRepository } from '../repositories/MetodoEstudioRepository';
 import { MetodoEstudio } from '../models/MedotoEstudio.entity';
-import { ifError } from 'assert';
 
 
 export const MetodoEstudioService = {
