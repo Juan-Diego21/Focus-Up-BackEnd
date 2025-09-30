@@ -7,9 +7,10 @@ exports.EventoService = {
     async listEvento() {
         try {
             const eventist = await EventoRepository_1.EventoRepository.find();
-            if (!eventist) {
-                return { success: false, data: eventist };
-            }
+            return {
+                success: true,
+                data: eventist
+            };
         }
         catch (error) {
             console.error('Error al traer los eventos', error);

@@ -2,13 +2,13 @@ import { IEventoCreate } from '../types/IEventoCreate';
 export declare const EventoService: {
     listEvento(): Promise<{
         success: boolean;
-        data: never;
+        data: import("../models/Evento.entity").EventoEntity[];
         error?: undefined;
     } | {
         success: boolean;
         error: string;
         data?: undefined;
-    } | undefined>;
+    }>;
     crearEvento(data: IEventoCreate, idMetodo: any): Promise<{
         success: boolean;
         error: string;

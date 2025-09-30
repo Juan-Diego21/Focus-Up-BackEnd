@@ -4,6 +4,7 @@ exports.eventosController = void 0;
 const EventosService_1 = require("../services/EventosService");
 exports.eventosController = {
     async listEventos(req, res) {
+        console.log("Entrando a listEventos");
         try {
             const listarEventos = await EventosService_1.EventoService.listEvento();
             if (listarEventos?.success) {

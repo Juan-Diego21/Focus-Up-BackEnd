@@ -32,7 +32,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -45,7 +44,7 @@ const UsuarioDistracciones_entity_1 = require("../models/UsuarioDistracciones.en
 const User_entity_1 = require("../models/User.entity");
 const logger_1 = __importDefault(require("../utils/logger"));
 class UserService {
-    static async hashPassword(password) 
+    static async hashPassword(password) {
         const bcrypt = await Promise.resolve().then(() => __importStar(require("bcryptjs")));
         return bcrypt.hash(password, this.SALT_ROUNDS);
     }
@@ -65,19 +64,28 @@ class UserService {
                 };
             }
             if (!validation_1.ValidationUtils.isValidEmail(userData.correo)) {
-                return { success: false, error: 'Formato de email inválido' };
+                return { success: false, error: "Formato de email inválido" };
             }
             if (!validation_1.ValidationUtils.isValidPassword(userData.contrasena)) {
-                return { success: false, error: 'La contraseña debe tener al menos 8 caracteres, una mayúscula y un número' };
+                return {
+                    success: false,
+                    error: "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número",
+                };
             }
-            if (userData.horario_fav && !validation_1.ValidationUtils.isValidTime(userData.horario_fav)) {
-                return { success: false, error: 'Formato de hora inválido (use HH:MM)' };
+            if (userData.horario_fav &&
+                !validation_1.ValidationUtils.isValidTime(userData.horario_fav)) {
+                return {
+                    success: false,
+                    error: "Formato de hora inválido (use HH:MM)",
+                };
             }
             const sanitizedData = {
                 ...userData,
                 nombre_usuario: validation_1.ValidationUtils.sanitizeText(userData.nombre_usuario),
-                pais: userData.pais ? validation_1.ValidationUtils.sanitizeText(userData.pais) : undefined,
-                correo: userData.correo.toLowerCase().trim()
+                pais: userData.pais
+                    ? validation_1.ValidationUtils.sanitizeText(userData.pais)
+                    : undefined,
+                correo: userData.correo.toLowerCase().trim(),
             };
             const emailExists = await queryRunner.manager
                 .createQueryBuilder()
@@ -86,15 +94,11 @@ class UserService {
                 .where("u.correo = :email", { email: sanitizedData.correo })
                 .getCount() > 0;
             if (emailExists) {
-<<<<<<< HEAD
                 return {
                     success: false,
                     message: "Validation error",
                     error: "El correo ya existe",
                 };
-=======
-                return { success: false, error: 'El correo electrónico ya está registrado' };
->>>>>>> ff070ba59edc0db7bd4c4e0094cd5acfb825ceb8
             }
             const usernameExists = await queryRunner.manager
                 .createQueryBuilder()
@@ -140,12 +144,11 @@ class UserService {
                 } };
         }
         catch (error) {
-
             await queryRunner.rollbackTransaction();
             logger_1.default.error("Error en UserService.createUser:", { error: error instanceof Error ? error.message : error, stack: error instanceof Error ? error.stack : undefined });
             return {
                 success: false,
-                error: error instanceof Error ? error.message : 'Error interno del servidor'
+                error: error instanceof Error ? error.message : "Error interno del servidor",
             };
         }
         finally {
@@ -156,12 +159,11 @@ class UserService {
         try {
             const user = await UserRepository_1.userRepository.findById(id);
             if (!user) {
-                return { success: false, error: 'Usuario no encontrado' };
+                return { success: false, error: "Usuario no encontrado" };
             }
             return { success: true, user };
         }
         catch (error) {
-
             logger_1.default.error("Error en UserService.getUserById:", error);
             return { success: false, error: "Error al obtener usuario" };
         }
@@ -170,22 +172,19 @@ class UserService {
         try {
             const user = await UserRepository_1.userRepository.findByEmail(email);
             if (!user) {
-                return { success: false, error: 'Usuario no encontrado' };
+                return { success: false, error: "Usuario no encontrado" };
             }
             return { success: true, user };
         }
         catch (error) {
-
             logger_1.default.error("Error en UserService.getUserByEmail:", error);
             return { success: false, error: "Error al obtener usuario" };
-
         }
     }
     async updateUser(id, updateData) {
         try {
             if (updateData.contrasena) {
                 if (!validation_1.ValidationUtils.isValidPassword(updateData.contrasena)) {
-
                     return {
                         success: false,
                         error: "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número",
@@ -203,7 +202,6 @@ class UserService {
                     success: false,
                     error: "Formato de hora inválido (use HH:MM)",
                 };
-
             }
             const sanitizedData = { ...updateData };
             if (sanitizedData.nombre_usuario) {
@@ -218,23 +216,28 @@ class UserService {
             if (sanitizedData.correo) {
                 const emailExists = await UserRepository_1.userRepository.emailExists(sanitizedData.correo, id);
                 if (emailExists) {
-                    return { success: false, error: 'El correo electrónico ya está registrado' };
+                    return {
+                        success: false,
+                        error: "El correo electrónico ya está registrado",
+                    };
                 }
             }
             if (sanitizedData.nombre_usuario) {
                 const usernameExists = await UserRepository_1.userRepository.usernameExists(sanitizedData.nombre_usuario, id);
                 if (usernameExists) {
-                    return { success: false, error: 'El nombre de usuario ya está en uso' };
+                    return {
+                        success: false,
+                        error: "El nombre de usuario ya está en uso",
+                    };
                 }
             }
             const user = await UserRepository_1.userRepository.update(id, sanitizedData);
             if (!user) {
-                return { success: false, error: 'Usuario no encontrado' };
+                return { success: false, error: "Usuario no encontrado" };
             }
             return { success: true, user };
         }
         catch (error) {
-
             logger_1.default.error("Error en UserService.updateUser:", error);
             return { success: false, error: "Error al actualizar usuario" };
         }
@@ -246,17 +249,16 @@ class UserService {
                 user = await UserRepository_1.userRepository.findByUsername(identifier);
             }
             if (!user) {
-                return { success: false, error: 'Credenciales inválidas' };
+                return { success: false, error: "Credenciales inválidas" };
             }
             const isValidPassword = await UserService.verifyPassword(password, user.contrasena);
             if (!isValidPassword) {
-                return { success: false, error: 'Credenciales inválidas' };
+                return { success: false, error: "Credenciales inválidas" };
             }
             const { contrasena: _, ...userWithoutPassword } = user;
             return { success: true, user: userWithoutPassword };
         }
         catch (error) {
-
             logger_1.default.error("Error en UserService.verifyCredentials:", error);
             return { success: false, error: "Error al verificar credenciales" };
         }
@@ -267,7 +269,6 @@ class UserService {
             return { success: true, users };
         }
         catch (error) {
-
             logger_1.default.error("Error en UserService.getAllUsers:", error);
             return { success: false, error: "Error al obtener usuarios" };
         }
@@ -316,5 +317,5 @@ class UserService {
     }
 }
 exports.UserService = UserService;
-UserService.SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS || '12');
+UserService.SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS || "12");
 exports.userService = new UserService();
