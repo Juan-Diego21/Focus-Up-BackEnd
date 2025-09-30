@@ -4,15 +4,15 @@ import {IEventoCreate } from '../types/IEventoCreate'
 import {MetodoEstudioRepository } from '../repositories/MetodoEstudioRepository'
 
 export const EventoService ={
-    async listEvento (){
-        try{
+    async listEvento () {
+        try {
             const eventist = await EventoRepository.find();
-            if(!eventist){
-                return {success: false, data:eventist };
-                
-                }
-        }catch (error){
-            console.error('Error al traer los eventos',error);
+            return {
+                success: true,
+                data: eventist
+            };
+        } catch (error) {
+            console.error('Error al traer los eventos', error);
             return { success: false, error: 'Error al traer eventos' };
         }
     },

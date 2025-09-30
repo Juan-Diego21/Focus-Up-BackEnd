@@ -12,7 +12,7 @@ export class EventoEntity{
     fechaEvento?:Date;
     @Column({name:"hora_evento"})
     horaEvento!:Date;
-    @Column({type:"varchar", length:30})
+    @Column({type:"text",name:"descripcion_evento"})
     descripcionEvento!:string;
 
 

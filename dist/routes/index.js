@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const userRoutes_1 = __importDefault(require("./userRoutes"));
 const env_1 = require("../config/env");
+const metodosRutas_1 = __importDefault(require("../routes/metodosRutas"));
+const eventosRutas_1 = __importDefault(require("../routes/eventosRutas"));
 const router = (0, express_1.Router)();
 router.get("/health", (req, res) => {
     res.status(200).json({
@@ -16,6 +18,8 @@ router.get("/health", (req, res) => {
     });
 });
 router.use("/users", userRoutes_1.default);
+router.use("/eventos", eventosRutas_1.default);
+router.use('/metodos', metodosRutas_1.default);
 router.use("*", (req, res) => {
     res.status(404).json({
         success: false,

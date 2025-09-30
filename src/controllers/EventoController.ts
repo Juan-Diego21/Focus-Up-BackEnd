@@ -4,7 +4,9 @@ import { error } from "console";
 
 
 export const eventosController ={
-    async listEventos(res:Response){
+    async listEventos(req:Request,res:Response){
+            console.log("Entrando a listEventos"); // <-- Agrega esto
+
         try{
             const listarEventos = await EventoService.listEvento();
             if(listarEventos?.success){
@@ -31,10 +33,10 @@ export const eventosController ={
     },
     
     async deleteEvento(req: Request, res: Response) {
-        const { id_evento } = req.params;
+        const { id } = req.params;
 
         try {
-            const resultado = await EventoService.deleteEvento(Number(id_evento));
+            const resultado = await EventoService.deleteEvento(Number(id));
 
             if (resultado.success) {
             return res.status(200).json(resultado);
@@ -49,11 +51,11 @@ export const eventosController ={
         }
     }, 
     async updateEvento(req: Request, res: Response) {
-        const { id_evento } = req.params;
+        const { id } = req.params;
         const { nombreEvento, fechaEvento, horaEvento, descripcionEvento } = req.body;
 
         try {
-            const datos = await EventoService.updateEvento(Number(id_evento), {
+            const datos = await EventoService.updateEvento(Number(id), {
             nombreEvento,
             fechaEvento,
             horaEvento,
