@@ -6,6 +6,7 @@ export declare class UserService {
     createUser(userData: UserCreateInput): Promise<{
         success: boolean;
         user?: User;
+        message?: string;
         error?: string;
     }>;
     getUserById(id: number): Promise<{

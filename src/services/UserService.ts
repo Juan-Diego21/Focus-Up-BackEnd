@@ -30,7 +30,7 @@ export class UserService {
   // Crear un nuevo usuario con validaciones
   async createUser(
     userData: UserCreateInput
-  ): Promise<{ success: boolean; user?: User; error?: string }> {
+  ): Promise<{ success: boolean; user?: User; message?: string; error?: string }> {
     const queryRunner = (await import("../config/ormconfig")).AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -87,7 +87,8 @@ export class UserService {
       if (emailExists) {
         return {
           success: false,
-          error: "El correo electrónico ya está registrado",
+          message: "Validation error",
+          error: "El correo ya existe",
         };
       }
 
@@ -100,7 +101,11 @@ export class UserService {
         .getCount() > 0;
 
       if (usernameExists) {
-        return { success: false, error: "El nombre de usuario ya está en uso" };
+        return {
+          success: false,
+          message: "Validation error",
+          error: "El nombre de usuario ya existe"
+        };
       }
 
       // Hash de la contraseña ANTES de crear el usuario

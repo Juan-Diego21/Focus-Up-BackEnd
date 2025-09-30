@@ -96,7 +96,8 @@ class UserService {
             if (emailExists) {
                 return {
                     success: false,
-                    error: "El correo electrónico ya está registrado",
+                    message: "Validation error",
+                    error: "El correo ya existe",
                 };
             }
             const usernameExists = await queryRunner.manager
@@ -106,7 +107,11 @@ class UserService {
                 .where("u.nombre_usuario = :username", { username: sanitizedData.nombre_usuario })
                 .getCount() > 0;
             if (usernameExists) {
-                return { success: false, error: "El nombre de usuario ya está en uso" };
+                return {
+                    success: false,
+                    message: "Validation error",
+                    error: "El nombre de usuario ya existe"
+                };
             }
             const hashedPassword = await UserService.hashPassword(sanitizedData.contrasena);
             const user = await queryRunner.manager.save(User_entity_1.UserEntity, {

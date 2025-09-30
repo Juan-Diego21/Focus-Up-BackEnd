@@ -166,11 +166,21 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/User'
  *       400:
- *         description: Datos de entrada inválidos
+ *         description: Datos de entrada inválidos o usuario/email ya existe
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Validation error"
+ *                 error:
+ *                   type: string
+ *                   example: "El nombre de usuario ya existe"
  */
 
 // PUT /api/v1/users/:id - Actualizar usuario por id

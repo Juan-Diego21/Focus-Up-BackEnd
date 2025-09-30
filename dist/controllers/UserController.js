@@ -15,7 +15,7 @@ class UserController {
             if (!result.success) {
                 const response = {
                     success: false,
-                    message: "Error al crear usuario",
+                    message: result.message || "Error al crear usuario",
                     error: result.error,
                     timestamp: new Date(),
                 };
