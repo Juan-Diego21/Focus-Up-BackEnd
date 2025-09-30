@@ -2,7 +2,15 @@ import { Request, Response } from "express";
 import { userService } from "../services/UserService";
 import { ApiResponse } from "../types/ApiResponse";
 import { JwtUtils } from "../utils/jwt";
-import { JwtPayload } from "../utils/jwt"; // Importar JwtPayload específicamente
+import { JwtPayload } from "../utils/jwt";
+import logger from "../utils/logger";
+
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: Gestión de usuarios
+ */
 
 export class UserController {
   // Crear un nuevo usuario
@@ -31,7 +39,7 @@ export class UserController {
 
       res.status(201).json(response);
     } catch (error) {
-      console.error("Error en UserController.createUser:", error);
+      logger.error("Error en UserController.createUser:", error);
 
       const response: ApiResponse = {
         success: false,
@@ -79,7 +87,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error("Error en UserController.getUserById:", error);
+      logger.error("Error en UserController.getUserById:", error);
 
       const response: ApiResponse = {
         success: false,
@@ -127,7 +135,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error("Error en UserController.getUserByEmail:", error);
+      logger.error("Error en UserController.getUserByEmail:", error);
 
       const response: ApiResponse = {
         success: false,
@@ -176,7 +184,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error("Error en UserController.updateUser:", error);
+      logger.error("Error en UserController.updateUser:", error);
 
       const response: ApiResponse = {
         success: false,
@@ -192,18 +200,18 @@ export class UserController {
   // Verificar credenciales (Login)
   async login(req: Request, res: Response) {
     try {
-      const { email, password } = req.body;
+      const { identifier, password } = req.body;
 
-      if (!email || !password) {
+      if (!identifier || !password) {
         const response: ApiResponse = {
           success: false,
-          message: "Email y contraseña son requeridos",
+          message: "Identificador (email o nombre de usuario) y contraseña son requeridos",
           timestamp: new Date(),
         };
         return res.status(400).json(response);
       }
 
-      const result = await userService.verifyCredentials(email, password);
+      const result = await userService.verifyCredentials(identifier, password);
 
       if (!result.success || !result.user) {
         const response: ApiResponse = {
@@ -237,7 +245,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error("Error en UserController.login:", error);
+      logger.error("Error en UserController.login:", error);
 
       const response: ApiResponse = {
         success: false,
@@ -276,7 +284,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error("Error en UserController.getProfile:", error);
+      logger.error("Error en UserController.getProfile:", error);
 
       const response: ApiResponse = {
         success: false,
@@ -313,7 +321,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error("Error en UserController.getAllUsers:", error);
+      logger.error("Error en UserController.getAllUsers:", error);
 
       const response: ApiResponse = {
         success: false,

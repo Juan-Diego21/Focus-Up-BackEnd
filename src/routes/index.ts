@@ -1,8 +1,38 @@
 import { Router } from "express";
 import userRoutes from "./userRoutes";
+import musicaRoutes from "./musicaRoutes";
 import { env } from "../config/env";
+import  metodosRutas  from "../routes/metodosRutas";
 
 const router = Router();
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check del servidor
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Servidor funcionando correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "OK"
+ *                 message:
+ *                   type: string
+ *                   example: "Focus Up API is running successfully"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 environment:
+ *                   type: string
+ *                   example: "development"
+ */
 
 // Ruta de health check
 router.get("/health", (req, res) => {
@@ -16,6 +46,11 @@ router.get("/health", (req, res) => {
 
 // Rutas de usuarios
 router.use("/users", userRoutes);
+//Rutas de metodos de estudio 
+router.use('/metodos', metodosRutas);
+
+// Rutas de musica
+router.use("/musica", musicaRoutes);
 
 // Ruta por defecto para manejar endpoints no encontrados
 router.use("*", (req, res) => {

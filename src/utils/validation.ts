@@ -17,6 +17,12 @@ export class ValidationUtils {
     return timeRegex.test(time);
   }
 
+  // Validar formato de nombre de usuario (solo alfanumérico, _ y -)
+  static isValidUsername(username: string): boolean {
+    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+    return usernameRegex.test(username) && !/\s/.test(username);
+  }
+
   // Sanitizar entrada de texto (prevención básica de XSS)
   static sanitizeText(text: string): string {
     return text

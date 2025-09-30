@@ -23,7 +23,7 @@ export declare class UserService {
         user?: User;
         error?: string;
     }>;
-    verifyCredentials(email: string, password: string): Promise<{
+    verifyCredentials(identifier: string, password: string): Promise<{
         success: boolean;
         user?: User;
         error?: string;
@@ -33,5 +33,9 @@ export declare class UserService {
         users?: User[];
         error?: string;
     }>;
+    private insertUserInterests;
+    private insertUserDistractions;
+    private insertUserInterestsInTransaction;
+    private insertUserDistractionsInTransaction;
 }
 export declare const userService: UserService;

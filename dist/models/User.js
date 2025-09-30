@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserModel = void 0;
 class UserModel {
-    constructor(id_usuario, nombre_usuario = '', pais = '', genero = 'Prefiero no decir', fecha_nacimiento = new Date(), horario_fav = '', correo = '', contrasena = '', id_objetivo_estudio, fecha_creacion = new Date(), fecha_actualizacion = new Date()) {
+    constructor(id_usuario, nombre_usuario = '', pais, genero, fecha_nacimiento, horario_fav, correo = '', contrasena = '', intereses, distracciones, fecha_creacion = new Date(), fecha_actualizacion = new Date()) {
         this.id_usuario = id_usuario;
         this.nombre_usuario = nombre_usuario;
         this.pais = pais;
@@ -11,21 +11,13 @@ class UserModel {
         this.horario_fav = horario_fav;
         this.correo = correo;
         this.contrasena = contrasena;
-        this.id_objetivo_estudio = id_objetivo_estudio;
+        this.intereses = intereses;
+        this.distracciones = distracciones;
         this.fecha_creacion = fecha_creacion;
         this.fecha_actualizacion = fecha_actualizacion;
     }
-    static isValidAge(fechaNacimiento) {
-        const hoy = new Date();
-        const edadMinima = new Date();
-        edadMinima.setFullYear(hoy.getFullYear() - 13);
-        return fechaNacimiento <= edadMinima;
-    }
     static fromInput(input) {
-        if (!this.isValidAge(input.fecha_nacimiento)) {
-            throw new Error('El usuario debe tener al menos 13 años');
-        }
-        return new UserModel(undefined, input.nombre_usuario, input.pais || '', input.genero || 'Prefiero no decir', input.fecha_nacimiento, input.horario_fav || '', input.correo, input.contrasena, input.id_objetivo_estudio, new Date(), new Date());
+        return new UserModel(undefined, input.nombre_usuario, input.pais, input.genero, input.fecha_nacimiento, input.horario_fav, input.correo, input.contrasena, input.intereses, input.distracciones, new Date(), new Date());
     }
     toJSON() {
         return {
@@ -37,9 +29,10 @@ class UserModel {
             horario_fav: this.horario_fav,
             correo: this.correo,
             contrasena: this.contrasena,
-            id_objetivo_estudio: this.id_objetivo_estudio,
             fecha_creacion: this.fecha_creacion,
-            fecha_actualizacion: this.fecha_actualizacion
+            fecha_actualizacion: this.fecha_actualizacion,
+            intereses: this.intereses,
+            distracciones: this.distracciones
         };
     }
 }

@@ -14,6 +14,10 @@ export const validateUserCreate = (
     errors.push("El nombre de usuario debe tener al menos 3 caracteres");
   }
 
+  if (!ValidationUtils.isValidUsername(nombre_usuario)) {
+    errors.push("El nombre de usuario solo puede contener letras, números, guiones bajos (_) y guiones (-), sin espacios");
+  }
+
   if (!correo || !ValidationUtils.isValidEmail(correo)) {
     errors.push("Formato de email inválido");
   }
@@ -24,9 +28,7 @@ export const validateUserCreate = (
     );
   }
 
-  if (!fecha_nacimiento) {
-    errors.push("La fecha de nacimiento es requerida");
-  } else {
+  if (fecha_nacimiento) {
     try {
       const birthDate = new Date(fecha_nacimiento);
       if (isNaN(birthDate.getTime())) {
