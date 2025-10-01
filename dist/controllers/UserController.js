@@ -15,7 +15,7 @@ class UserController {
             if (!result.success) {
                 const response = {
                     success: false,
-                    message: "Error al crear usuario",
+                    message: result.message || "Error al crear usuario",
                     error: result.error,
                     timestamp: new Date(),
                 };
@@ -163,8 +163,15 @@ class UserController {
     }
     async login(req, res) {
         try {
-            const { identifier, password } = req.body;
-            if (!identifier || !password) {
+            const { correo, nombre_usuario, contrasena } = req.body;
+            let identifier;
+            if (correo) {
+                identifier = correo;
+            }
+            else if (nombre_usuario) {
+                identifier = nombre_usuario;
+            }
+            if (!identifier || !contrasena) {
                 const response = {
                     success: false,
                     message: "Identificador (email o nombre de usuario) y contraseña son requeridos",
@@ -172,12 +179,12 @@ class UserController {
                 };
                 return res.status(400).json(response);
             }
-            const result = await UserService_1.userService.verifyCredentials(identifier, password);
-            if (!result.success || !result.user) {
+            const result = await UserService_1.userService.verifyCredentials(identifier, contrasena);
+            if (!result.success) {
                 const response = {
                     success: false,
-                    message: "Error de autenticación",
-                    error: result.error,
+                    message: "Credenciales inválidas",
+                    error: "El correo o la contraseña no son correctos",
                     timestamp: new Date(),
                 };
                 return res.status(401).json(response);
@@ -187,15 +194,13 @@ class UserController {
                 email: result.user.correo,
             };
             const accessToken = jwt_1.JwtUtils.generateAccessToken(tokenPayload);
-            const refreshToken = jwt_1.JwtUtils.generateRefreshToken(tokenPayload);
             const response = {
                 success: true,
-                message: "Login exitoso",
-                data: {
-                    user: result.user,
-                    accessToken,
-                    refreshToken,
-                },
+                message: "Autenticación exitosa",
+                token: accessToken,
+                userId: result.user.id_usuario,
+                username: result.user.nombre_usuario,
+                user: result.user,
                 timestamp: new Date(),
             };
             res.status(200).json(response);
@@ -273,6 +278,25 @@ class UserController {
             };
             res.status(500).json(response);
         }
+    }
+    async deleteUser(req, res) {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return res.status(400).json({
+                success: false,
+                message: "ID inválido",
+                timestamp: new Date(),
+            });
+        }
+        const result = await UserService_1.userService.deleteUser(id);
+        const response = {
+            success: result.success,
+            message: result.success
+                ? "Usuario eliminado correctamente"
+                : result.error || "Error eliminando usuario",
+            timestamp: new Date(),
+        };
+        res.status(result.success ? 200 : 404).json(response);
     }
 }
 exports.UserController = UserController;

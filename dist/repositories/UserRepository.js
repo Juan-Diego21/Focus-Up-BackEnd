@@ -29,12 +29,14 @@ class UserRepository {
     async findByEmail(email) {
         const user = await this.repository.findOne({
             where: { correo: email.toLowerCase() },
+            relations: ['usuarioIntereses', 'usuarioDistracciones']
         });
         return user ? this.mapToUserDTO(user) : null;
     }
     async findByUsername(username) {
         const user = await this.repository.findOne({
             where: { nombreUsuario: username },
+            relations: ['usuarioIntereses', 'usuarioDistracciones']
         });
         return user ? this.mapToUserDTO(user) : null;
     }
@@ -63,8 +65,8 @@ class UserRepository {
         return null;
     }
     async delete(id) {
-        const result = await this.repository.update(id, {});
-        return result.affected !== undefined && result.affected > 0;
+        const result = await this.repository.delete(id);
+        return !!(result.affected && result.affected > 0);
     }
     async findAll() {
         const users = await this.repository.find();
@@ -106,6 +108,8 @@ class UserRepository {
             contrasena: entity.contrasena,
             fecha_creacion: entity.fechaCreacion,
             fecha_actualizacion: entity.fechaActualizacion,
+            intereses: entity.usuarioIntereses?.map(ui => ui.idInteres) || [],
+            distracciones: entity.usuarioDistracciones?.map(ud => ud.idDistraccion) || [],
         };
     }
 }

@@ -4,7 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from "typeorm";
+import { UsuarioInteresesEntity } from "./UsuarioIntereses.entity";
+import { UsuarioDistraccionesEntity } from "./UsuarioDistracciones.entity";
 
 @Entity("usuario")
 export class UserEntity {
@@ -44,4 +47,10 @@ export class UserEntity {
 
   @UpdateDateColumn({ name: "fecha_actualizacion" })
   fechaActualizacion!: Date;
+
+  @OneToMany(() => UsuarioInteresesEntity, usuarioInteres => usuarioInteres.usuario)
+  usuarioIntereses?: UsuarioInteresesEntity[];
+
+  @OneToMany(() => UsuarioDistraccionesEntity, usuarioDistraccion => usuarioDistraccion.usuario)
+  usuarioDistracciones?: UsuarioDistraccionesEntity[];
 }

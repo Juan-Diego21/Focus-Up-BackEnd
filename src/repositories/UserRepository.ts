@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { Repository, DeleteResult } from "typeorm";
 import { AppDataSource } from "../config/ormconfig";
 import { UserEntity } from "../models/User.entity";
 import {
@@ -40,6 +40,7 @@ export class UserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {
     const user = await this.repository.findOne({
       where: { correo: email.toLowerCase() },
+      relations: ['usuarioIntereses', 'usuarioDistracciones']
     });
     return user ? this.mapToUserDTO(user) : null;
   }
@@ -47,6 +48,7 @@ export class UserRepository implements IUserRepository {
   async findByUsername(username: string): Promise<User | null> {
     const user = await this.repository.findOne({
       where: { nombreUsuario: username },
+      relations: ['usuarioIntereses', 'usuarioDistracciones']
     });
     return user ? this.mapToUserDTO(user) : null;
   }
@@ -78,12 +80,8 @@ export class UserRepository implements IUserRepository {
   }
 
   async delete(id: number): Promise<boolean> {
-    const result = await this.repository.update(id, {
-      // Implementar lógica de soft delete según tu esquema
-      // Por ejemplo: activo: false
-    } as any);
-
-    return result.affected !== undefined && result.affected > 0;
+    const result: DeleteResult = await this.repository.delete(id);
+    return !!(result.affected && result.affected > 0);
   }
 
   async findAll(): Promise<User[]> {
@@ -136,6 +134,8 @@ export class UserRepository implements IUserRepository {
       contrasena: entity.contrasena,
       fecha_creacion: entity.fechaCreacion,
       fecha_actualizacion: entity.fechaActualizacion,
+      intereses: entity.usuarioIntereses?.map(ui => ui.idInteres) || [],
+      distracciones: entity.usuarioDistracciones?.map(ud => ud.idDistraccion) || [],
     };
   }
 }

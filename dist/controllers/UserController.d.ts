@@ -7,5 +7,6 @@ export declare class UserController {
     login(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     getProfile(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     getAllUsers(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    deleteUser(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 }
 export declare const userController: UserController;

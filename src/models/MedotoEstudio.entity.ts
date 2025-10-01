@@ -1,9 +1,7 @@
 import {  Entity,
   PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn} from  "typeorm";
-
+  Column,OneToMany} from  "typeorm";
+import { EventoEntity} from '../models/Evento.entity'
 @Entity("bibliotecametodosestudio")
 export class MetodoEstudio {
   @PrimaryGeneratedColumn({ name: "id_metodo" })
@@ -14,4 +12,7 @@ export class MetodoEstudio {
 
   @Column({ name: "descripcion", type: "text" })
   descripcion!: string;
+  @OneToMany(() => EventoEntity, evento => evento.metodoEstudio)
+  eventos: EventoEntity[];
+
 }

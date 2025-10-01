@@ -1,3 +1,5 @@
+import { UsuarioInteresesEntity } from "./UsuarioIntereses.entity";
+import { UsuarioDistraccionesEntity } from "./UsuarioDistracciones.entity";
 export declare class UserEntity {
     idUsuario: number;
     nombreUsuario: string;
@@ -10,4 +12,6 @@ export declare class UserEntity {
     idObjetivoEstudio: number;
     fechaCreacion: Date;
     fechaActualizacion: Date;
+    usuarioIntereses?: UsuarioInteresesEntity[];
+    usuarioDistracciones?: UsuarioDistraccionesEntity[];
 }

@@ -132,6 +132,7 @@ router.post(
  *               contrasena:
  *                 type: string
  *                 format: password
+ *                 description: "Contraseña debe tener al menos 8 caracteres, una mayúscula y un número. Se compara con la versión hasheada en la base de datos."
  *                 example: "SecurePassword123"
  *               fecha_nacimiento:
  *                 type: string
@@ -166,11 +167,21 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/User'
  *       400:
- *         description: Datos de entrada inválidos
+ *         description: Datos de entrada inválidos o usuario/email ya existe
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Validation error"
+ *                 error:
+ *                   type: string
+ *                   example: "El nombre de usuario ya existe"
  */
 
 // PUT /api/v1/users/:id - Actualizar usuario por id
@@ -200,7 +211,31 @@ router.put(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/User'
+ *             type: object
+ *             properties:
+ *               nombre_usuario:
+ *                 type: string
+ *                 example: "johndoe"
+ *               correo:
+ *                 type: string
+ *                 format: email
+ *                 example: "john@example.com"
+ *               contrasena:
+ *                 type: string
+ *                 format: password
+ *                 description: "Nueva contraseña (opcional). Debe tener al menos 8 caracteres, una mayúscula y un número."
+ *                 example: "NewSecurePassword123"
+ *               pais:
+ *                 type: string
+ *                 example: "Colombia"
+ *               genero:
+ *                 type: string
+ *                 enum: [Masculino, Femenino, Otro, Prefiero no decir]
+ *                 example: "Masculino"
+ *               horario_fav:
+ *                 type: string
+ *                 format: time
+ *                 example: "08:00"
  *     responses:
  *       200:
  *         description: Usuario actualizado exitosamente
@@ -228,20 +263,27 @@ router.post("/login", userController.login.bind(userController));
  *             schema:
  *               type: object
  *             required:
- *               - identifier
- *               - password
+ *               - contrasena
  *             properties:
- *               identifier:
+ *               correo:
  *                 type: string
- *                 description: "Email o nombre de usuario"
+ *                 format: email
+ *                 description: "Email del usuario (requerido si no se proporciona nombre_usuario)"
  *                 example: "john@example.com"
- *               password:
+ *               nombre_usuario:
+ *                 type: string
+ *                 description: "Nombre de usuario (requerido si no se proporciona correo)"
+ *                 example: "johndoe"
+ *               contrasena:
  *                 type: string
  *                 format: password
  *                 example: "SecurePassword123"
+ *             example:
+ *               correo: "john@example.com"
+ *               contrasena: "SecurePassword123"
  *     responses:
  *       200:
- *         description: Login exitoso
+ *         description: Autenticación exitosa
  *         content:
  *           application/json:
  *             schema:
@@ -249,23 +291,97 @@ router.post("/login", userController.login.bind(userController));
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     user:
- *                       $ref: '#/components/schemas/User'
- *                     accessToken:
- *                       type: string
- *                     refreshToken:
- *                       type: string
+ *                   example: "Autenticación exitosa"
+ *                 token:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 userId:
+ *                   type: integer
+ *                   example: 1
+ *                 username:
+ *                   type: string
+ *                   example: "johndoe"
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
  *       401:
  *         description: Credenciales inválidas
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Credenciales inválidas"
+ *                 error:
+ *                   type: string
+ *                   example: "El correo o la contraseña no son correctos"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
  */
 
+// DELETE /api/v1/users/:id - eliminar usuario
+router.delete("/:id", userController.deleteUser.bind(userController));
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   delete:
+ *     summary: Eliminar usuario por ID
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario a eliminar
+ *     responses:
+ *       200:
+ *         description: Usuario eliminado correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Usuario eliminado correctamente"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       404:
+ *         description: Usuario no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Error eliminando usuario"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       401:
+ *         description: No autorizado
+ */
 export default router;

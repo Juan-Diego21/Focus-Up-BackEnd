@@ -31,4 +31,7 @@ export class MusicaEntity {
 
   @UpdateDateColumn({ name: "fecha_actualizacion" })
   fechaActualizacion!: Date;
+
+  @Column({ name: "url_archivo", type: "text", nullable: false })
+  urlArchivo!: string;
 }

@@ -23,7 +23,7 @@ export class UserController {
       if (!result.success) {
         const response: ApiResponse = {
           success: false,
-          message: "Error al crear usuario",
+          message: result.message || "Error al crear usuario",
           error: result.error,
           timestamp: new Date(),
         };
@@ -200,46 +200,56 @@ export class UserController {
   // Verificar credenciales (Login)
   async login(req: Request, res: Response) {
     try {
-      const { identifier, password } = req.body;
+      const { correo, nombre_usuario, contrasena } = req.body;
 
-      if (!identifier || !password) {
+      // Determinar el identificador: priorizar email si ambos están presentes
+      let identifier: string | undefined;
+      if (correo) {
+        identifier = correo;
+      } else if (nombre_usuario) {
+        identifier = nombre_usuario;
+      }
+
+      if (!identifier || !contrasena) {
         const response: ApiResponse = {
           success: false,
-          message: "Identificador (email o nombre de usuario) y contraseña son requeridos",
+          message:
+            "Identificador (email o nombre de usuario) y contraseña son requeridos",
           timestamp: new Date(),
         };
         return res.status(400).json(response);
       }
 
-      const result = await userService.verifyCredentials(identifier, password);
+      const result = await userService.verifyCredentials(
+        identifier,
+        contrasena
+      );
 
-      if (!result.success || !result.user) {
+      if (!result.success) {
         const response: ApiResponse = {
           success: false,
-          message: "Error de autenticación",
-          error: result.error,
+          message: "Credenciales inválidas",
+          error: "El correo o la contraseña no son correctos",
           timestamp: new Date(),
         };
         return res.status(401).json(response);
       }
 
-      // Generar tokens
+      // Generar token
       const tokenPayload = {
-        userId: result.user.id_usuario!,
-        email: result.user.correo,
+        userId: result.user!.id_usuario!,
+        email: result.user!.correo,
       };
 
       const accessToken = JwtUtils.generateAccessToken(tokenPayload);
-      const refreshToken = JwtUtils.generateRefreshToken(tokenPayload);
 
       const response: ApiResponse = {
         success: true,
-        message: "Login exitoso",
-        data: {
-          user: result.user,
-          accessToken,
-          refreshToken,
-        },
+        message: "Autenticación exitosa",
+        token: accessToken,
+        userId: result.user!.id_usuario,
+        username: result.user!.nombre_usuario,
+        user: result.user,
         timestamp: new Date(),
       };
 
@@ -332,6 +342,30 @@ export class UserController {
 
       res.status(500).json(response);
     }
+  }
+
+  //Eliminar usuario
+  async deleteUser(req: Request, res: Response) {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "ID inválido",
+        timestamp: new Date(),
+      });
+    }
+
+    const result = await userService.deleteUser(id);
+
+    const response: ApiResponse = {
+      success: result.success,
+      message: result.success
+        ? "Usuario eliminado correctamente"
+        : result.error || "Error eliminando usuario",
+      timestamp: new Date(),
+    };
+
+    res.status(result.success ? 200 : 404).json(response);
   }
 }
 

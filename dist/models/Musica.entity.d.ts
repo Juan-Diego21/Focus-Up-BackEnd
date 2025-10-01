@@ -7,4 +7,5 @@ export declare class MusicaEntity {
     idAlbum: number;
     fechaCreacion: Date;
     fechaActualizacion: Date;
+    urlArchivo: string;
 }

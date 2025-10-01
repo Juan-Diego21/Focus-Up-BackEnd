@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateUserUpdate = exports.validateUserCreate = void 0;
+exports.validationEventCreate = exports.validateUserUpdate = exports.validateUserCreate = void 0;
 const validation_1 = require("../utils/validation");
 const validateUserCreate = (req, res, next) => {
     const { nombre_usuario, correo, contrasena, fecha_nacimiento } = req.body;
@@ -62,3 +62,6 @@ const validateUserUpdate = (req, res, next) => {
     next();
 };
 exports.validateUserUpdate = validateUserUpdate;
+const validationEventCreate = (req, res, next) => {
+};
+exports.validationEventCreate = validationEventCreate;

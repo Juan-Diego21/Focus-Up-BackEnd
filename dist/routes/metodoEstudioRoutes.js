@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const MetodoEstudioController_1 = require("../controllers/MetodoEstudioController");
+const router = (0, express_1.Router)();
+router.get("/", MetodoEstudioController_1.metodoEstudioController.getAllMetodosEstudio.bind(MetodoEstudioController_1.metodoEstudioController));
+router.get("/:id", MetodoEstudioController_1.metodoEstudioController.getMetodoEstudioById.bind(MetodoEstudioController_1.metodoEstudioController));
+router.post("/", MetodoEstudioController_1.metodoEstudioController.createMetodoEstudio.bind(MetodoEstudioController_1.metodoEstudioController));
+router.put("/:id", MetodoEstudioController_1.metodoEstudioController.updateMetodoEstudio.bind(MetodoEstudioController_1.metodoEstudioController));
+router.delete("/:id", MetodoEstudioController_1.metodoEstudioController.deleteMetodoEstudio.bind(MetodoEstudioController_1.metodoEstudioController));
+router.get("/:id/beneficios", MetodoEstudioController_1.metodoEstudioController.getBeneficiosForMetodo.bind(MetodoEstudioController_1.metodoEstudioController));
+router.post("/:id_metodo/beneficios/:id_beneficio", MetodoEstudioController_1.metodoEstudioController.addBeneficioToMetodo.bind(MetodoEstudioController_1.metodoEstudioController));
+router.delete("/:id_metodo/beneficios/:id_beneficio", MetodoEstudioController_1.metodoEstudioController.removeBeneficioFromMetodo.bind(MetodoEstudioController_1.metodoEstudioController));
+exports.default = router;

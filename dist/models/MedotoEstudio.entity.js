@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MetodoEstudio = void 0;
 const typeorm_1 = require("typeorm");
+const Evento_entity_1 = require("../models/Evento.entity");
 let MetodoEstudio = class MetodoEstudio {
 };
 exports.MetodoEstudio = MetodoEstudio;
@@ -26,6 +27,10 @@ __decorate([
     (0, typeorm_1.Column)({ name: "descripcion", type: "text" }),
     __metadata("design:type", String)
 ], MetodoEstudio.prototype, "descripcion", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => Evento_entity_1.EventoEntity, evento => evento.metodoEstudio),
+    __metadata("design:type", Array)
+], MetodoEstudio.prototype, "eventos", void 0);
 exports.MetodoEstudio = MetodoEstudio = __decorate([
     (0, typeorm_1.Entity)("bibliotecametodosestudio")
 ], MetodoEstudio);

@@ -2,6 +2,10 @@ export interface ApiResponse<T = any> {
     success: boolean;
     message: string;
     data?: T;
+    token?: string;
+    userId?: number;
+    username?: string;
+    user?: any;
     error?: string;
     timestamp: Date;
 }

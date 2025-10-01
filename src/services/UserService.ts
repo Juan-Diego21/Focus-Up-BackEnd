@@ -28,10 +28,15 @@ export class UserService {
   }
 
   // Crear un nuevo usuario con validaciones
-  async createUser(
-    userData: UserCreateInput
-  ): Promise<{ success: boolean; user?: User; error?: string }> {
-    const queryRunner = (await import("../config/ormconfig")).AppDataSource.createQueryRunner();
+  async createUser(userData: UserCreateInput): Promise<{
+    success: boolean;
+    user?: User;
+    message?: string;
+    error?: string;
+  }> {
+    const queryRunner = (
+      await import("../config/ormconfig")
+    ).AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
@@ -40,7 +45,8 @@ export class UserService {
       if (!ValidationUtils.isValidUsername(userData.nombre_usuario)) {
         return {
           success: false,
-          error: "El nombre de usuario solo puede contener letras, números, guiones bajos (_) y guiones (-), sin espacios"
+          error:
+            "El nombre de usuario solo puede contener letras, números, guiones bajos (_) y guiones (-), sin espacios",
         };
       }
 
@@ -77,30 +83,39 @@ export class UserService {
       };
 
       // Verificar si el email ya existe
-      const emailExists = await queryRunner.manager
-        .createQueryBuilder()
-        .select()
-        .from("usuario", "u")
-        .where("u.correo = :email", { email: sanitizedData.correo })
-        .getCount() > 0;
+      const emailExists =
+        (await queryRunner.manager
+          .createQueryBuilder()
+          .select()
+          .from("usuario", "u")
+          .where("u.correo = :email", { email: sanitizedData.correo })
+          .getCount()) > 0;
 
       if (emailExists) {
         return {
           success: false,
-          error: "El correo electrónico ya está registrado",
+          message: "Validation error",
+          error: "El correo ya existe",
         };
       }
 
       // Verificar si el nombre de usuario ya existe
-      const usernameExists = await queryRunner.manager
-        .createQueryBuilder()
-        .select()
-        .from("usuario", "u")
-        .where("u.nombre_usuario = :username", { username: sanitizedData.nombre_usuario })
-        .getCount() > 0;
+      const usernameExists =
+        (await queryRunner.manager
+          .createQueryBuilder()
+          .select()
+          .from("usuario", "u")
+          .where("u.nombre_usuario = :username", {
+            username: sanitizedData.nombre_usuario,
+          })
+          .getCount()) > 0;
 
       if (usernameExists) {
-        return { success: false, error: "El nombre de usuario ya está en uso" };
+        return {
+          success: false,
+          message: "Validation error",
+          error: "El nombre de usuario ya existe",
+        };
       }
 
       // Hash de la contraseña ANTES de crear el usuario
@@ -109,7 +124,7 @@ export class UserService {
       );
 
       // Crear usuario con contraseña hasheada usando el queryRunner
-      const user = await queryRunner.manager.save(UserEntity, {
+      const user = (await queryRunner.manager.save(UserEntity, {
         nombreUsuario: sanitizedData.nombre_usuario,
         pais: sanitizedData.pais,
         genero: sanitizedData.genero,
@@ -117,35 +132,49 @@ export class UserService {
         horarioFav: sanitizedData.horario_fav,
         correo: sanitizedData.correo.toLowerCase(),
         contrasena: hashedPassword,
-      }) as UserEntity;
+      })) as UserEntity;
 
       // Insertar intereses si se proporcionaron
       if (userData.intereses && userData.intereses.length > 0) {
-        await this.insertUserInterestsInTransaction(queryRunner, user.idUsuario, userData.intereses);
+        await this.insertUserInterestsInTransaction(
+          queryRunner,
+          user.idUsuario,
+          userData.intereses
+        );
       }
 
       // Insertar distracciones si se proporcionaron
       if (userData.distracciones && userData.distracciones.length > 0) {
-        await this.insertUserDistractionsInTransaction(queryRunner, user.idUsuario, userData.distracciones);
+        await this.insertUserDistractionsInTransaction(
+          queryRunner,
+          user.idUsuario,
+          userData.distracciones
+        );
       }
 
       await queryRunner.commitTransaction();
 
-      return { success: true, user: {
-        id_usuario: user.idUsuario,
-        nombre_usuario: user.nombreUsuario,
-        pais: user.pais,
-        genero: user.genero as any,
-        fecha_nacimiento: user.fechaNacimiento,
-        horario_fav: user.horarioFav,
-        correo: user.correo,
-        contrasena: user.contrasena,
-        fecha_creacion: user.fechaCreacion,
-        fecha_actualizacion: user.fechaActualizacion,
-      } };
+      return {
+        success: true,
+        user: {
+          id_usuario: user.idUsuario,
+          nombre_usuario: user.nombreUsuario,
+          pais: user.pais,
+          genero: user.genero as any,
+          fecha_nacimiento: user.fechaNacimiento,
+          horario_fav: user.horarioFav,
+          correo: user.correo,
+          contrasena: user.contrasena,
+          fecha_creacion: user.fechaCreacion,
+          fecha_actualizacion: user.fechaActualizacion,
+        },
+      };
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      logger.error("Error en UserService.createUser:", { error: error instanceof Error ? error.message : error, stack: error instanceof Error ? error.stack : undefined });
+      logger.error("Error en UserService.createUser:", {
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return {
         success: false,
         error:
@@ -298,11 +327,17 @@ export class UserService {
         return { success: false, error: "Credenciales inválidas" };
       }
 
-      // Verificar contraseña hasheada
-      const isValidPassword = await UserService.verifyPassword(
-        password,
-        user.contrasena
-      );
+      // Verificar contraseña
+      let isValidPassword: boolean;
+      try {
+        isValidPassword = await UserService.verifyPassword(
+          password,
+          user.contrasena
+        );
+      } catch (error) {
+        // Si bcrypt falla (posiblemente contraseña no hasheada), comparar directamente
+        isValidPassword = password === user.contrasena;
+      }
       if (!isValidPassword) {
         return { success: false, error: "Credenciales inválidas" };
       }
@@ -332,36 +367,50 @@ export class UserService {
   }
 
   // Insertar intereses del usuario
-  private async insertUserInterests(userId: number, interestIds: number[]): Promise<void> {
+  private async insertUserInterests(
+    userId: number,
+    interestIds: number[]
+  ): Promise<void> {
     const { AppDataSource } = await import("../config/ormconfig");
-    const usuarioInteresesRepo = AppDataSource.getRepository(UsuarioInteresesEntity);
+    const usuarioInteresesRepo = AppDataSource.getRepository(
+      UsuarioInteresesEntity
+    );
 
-    const inserts = interestIds.map(interestId => ({
+    const inserts = interestIds.map((interestId) => ({
       usuario: { idUsuario: userId },
-      interes: { idInteres: interestId }
+      interes: { idInteres: interestId },
     }));
 
     await usuarioInteresesRepo.save(inserts);
   }
 
   // Insertar distracciones del usuario
-  private async insertUserDistractions(userId: number, distractionIds: number[]): Promise<void> {
+  private async insertUserDistractions(
+    userId: number,
+    distractionIds: number[]
+  ): Promise<void> {
     const { AppDataSource } = await import("../config/ormconfig");
-    const usuarioDistraccionesRepo = AppDataSource.getRepository(UsuarioDistraccionesEntity);
+    const usuarioDistraccionesRepo = AppDataSource.getRepository(
+      UsuarioDistraccionesEntity
+    );
 
-    const inserts = distractionIds.map(distractionId => ({
+    const inserts = distractionIds.map((distractionId) => ({
       usuario: { idUsuario: userId },
-      distraccion: { idDistraccion: distractionId }
+      distraccion: { idDistraccion: distractionId },
     }));
 
     await usuarioDistraccionesRepo.save(inserts);
   }
 
   // Insertar intereses del usuario en transacción
-  private async insertUserInterestsInTransaction(queryRunner: any, userId: number, interestIds: number[]): Promise<void> {
-    const inserts = interestIds.map(interestId => ({
+  private async insertUserInterestsInTransaction(
+    queryRunner: any,
+    userId: number,
+    interestIds: number[]
+  ): Promise<void> {
+    const inserts = interestIds.map((interestId) => ({
       idUsuario: userId,
-      idInteres: interestId
+      idInteres: interestId,
     }));
 
     await queryRunner.manager
@@ -373,10 +422,14 @@ export class UserService {
   }
 
   // Insertar distracciones del usuario en transacción
-  private async insertUserDistractionsInTransaction(queryRunner: any, userId: number, distractionIds: number[]): Promise<void> {
-    const inserts = distractionIds.map(distractionId => ({
+  private async insertUserDistractionsInTransaction(
+    queryRunner: any,
+    userId: number,
+    distractionIds: number[]
+  ): Promise<void> {
+    const inserts = distractionIds.map((distractionId) => ({
       idUsuario: userId,
-      idDistraccion: distractionId
+      idDistraccion: distractionId,
     }));
 
     await queryRunner.manager
@@ -385,6 +438,20 @@ export class UserService {
       .into("usuariodistracciones")
       .values(inserts)
       .execute();
+  }
+
+  //Eliminar usuario
+  async deleteUser(id: number): Promise<{ success: boolean; error?: string }> {
+    try {
+      const deleted = await userRepository.delete(id);
+      if (!deleted) {
+        return { success: false, error: "Usuario no encontrado" };
+      }
+      return { success: true };
+    } catch (error) {
+      console.error("Error en UserService.deleteUser:", error);
+      return { success: false, error: "Error eliminando usuario" };
+    }
   }
 }
 
