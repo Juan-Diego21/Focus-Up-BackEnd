@@ -333,6 +333,18 @@ export class UserController {
       res.status(500).json(response);
     }
   }
+  async forgotPassword(req: Request, res: Response) {
+    const { email } = req.body;
+    const result = await userService.requestPasswordReset(email);
+    res.status(200).json(result);
+  }
+
+  // Restablecimiento de contraseña
+  async resetPassword(req: Request, res: Response) {
+    const { token, newPassword } = req.body;
+    const result = await userService.resetPassword(token, newPassword);
+    res.status(result.success ? 200 : 400).json(result);
+  }
 }
 
 export const userController = new UserController();

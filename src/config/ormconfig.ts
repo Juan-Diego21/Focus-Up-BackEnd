@@ -1,7 +1,7 @@
 // src/config/ormconfig.ts
 import { DataSource } from "typeorm";
 import { env } from "./env";
-
+import { PasswordResetToken } from "../types/PasswordResetToken";
 // Exportar la instancia para uso global
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -21,6 +21,7 @@ export const AppDataSource = new DataSource({
     __dirname + "/../models/UsuarioDistracciones.entity{.ts,.js}",
     __dirname + "/../models/MedotoEstudio.entity{.ts,.js}",
     __dirname + "/../models/Evento.entity{.ts,.js}",
+    PasswordResetToken,
   ],
   migrations: [__dirname + "/../migrations/*{.ts,.js}"],
   subscribers: [],

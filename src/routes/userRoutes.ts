@@ -277,5 +277,93 @@ router.post("/login", userController.login.bind(userController));
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+router.post("/forgot-password", userController.forgotPassword.bind(userController));
+/**
+ * @swagger
+ * /users/forgot-password:
+ *   post:
+ *     summary: Solicitar recuperación de contraseña
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - correo
+ *             properties:
+ *               correo:
+ *                 type: string
+ *                 format: email
+ *                 example: "brayan22@example.com"
+ *     responses:
+ *       200:
+ *         description: Enlace de recuperación enviado al correo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Correo de recuperación enviado"
+ *       404:
+ *         description: Correo no registrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+
+router.post("/reset-password", userController.resetPassword.bind(userController));
+/**
+ * @swagger
+ * /users/reset-password:
+ *   post:
+ *     summary: Restablecer contraseña usando token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - nuevaContrasena
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: "abc123"
+ *               nuevaContrasena:
+ *                 type: string
+ *                 format: password
+ *                 example: "FocusUp123!"
+ *     responses:
+ *       200:
+ *         description: Contraseña actualizada correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Contraseña actualizada"
+ *       400:
+ *         description: Token inválido o expirado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 
 export default router;
