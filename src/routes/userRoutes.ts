@@ -211,7 +211,31 @@ router.put(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/User'
+ *             type: object
+ *             properties:
+ *               nombre_usuario:
+ *                 type: string
+ *                 example: "johndoe"
+ *               correo:
+ *                 type: string
+ *                 format: email
+ *                 example: "john@example.com"
+ *               contrasena:
+ *                 type: string
+ *                 format: password
+ *                 description: "Nueva contraseña (opcional). Debe tener al menos 8 caracteres, una mayúscula y un número."
+ *                 example: "NewSecurePassword123"
+ *               pais:
+ *                 type: string
+ *                 example: "Colombia"
+ *               genero:
+ *                 type: string
+ *                 enum: [Masculino, Femenino, Otro, Prefiero no decir]
+ *                 example: "Masculino"
+ *               horario_fav:
+ *                 type: string
+ *                 format: time
+ *                 example: "08:00"
  *     responses:
  *       200:
  *         description: Usuario actualizado exitosamente
