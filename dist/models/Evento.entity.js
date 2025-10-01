@@ -29,7 +29,7 @@ __decorate([
 ], EventoEntity.prototype, "fechaEvento", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: "hora_evento" }),
-    __metadata("design:type", Date)
+    __metadata("design:type", String)
 ], EventoEntity.prototype, "horaEvento", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: "text", name: "descripcion_evento" }),

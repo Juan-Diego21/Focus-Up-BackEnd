@@ -3,7 +3,7 @@ export declare class EventoEntity {
     idEvento: number;
     nombreEvento: string;
     fechaEvento?: Date;
-    horaEvento: Date;
+    horaEvento: string;
     descripcionEvento: string;
     metodoEstudio: MetodoEstudio;
 }

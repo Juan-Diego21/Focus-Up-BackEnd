@@ -198,6 +198,7 @@ class UserController {
                 success: true,
                 message: "Autenticación exitosa",
                 token: accessToken,
+                userId: result.user.id_usuario,
                 timestamp: new Date(),
             };
             res.status(200).json(response);

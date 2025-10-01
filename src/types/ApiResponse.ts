@@ -3,6 +3,7 @@ export interface ApiResponse<T = any> {
   message: string;
   data?: T;
   token?: string;
+  userId?: number;
   error?: string;
   timestamp: Date;
 }

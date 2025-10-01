@@ -254,6 +254,9 @@ router.post("/login", userController.login.bind(userController));
  *                 type: string
  *                 format: password
  *                 example: "SecurePassword123"
+ *             example:
+ *               correo: "john@example.com"
+ *               contrasena: "SecurePassword123"
  *     responses:
  *       200:
  *         description: Autenticación exitosa
@@ -271,6 +274,9 @@ router.post("/login", userController.login.bind(userController));
  *                 token:
  *                   type: string
  *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 userId:
+ *                   type: integer
+ *                   example: 1
  *                 timestamp:
  *                   type: string
  *                   format: date-time

@@ -243,6 +243,7 @@ export class UserController {
         success: true,
         message: "Autenticación exitosa",
         token: accessToken,
+        userId: result.user!.id_usuario,
         timestamp: new Date(),
       };
 
