@@ -11,7 +11,7 @@ export class EventoEntity{
     @Column({name:"fecha_evento"})
     fechaEvento?:Date;
     @Column({name:"hora_evento"})
-    horaEvento!:Date;
+    horaEvento!:string;
     @Column({type:"text",name:"descripcion_evento"})
     descripcionEvento!:string;
 
