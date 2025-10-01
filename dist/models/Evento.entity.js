@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventoEntity = void 0;
 const typeorm_1 = require("typeorm");
-const MedotoEstudio_entity_1 = require("./MedotoEstudio.entity");
+const MetodoEstudio_entity_1 = require("./MetodoEstudio.entity");
 let EventoEntity = class EventoEntity {
 };
 exports.EventoEntity = EventoEntity;
@@ -36,9 +36,9 @@ __decorate([
     __metadata("design:type", String)
 ], EventoEntity.prototype, "descripcionEvento", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => MedotoEstudio_entity_1.MetodoEstudio, metodo => metodo.eventos),
+    (0, typeorm_1.ManyToOne)(() => MetodoEstudio_entity_1.MetodoEstudioEntity, metodo => metodo.eventos),
     (0, typeorm_1.JoinColumn)({ name: "id_metodo" }),
-    __metadata("design:type", MedotoEstudio_entity_1.MetodoEstudio)
+    __metadata("design:type", MetodoEstudio_entity_1.MetodoEstudioEntity)
 ], EventoEntity.prototype, "metodoEstudio", void 0);
 exports.EventoEntity = EventoEntity = __decorate([
     (0, typeorm_1.Entity)("eventos")

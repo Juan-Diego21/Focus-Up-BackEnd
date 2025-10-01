@@ -1,7 +1,7 @@
 import {EventoRepository} from '../repositories/EventoRepository';
 import {} from '../models/Evento.entity';
 import {IEventoCreate } from '../types/IEventoCreate'
-import {MetodoEstudioRepository } from '../repositories/MetodoEstudioRepository'
+import { metodoEstudioRepository } from '../repositories/MetodoEstudioRepository'
 
 export const EventoService ={
     async listEvento () {
@@ -20,7 +20,7 @@ export const EventoService ={
         try{
             console.log("Creando los eventos con :", data)
 
-            const metodo = await MetodoEstudioRepository.findOneBy({idMetodo:idMetodo})
+            const metodo = await metodoEstudioRepository.findById(idMetodo)
             if(!metodo){
                 return {success:false,
                     error:'Metodo de estudio no valido'

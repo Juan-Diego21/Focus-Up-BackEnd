@@ -1,26 +1,42 @@
-import { MetodoEstudio } from '../models/MedotoEstudio.entity';
-export declare const MetodoEstudioService: {
-    getMetodoById(idMetodo: number): Promise<{
+import { MetodoEstudioCreateInput, MetodoEstudioUpdateInput, MetodoEstudio } from "../types/MetodoEstudio";
+export declare class MetodoEstudioService {
+    createMetodoEstudio(metodoData: MetodoEstudioCreateInput): Promise<{
         success: boolean;
-        error: string;
-        metodo?: undefined;
-    } | {
-        success: boolean;
-        metodo: MetodoEstudio;
-        error?: undefined;
+        metodo?: MetodoEstudio;
+        message?: string;
+        error?: string;
     }>;
-    getMetodoByname(nombreMetodo: string): Promise<{
+    getMetodoEstudioById(id: number): Promise<{
         success: boolean;
-        error: string;
-    } | undefined>;
-    getMetodoList(): Promise<{
-        success: boolean;
-        data: MetodoEstudio[];
-        error?: undefined;
-    } | {
-        success: boolean;
-        error: string;
-        data?: undefined;
+        metodo?: MetodoEstudio;
+        error?: string;
     }>;
-};
-export default MetodoEstudioService;
+    updateMetodoEstudio(id: number, updateData: MetodoEstudioUpdateInput): Promise<{
+        success: boolean;
+        metodo?: MetodoEstudio;
+        error?: string;
+    }>;
+    deleteMetodoEstudio(id: number): Promise<{
+        success: boolean;
+        error?: string;
+    }>;
+    getAllMetodosEstudio(): Promise<{
+        success: boolean;
+        metodos?: MetodoEstudio[];
+        error?: string;
+    }>;
+    getBeneficiosForMetodo(idMetodo: number): Promise<{
+        success: boolean;
+        beneficios?: any[];
+        error?: string;
+    }>;
+    addBeneficioToMetodo(idMetodo: number, idBeneficio: number): Promise<{
+        success: boolean;
+        error?: string;
+    }>;
+    removeBeneficioFromMetodo(idMetodo: number, idBeneficio: number): Promise<{
+        success: boolean;
+        error?: string;
+    }>;
+}
+export declare const metodoEstudioService: MetodoEstudioService;

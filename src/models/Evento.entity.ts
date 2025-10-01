@@ -1,6 +1,6 @@
 import {Entity,Column,
     ManyToOne,JoinColumn, PrimaryGeneratedColumn } from "typeorm";
-import { MetodoEstudio } from "./MedotoEstudio.entity";
+import { MetodoEstudioEntity } from "./MetodoEstudio.entity";
 
 @Entity("eventos")
 export class EventoEntity{
@@ -18,9 +18,9 @@ export class EventoEntity{
 
 
     //Conexion con metodos de estudio
-    @ManyToOne(() => MetodoEstudio, metodo => metodo.eventos)
+    @ManyToOne(() => MetodoEstudioEntity, metodo => metodo.eventos)
     @JoinColumn({ name: "id_metodo" })
-    metodoEstudio: MetodoEstudio;
+    metodoEstudio: MetodoEstudioEntity;
     //Conexion con la biblioteca de musica
     
 

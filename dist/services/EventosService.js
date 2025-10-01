@@ -20,7 +20,7 @@ exports.EventoService = {
     async crearEvento(data, idMetodo) {
         try {
             console.log("Creando los eventos con :", data);
-            const metodo = await MetodoEstudioRepository_1.MetodoEstudioRepository.findOneBy({ idMetodo: idMetodo });
+            const metodo = await MetodoEstudioRepository_1.metodoEstudioRepository.findById(idMetodo);
             if (!metodo) {
                 return { success: false,
                     error: 'Metodo de estudio no valido'

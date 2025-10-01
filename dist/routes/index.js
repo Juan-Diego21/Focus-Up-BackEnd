@@ -6,8 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const userRoutes_1 = __importDefault(require("./userRoutes"));
 const musicaRoutes_1 = __importDefault(require("./musicaRoutes"));
+const beneficioRoutes_1 = __importDefault(require("./beneficioRoutes"));
+const metodoEstudioRoutes_1 = __importDefault(require("./metodoEstudioRoutes"));
 const env_1 = require("../config/env");
-const metodosRutas_1 = __importDefault(require("../routes/metodosRutas"));
 const eventosRutas_1 = __importDefault(require("../routes/eventosRutas"));
 const router = (0, express_1.Router)();
 router.get("/health", (req, res) => {
@@ -19,8 +20,9 @@ router.get("/health", (req, res) => {
     });
 });
 router.use("/users", userRoutes_1.default);
+router.use("/beneficios", beneficioRoutes_1.default);
+router.use("/metodos-estudio", metodoEstudioRoutes_1.default);
 router.use("/eventos", eventosRutas_1.default);
-router.use('/metodos', metodosRutas_1.default);
 router.use("/musica", musicaRoutes_1.default);
 router.use("*", (req, res) => {
     res.status(404).json({

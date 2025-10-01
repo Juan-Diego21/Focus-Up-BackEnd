@@ -1,8 +1,9 @@
 import { Router } from "express";
 import userRoutes from "./userRoutes";
 import musicaRoutes from "./musicaRoutes";
+import beneficioRoutes from "./beneficioRoutes";
+import metodoEstudioRoutes from "./metodoEstudioRoutes";
 import { env } from "../config/env";
-import  metodosRutas  from "../routes/metodosRutas";
 import eventosRutas from "../routes/eventosRutas"
 
 const router = Router();
@@ -48,10 +49,14 @@ router.get("/health", (req, res) => {
 // Rutas de usuarios
 router.use("/users", userRoutes);
 
-//Rutas de Eventos 
+// Rutas de beneficios
+router.use("/beneficios", beneficioRoutes);
+
+// Rutas de métodos de estudio
+router.use("/metodos-estudio", metodoEstudioRoutes);
+
+//Rutas de Eventos
 router.use("/eventos", eventosRutas)
-//Rutas de metodos de estudio 
-router.use('/metodos', metodosRutas);
 
 // Rutas de musica
 router.use("/musica", musicaRoutes);

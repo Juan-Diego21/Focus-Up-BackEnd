@@ -111,6 +111,57 @@ const swaggerOptions = {
                         },
                     },
                 },
+                Beneficio: {
+                    type: "object",
+                    properties: {
+                        id_beneficio: {
+                            type: "integer",
+                            description: "ID único del beneficio",
+                        },
+                        descripcion_beneficio: {
+                            type: "string",
+                            description: "Descripción del beneficio",
+                        },
+                        fecha_creacion: {
+                            type: "string",
+                            format: "date-time",
+                            description: "Fecha de creación del beneficio",
+                        },
+                        fecha_actualizacion: {
+                            type: "string",
+                            format: "date-time",
+                            description: "Fecha de actualización del beneficio",
+                        },
+                    },
+                },
+                MetodoEstudio: {
+                    type: "object",
+                    properties: {
+                        id_metodo: {
+                            type: "integer",
+                            description: "ID único del método de estudio",
+                        },
+                        nombre_metodo: {
+                            type: "string",
+                            description: "Nombre del método de estudio",
+                        },
+                        descripcion: {
+                            type: "string",
+                            nullable: true,
+                            description: "Descripción del método de estudio",
+                        },
+                        fecha_creacion: {
+                            type: "string",
+                            format: "date-time",
+                            description: "Fecha de creación del método de estudio",
+                        },
+                        fecha_actualizacion: {
+                            type: "string",
+                            format: "date-time",
+                            description: "Fecha de actualización del método de estudio",
+                        },
+                    },
+                },
                 Error: {
                     type: "object",
                     properties: {
@@ -142,6 +193,14 @@ const swaggerOptions = {
             {
                 name: "Users",
                 description: "Endpoints de gestión de usuarios",
+            },
+            {
+                name: "Beneficios",
+                description: "Endpoints de gestión de beneficios",
+            },
+            {
+                name: "MetodosEstudio",
+                description: "Endpoints de gestión de métodos de estudio",
             },
             {
                 name: "Health",
