@@ -277,6 +277,11 @@ router.post("/login", userController.login.bind(userController));
  *                 userId:
  *                   type: integer
  *                   example: 1
+ *                 username:
+ *                   type: string
+ *                   example: "johndoe"
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
  *                 timestamp:
  *                   type: string
  *                   format: date-time

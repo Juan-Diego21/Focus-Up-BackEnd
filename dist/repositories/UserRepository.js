@@ -29,12 +29,14 @@ class UserRepository {
     async findByEmail(email) {
         const user = await this.repository.findOne({
             where: { correo: email.toLowerCase() },
+            relations: ['usuarioIntereses', 'usuarioDistracciones']
         });
         return user ? this.mapToUserDTO(user) : null;
     }
     async findByUsername(username) {
         const user = await this.repository.findOne({
             where: { nombreUsuario: username },
+            relations: ['usuarioIntereses', 'usuarioDistracciones']
         });
         return user ? this.mapToUserDTO(user) : null;
     }
@@ -106,6 +108,8 @@ class UserRepository {
             contrasena: entity.contrasena,
             fecha_creacion: entity.fechaCreacion,
             fecha_actualizacion: entity.fechaActualizacion,
+            intereses: entity.usuarioIntereses?.map(ui => ui.idInteres) || [],
+            distracciones: entity.usuarioDistracciones?.map(ud => ud.idDistraccion) || [],
         };
     }
 }

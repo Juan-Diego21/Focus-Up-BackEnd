@@ -11,6 +11,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserEntity = void 0;
 const typeorm_1 = require("typeorm");
+const UsuarioIntereses_entity_1 = require("./UsuarioIntereses.entity");
+const UsuarioDistracciones_entity_1 = require("./UsuarioDistracciones.entity");
 let UserEntity = class UserEntity {
 };
 exports.UserEntity = UserEntity;
@@ -62,6 +64,14 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)({ name: "fecha_actualizacion" }),
     __metadata("design:type", Date)
 ], UserEntity.prototype, "fechaActualizacion", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => UsuarioIntereses_entity_1.UsuarioInteresesEntity, usuarioInteres => usuarioInteres.usuario),
+    __metadata("design:type", Array)
+], UserEntity.prototype, "usuarioIntereses", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => UsuarioDistracciones_entity_1.UsuarioDistraccionesEntity, usuarioDistraccion => usuarioDistraccion.usuario),
+    __metadata("design:type", Array)
+], UserEntity.prototype, "usuarioDistracciones", void 0);
 exports.UserEntity = UserEntity = __decorate([
     (0, typeorm_1.Entity)("usuario")
 ], UserEntity);

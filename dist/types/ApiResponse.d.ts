@@ -4,6 +4,8 @@ export interface ApiResponse<T = any> {
     data?: T;
     token?: string;
     userId?: number;
+    username?: string;
+    user?: any;
     error?: string;
     timestamp: Date;
 }

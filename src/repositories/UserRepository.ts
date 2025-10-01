@@ -40,6 +40,7 @@ export class UserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {
     const user = await this.repository.findOne({
       where: { correo: email.toLowerCase() },
+      relations: ['usuarioIntereses', 'usuarioDistracciones']
     });
     return user ? this.mapToUserDTO(user) : null;
   }
@@ -47,6 +48,7 @@ export class UserRepository implements IUserRepository {
   async findByUsername(username: string): Promise<User | null> {
     const user = await this.repository.findOne({
       where: { nombreUsuario: username },
+      relations: ['usuarioIntereses', 'usuarioDistracciones']
     });
     return user ? this.mapToUserDTO(user) : null;
   }
@@ -132,6 +134,8 @@ export class UserRepository implements IUserRepository {
       contrasena: entity.contrasena,
       fecha_creacion: entity.fechaCreacion,
       fecha_actualizacion: entity.fechaActualizacion,
+      intereses: entity.usuarioIntereses?.map(ui => ui.idInteres) || [],
+      distracciones: entity.usuarioDistracciones?.map(ud => ud.idDistraccion) || [],
     };
   }
 }
