@@ -36,7 +36,27 @@ router.get("/", metodoEstudioController.getAllMetodosEstudio.bind(metodoEstudioC
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/MetodoEstudio'
+ *                     type: object
+ *                     properties:
+ *                       id_metodo:
+ *                         type: integer
+ *                         example: 1
+ *                       nombre_metodo:
+ *                         type: string
+ *                         example: "Método Pomodoro"
+ *                       descripcion:
+ *                         type: string
+ *                         example: "Técnica de gestión del tiempo"
+ *                       fecha_creacion:
+ *                         type: string
+ *                         format: date-time
+ *                       fecha_actualizacion:
+ *                         type: string
+ *                         format: date-time
+ *                       beneficios:
+ *                         type: array
+ *                         items:
+ *                           $ref: '#/components/schemas/Beneficio'
  *                 timestamp:
  *                   type: string
  *                   format: date-time
@@ -75,7 +95,27 @@ router.get("/:id", metodoEstudioController.getMetodoEstudioById.bind(metodoEstud
  *                   type: string
  *                   example: "Método de estudio encontrado"
  *                 data:
- *                   $ref: '#/components/schemas/MetodoEstudio'
+ *                   type: object
+ *                   properties:
+ *                     id_metodo:
+ *                       type: integer
+ *                       example: 1
+ *                     nombre_metodo:
+ *                       type: string
+ *                       example: "Método Pomodoro"
+ *                     descripcion:
+ *                       type: string
+ *                       example: "Técnica de gestión del tiempo"
+ *                     fecha_creacion:
+ *                       type: string
+ *                       format: date-time
+ *                     fecha_actualizacion:
+ *                       type: string
+ *                       format: date-time
+ *                     beneficios:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Beneficio'
  *                 timestamp:
  *                   type: string
  *                   format: date-time

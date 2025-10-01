@@ -22,6 +22,7 @@ class MetodoEstudioRepository {
     async findById(id) {
         const metodo = await this.repository.findOne({
             where: { idMetodo: id },
+            relations: ['beneficios'],
         });
         return metodo ? this.mapToMetodoEstudioDTO(metodo) : null;
     }
@@ -42,7 +43,9 @@ class MetodoEstudioRepository {
         return result.affected !== null && result.affected !== undefined && result.affected > 0;
     }
     async findAll() {
-        const metodos = await this.repository.find();
+        const metodos = await this.repository.find({
+            relations: ['beneficios'],
+        });
         return metodos.map((metodo) => this.mapToMetodoEstudioDTO(metodo));
     }
     async addBeneficio(idMetodo, idBeneficio) {
@@ -90,6 +93,12 @@ class MetodoEstudioRepository {
             descripcion: entity.descripcion,
             fecha_creacion: entity.fechaCreacion,
             fecha_actualizacion: entity.fechaActualizacion,
+            beneficios: entity.beneficios ? entity.beneficios.map(b => ({
+                id_beneficio: b.idBeneficio,
+                descripcion_beneficio: b.descripcionBeneficio,
+                fecha_creacion: b.fechaCreacion,
+                fecha_actualizacion: b.fechaActualizacion,
+            })) : [],
         };
     }
 }

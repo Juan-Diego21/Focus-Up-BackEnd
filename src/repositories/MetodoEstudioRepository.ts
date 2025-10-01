@@ -33,6 +33,7 @@ export class MetodoEstudioRepository implements IMetodoEstudioRepository {
   async findById(id: number): Promise<MetodoEstudio | null> {
     const metodo = await this.repository.findOne({
       where: { idMetodo: id },
+      relations: ['beneficios'],
     });
     return metodo ? this.mapToMetodoEstudioDTO(metodo) : null;
   }
@@ -57,7 +58,9 @@ export class MetodoEstudioRepository implements IMetodoEstudioRepository {
   }
 
   async findAll(): Promise<MetodoEstudio[]> {
-    const metodos = await this.repository.find();
+    const metodos = await this.repository.find({
+      relations: ['beneficios'],
+    });
     return metodos.map((metodo) => this.mapToMetodoEstudioDTO(metodo));
   }
 
@@ -101,13 +104,19 @@ export class MetodoEstudioRepository implements IMetodoEstudioRepository {
     }));
   }
 
-  private mapToMetodoEstudioDTO(entity: MetodoEstudioEntity): MetodoEstudio {
+  private mapToMetodoEstudioDTO(entity: MetodoEstudioEntity): any {
     return {
       id_metodo: entity.idMetodo,
       nombre_metodo: entity.nombreMetodo,
       descripcion: entity.descripcion,
       fecha_creacion: entity.fechaCreacion,
       fecha_actualizacion: entity.fechaActualizacion,
+      beneficios: entity.beneficios ? entity.beneficios.map(b => ({
+        id_beneficio: b.idBeneficio,
+        descripcion_beneficio: b.descripcionBeneficio,
+        fecha_creacion: b.fechaCreacion,
+        fecha_actualizacion: b.fechaActualizacion,
+      })) : [],
     };
   }
 }
