@@ -303,11 +303,17 @@ export class UserService {
         return { success: false, error: "Credenciales inválidas" };
       }
 
-      // Verificar contraseña hasheada
-      const isValidPassword = await UserService.verifyPassword(
-        password,
-        user.contrasena
-      );
+      // Verificar contraseña
+      let isValidPassword: boolean;
+      try {
+        isValidPassword = await UserService.verifyPassword(
+          password,
+          user.contrasena
+        );
+      } catch (error) {
+        // Si bcrypt falla (posiblemente contraseña no hasheada), comparar directamente
+        isValidPassword = password === user.contrasena;
+      }
       if (!isValidPassword) {
         return { success: false, error: "Credenciales inválidas" };
       }

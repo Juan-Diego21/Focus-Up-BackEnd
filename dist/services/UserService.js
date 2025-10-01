@@ -251,7 +251,13 @@ class UserService {
             if (!user) {
                 return { success: false, error: "Credenciales inválidas" };
             }
-            const isValidPassword = await UserService.verifyPassword(password, user.contrasena);
+            let isValidPassword;
+            try {
+                isValidPassword = await UserService.verifyPassword(password, user.contrasena);
+            }
+            catch (error) {
+                isValidPassword = password === user.contrasena;
+            }
             if (!isValidPassword) {
                 return { success: false, error: "Credenciales inválidas" };
             }

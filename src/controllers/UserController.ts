@@ -200,9 +200,17 @@ export class UserController {
   // Verificar credenciales (Login)
   async login(req: Request, res: Response) {
     try {
-      const { identifier, password } = req.body;
+      const { correo, nombre_usuario, contrasena } = req.body;
 
-      if (!identifier || !password) {
+      // Determinar el identificador: priorizar email si ambos están presentes
+      let identifier: string | undefined;
+      if (correo) {
+        identifier = correo;
+      } else if (nombre_usuario) {
+        identifier = nombre_usuario;
+      }
+
+      if (!identifier || !contrasena) {
         const response: ApiResponse = {
           success: false,
           message: "Identificador (email o nombre de usuario) y contraseña son requeridos",
@@ -211,35 +219,30 @@ export class UserController {
         return res.status(400).json(response);
       }
 
-      const result = await userService.verifyCredentials(identifier, password);
+      const result = await userService.verifyCredentials(identifier, contrasena);
 
-      if (!result.success || !result.user) {
+      if (!result.success) {
         const response: ApiResponse = {
           success: false,
-          message: "Error de autenticación",
-          error: result.error,
+          message: "Credenciales inválidas",
+          error: "El correo o la contraseña no son correctos",
           timestamp: new Date(),
         };
         return res.status(401).json(response);
       }
 
-      // Generar tokens
+      // Generar token
       const tokenPayload = {
-        userId: result.user.id_usuario!,
-        email: result.user.correo,
+        userId: result.user!.id_usuario!,
+        email: result.user!.correo,
       };
 
       const accessToken = JwtUtils.generateAccessToken(tokenPayload);
-      const refreshToken = JwtUtils.generateRefreshToken(tokenPayload);
 
       const response: ApiResponse = {
         success: true,
-        message: "Login exitoso",
-        data: {
-          user: result.user,
-          accessToken,
-          refreshToken,
-        },
+        message: "Autenticación exitosa",
+        token: accessToken,
         timestamp: new Date(),
       };
 

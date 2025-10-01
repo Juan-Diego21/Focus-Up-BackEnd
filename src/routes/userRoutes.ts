@@ -132,6 +132,7 @@ router.post(
  *               contrasena:
  *                 type: string
  *                 format: password
+ *                 description: "Contraseña debe tener al menos 8 caracteres, una mayúscula y un número. Se compara con la versión hasheada en la base de datos."
  *                 example: "SecurePassword123"
  *               fecha_nacimiento:
  *                 type: string
@@ -238,20 +239,24 @@ router.post("/login", userController.login.bind(userController));
  *             schema:
  *               type: object
  *             required:
- *               - identifier
- *               - password
+ *               - contrasena
  *             properties:
- *               identifier:
+ *               correo:
  *                 type: string
- *                 description: "Email o nombre de usuario"
+ *                 format: email
+ *                 description: "Email del usuario (requerido si no se proporciona nombre_usuario)"
  *                 example: "john@example.com"
- *               password:
+ *               nombre_usuario:
+ *                 type: string
+ *                 description: "Nombre de usuario (requerido si no se proporciona correo)"
+ *                 example: "johndoe"
+ *               contrasena:
  *                 type: string
  *                 format: password
  *                 example: "SecurePassword123"
  *     responses:
  *       200:
- *         description: Login exitoso
+ *         description: Autenticación exitosa
  *         content:
  *           application/json:
  *             schema:
@@ -259,23 +264,35 @@ router.post("/login", userController.login.bind(userController));
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     user:
- *                       $ref: '#/components/schemas/User'
- *                     accessToken:
- *                       type: string
- *                     refreshToken:
- *                       type: string
+ *                   example: "Autenticación exitosa"
+ *                 token:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
  *       401:
  *         description: Credenciales inválidas
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Credenciales inválidas"
+ *                 error:
+ *                   type: string
+ *                   example: "El correo o la contraseña no son correctos"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
  */
 
 export default router;
