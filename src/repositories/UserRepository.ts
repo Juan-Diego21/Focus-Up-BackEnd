@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { Repository, DeleteResult } from "typeorm";
 import { AppDataSource } from "../config/ormconfig";
 import { UserEntity } from "../models/User.entity";
 import {
@@ -78,12 +78,8 @@ export class UserRepository implements IUserRepository {
   }
 
   async delete(id: number): Promise<boolean> {
-    const result = await this.repository.update(id, {
-      // Implementar lógica de soft delete según tu esquema
-      // Por ejemplo: activo: false
-    } as any);
-
-    return result.affected !== undefined && result.affected > 0;
+    const result: DeleteResult = await this.repository.delete(id);
+    return !!(result.affected && result.affected > 0);
   }
 
   async findAll(): Promise<User[]> {

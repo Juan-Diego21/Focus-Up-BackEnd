@@ -301,4 +301,26 @@ router.post("/login", userController.login.bind(userController));
  *                   format: date-time
  */
 
+// DELETE /api/v1/users/:id - eliminar usuario
+router.delete("/:id", userController.deleteUser.bind(userController));
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   delete:
+ *     summary: Eliminar usuario
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID del usuario a eliminar
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: usuario eliminado correctamente
+ *       404:
+ *         description: usuario no encontrado
+ */
 export default router;

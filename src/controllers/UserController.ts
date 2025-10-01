@@ -213,13 +213,17 @@ export class UserController {
       if (!identifier || !contrasena) {
         const response: ApiResponse = {
           success: false,
-          message: "Identificador (email o nombre de usuario) y contraseña son requeridos",
+          message:
+            "Identificador (email o nombre de usuario) y contraseña son requeridos",
           timestamp: new Date(),
         };
         return res.status(400).json(response);
       }
 
-      const result = await userService.verifyCredentials(identifier, contrasena);
+      const result = await userService.verifyCredentials(
+        identifier,
+        contrasena
+      );
 
       if (!result.success) {
         const response: ApiResponse = {
@@ -336,6 +340,30 @@ export class UserController {
 
       res.status(500).json(response);
     }
+  }
+
+  //Eliminar usuario
+  async deleteUser(req: Request, res: Response) {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "ID inválido",
+        timestamp: new Date(),
+      });
+    }
+
+    const result = await userService.deleteUser(id);
+
+    const response: ApiResponse = {
+      success: result.success,
+      message: result.success
+        ? "Usuario eliminado correctamente"
+        : result.error || "Error eliminando usuario",
+      timestamp: new Date(),
+    };
+
+    res.status(result.success ? 200 : 404).json(response);
   }
 }
 
