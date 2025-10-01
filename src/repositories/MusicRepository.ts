@@ -23,6 +23,7 @@ export class MusicRepository {
       id_album: entity.idAlbum ?? null,
       fecha_creacion: entity.fechaCreacion,
       fecha_actualizacion: entity.fechaActualizacion,
+      url_archivo: entity.urlArchivo,
     };
   }
 
