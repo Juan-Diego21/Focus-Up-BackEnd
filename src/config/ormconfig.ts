@@ -19,6 +19,8 @@ export const AppDataSource = new DataSource({
     __dirname + "/../models/Distraction.entity{.ts,.js}",
     __dirname + "/../models/UsuarioIntereses.entity{.ts,.js}",
     __dirname + "/../models/UsuarioDistracciones.entity{.ts,.js}",
+    __dirname + "/../models/MedotoEstudio.entity{.ts,.js}",
+    __dirname + "/../models/Evento.entity{.ts,.js}",
   ],
   migrations: [__dirname + "/../migrations/*{.ts,.js}"],
   subscribers: [],
