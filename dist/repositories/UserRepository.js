@@ -63,8 +63,8 @@ class UserRepository {
         return null;
     }
     async delete(id) {
-        const result = await this.repository.update(id, {});
-        return result.affected !== undefined && result.affected > 0;
+        const result = await this.repository.delete(id);
+        return !!(result.affected && result.affected > 0);
     }
     async findAll() {
         const users = await this.repository.find();

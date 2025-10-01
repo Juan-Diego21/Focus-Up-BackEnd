@@ -308,19 +308,51 @@ router.delete("/:id", userController.deleteUser.bind(userController));
  * @swagger
  * /users/{id}:
  *   delete:
- *     summary: Eliminar usuario
+ *     summary: Eliminar usuario por ID
  *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: ID del usuario a eliminar
  *         schema:
  *           type: integer
+ *         description: ID del usuario a eliminar
  *     responses:
  *       200:
- *         description: usuario eliminado correctamente
+ *         description: Usuario eliminado correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Usuario eliminado correctamente"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
  *       404:
- *         description: usuario no encontrado
+ *         description: Usuario no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Error eliminando usuario"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       401:
+ *         description: No autorizado
  */
 export default router;

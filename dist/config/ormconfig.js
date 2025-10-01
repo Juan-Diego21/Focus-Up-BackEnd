@@ -21,6 +21,8 @@ exports.AppDataSource = new typeorm_1.DataSource({
         __dirname + "/../models/UsuarioDistracciones.entity{.ts,.js}",
         __dirname + "/../models/MedotoEstudio.entity{.ts,.js}",
         __dirname + "/../models/Evento.entity{.ts,.js}",
+        __dirname + "/../models/Musica.entity{.ts,.js}",
+        __dirname + "/../models/AlbumMusica.entity{.ts,.js}",
     ],
     migrations: [__dirname + "/../migrations/*{.ts,.js}"],
     subscribers: [],

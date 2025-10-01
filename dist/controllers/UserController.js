@@ -277,6 +277,25 @@ class UserController {
             res.status(500).json(response);
         }
     }
+    async deleteUser(req, res) {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return res.status(400).json({
+                success: false,
+                message: "ID inválido",
+                timestamp: new Date(),
+            });
+        }
+        const result = await UserService_1.userService.deleteUser(id);
+        const response = {
+            success: result.success,
+            message: result.success
+                ? "Usuario eliminado correctamente"
+                : result.error || "Error eliminando usuario",
+            timestamp: new Date(),
+        };
+        res.status(result.success ? 200 : 404).json(response);
+    }
 }
 exports.UserController = UserController;
 exports.userController = new UserController();

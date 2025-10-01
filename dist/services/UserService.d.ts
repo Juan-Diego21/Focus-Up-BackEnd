@@ -38,5 +38,9 @@ export declare class UserService {
     private insertUserDistractions;
     private insertUserInterestsInTransaction;
     private insertUserDistractionsInTransaction;
+    deleteUser(id: number): Promise<{
+        success: boolean;
+        error?: string;
+    }>;
 }
 export declare const userService: UserService;
