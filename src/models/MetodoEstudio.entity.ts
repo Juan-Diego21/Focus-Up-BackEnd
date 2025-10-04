@@ -20,17 +20,26 @@ export class MetodoEstudioEntity {
   @Column({ type: "text", nullable: true })
   descripcion!: string;
 
+  @Column({ name: "url_imagen", type: "text", nullable: false })
+  urlImagen!: string;
+
+  @Column({ name: "color_hexa", type: "text", nullable: false })
+  colorHexa!: string;
+
   @CreateDateColumn({ name: "fecha_creacion" })
   fechaCreacion!: Date;
 
   @UpdateDateColumn({ name: "fecha_actualizacion" })
   fechaActualizacion!: Date;
 
-  @ManyToMany(() => BeneficioEntity, beneficio => beneficio.metodos)
+  @ManyToMany(() => BeneficioEntity, (beneficio) => beneficio.metodos)
   @JoinTable({
     name: "metodobeneficios",
     joinColumn: { name: "id_metodo", referencedColumnName: "idMetodo" },
-    inverseJoinColumn: { name: "id_beneficio", referencedColumnName: "idBeneficio" },
+    inverseJoinColumn: {
+      name: "id_beneficio",
+      referencedColumnName: "idBeneficio",
+    },
   })
   beneficios?: BeneficioEntity[];
 
