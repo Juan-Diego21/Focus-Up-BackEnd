@@ -7,7 +7,8 @@ export interface Musica {
   id_album?: number | null;
   fecha_creacion?: Date;
   fecha_actualizacion?: Date;
-  url_archivo: string;
+  url_musica: string;
+  url_imagen: string;
 }
 
 export interface Album {
@@ -15,4 +16,5 @@ export interface Album {
   nombre_album: string;
   fecha_creacion?: Date;
   fecha_actualizacion?: Date;
+  url_imagen: string;
 }

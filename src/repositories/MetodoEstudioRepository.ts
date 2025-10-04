@@ -18,13 +18,17 @@ export class MetodoEstudioRepository implements IMetodoEstudioRepository {
   constructor() {
     this.repository = AppDataSource.getRepository(MetodoEstudioEntity);
     this.beneficioRepository = AppDataSource.getRepository(BeneficioEntity);
-    this.metodoBeneficiosRepository = AppDataSource.getRepository(MetodoBeneficiosEntity);
+    this.metodoBeneficiosRepository = AppDataSource.getRepository(
+      MetodoBeneficiosEntity
+    );
   }
 
   async create(metodoInput: MetodoEstudioCreateInput): Promise<MetodoEstudio> {
     const metodo = this.repository.create({
       nombreMetodo: metodoInput.nombre_metodo,
       descripcion: metodoInput.descripcion,
+      urlImagen: metodoInput.url_imagen,
+      colorHexa: metodoInput.color_hexa,
     });
     const savedMetodo = await this.repository.save(metodo);
     return this.mapToMetodoEstudioDTO(savedMetodo);
@@ -33,17 +37,24 @@ export class MetodoEstudioRepository implements IMetodoEstudioRepository {
   async findById(id: number): Promise<MetodoEstudio | null> {
     const metodo = await this.repository.findOne({
       where: { idMetodo: id },
-      relations: ['beneficios'],
+      relations: ["beneficios"],
     });
     return metodo ? this.mapToMetodoEstudioDTO(metodo) : null;
   }
 
-  async update(id: number, updates: MetodoEstudioUpdateInput): Promise<MetodoEstudio | null> {
+  async update(
+    id: number,
+    updates: MetodoEstudioUpdateInput
+  ): Promise<MetodoEstudio | null> {
     const updateData: any = {};
     if (updates.nombre_metodo !== undefined)
       updateData.nombreMetodo = updates.nombre_metodo;
     if (updates.descripcion !== undefined)
       updateData.descripcion = updates.descripcion;
+    if (updates.url_imagen !== undefined)
+      updateData.urlImagen = updates.url_imagen;
+    if (updates.color_hexa !== undefined)
+      updateData.colorHexa = updates.color_hexa;
 
     const result = await this.repository.update(id, updateData);
     if (result.affected && result.affected > 0) {
@@ -54,19 +65,25 @@ export class MetodoEstudioRepository implements IMetodoEstudioRepository {
 
   async delete(id: number): Promise<boolean> {
     const result = await this.repository.delete(id);
-    return result.affected !== null && result.affected !== undefined && result.affected > 0;
+    return (
+      result.affected !== null &&
+      result.affected !== undefined &&
+      result.affected > 0
+    );
   }
 
   async findAll(): Promise<MetodoEstudio[]> {
     const metodos = await this.repository.find({
-      relations: ['beneficios'],
+      relations: ["beneficios"],
     });
     return metodos.map((metodo) => this.mapToMetodoEstudioDTO(metodo));
   }
 
   async addBeneficio(idMetodo: number, idBeneficio: number): Promise<boolean> {
     const metodo = await this.repository.findOne({ where: { idMetodo } });
-    const beneficio = await this.beneficioRepository.findOne({ where: { idBeneficio } });
+    const beneficio = await this.beneficioRepository.findOne({
+      where: { idBeneficio },
+    });
     if (!metodo || !beneficio) return false;
 
     const existing = await this.metodoBeneficiosRepository.findOne({
@@ -82,21 +99,28 @@ export class MetodoEstudioRepository implements IMetodoEstudioRepository {
     return true;
   }
 
-  async removeBeneficio(idMetodo: number, idBeneficio: number): Promise<boolean> {
+  async removeBeneficio(
+    idMetodo: number,
+    idBeneficio: number
+  ): Promise<boolean> {
     const result = await this.metodoBeneficiosRepository.delete({
       idMetodo,
       idBeneficio,
     });
-    return result.affected !== null && result.affected !== undefined && result.affected > 0;
+    return (
+      result.affected !== null &&
+      result.affected !== undefined &&
+      result.affected > 0
+    );
   }
 
   async getBeneficios(idMetodo: number): Promise<any[]> {
     const metodo = await this.repository.findOne({
       where: { idMetodo },
-      relations: ['beneficios'],
+      relations: ["beneficios"],
     });
     if (!metodo || !metodo.beneficios) return [];
-    return metodo.beneficios.map(b => ({
+    return metodo.beneficios.map((b) => ({
       id_beneficio: b.idBeneficio,
       descripcion_beneficio: b.descripcionBeneficio,
       fecha_creacion: b.fechaCreacion,
@@ -109,14 +133,18 @@ export class MetodoEstudioRepository implements IMetodoEstudioRepository {
       id_metodo: entity.idMetodo,
       nombre_metodo: entity.nombreMetodo,
       descripcion: entity.descripcion,
+      url_imagen: entity.urlImagen,
+      color_hexa: entity.colorHexa,
       fecha_creacion: entity.fechaCreacion,
       fecha_actualizacion: entity.fechaActualizacion,
-      beneficios: entity.beneficios ? entity.beneficios.map(b => ({
-        id_beneficio: b.idBeneficio,
-        descripcion_beneficio: b.descripcionBeneficio,
-        fecha_creacion: b.fechaCreacion,
-        fecha_actualizacion: b.fechaActualizacion,
-      })) : [],
+      beneficios: entity.beneficios
+        ? entity.beneficios.map((b) => ({
+            id_beneficio: b.idBeneficio,
+            descripcion_beneficio: b.descripcionBeneficio,
+            fecha_creacion: b.fechaCreacion,
+            fecha_actualizacion: b.fechaActualizacion,
+          }))
+        : [],
     };
   }
 }

@@ -2,6 +2,8 @@ export interface MetodoEstudio {
   id_metodo?: number;
   nombre_metodo: string;
   descripcion?: string;
+  url_imagen: string;
+  color_hexa: string;
   fecha_creacion: Date;
   fecha_actualizacion: Date;
 }
@@ -9,17 +11,24 @@ export interface MetodoEstudio {
 export interface MetodoEstudioCreateInput {
   nombre_metodo: string;
   descripcion?: string;
+  url_imagen: string;
+  color_hexa: string;
 }
 
 export interface MetodoEstudioUpdateInput {
   nombre_metodo?: string;
   descripcion?: string;
+  url_imagen: string;
+  color_hexa: string;
 }
 
 export interface IMetodoEstudioRepository {
   create(metodoInput: MetodoEstudioCreateInput): Promise<MetodoEstudio>;
   findById(id: number): Promise<MetodoEstudio | null>;
-  update(id: number, updates: MetodoEstudioUpdateInput): Promise<MetodoEstudio | null>;
+  update(
+    id: number,
+    updates: MetodoEstudioUpdateInput
+  ): Promise<MetodoEstudio | null>;
   delete(id: number): Promise<boolean>;
   findAll(): Promise<MetodoEstudio[]>;
   addBeneficio(idMetodo: number, idBeneficio: number): Promise<boolean>;
