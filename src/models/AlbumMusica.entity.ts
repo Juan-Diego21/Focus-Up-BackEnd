@@ -19,4 +19,7 @@ export class AlbumMusicaEntity {
 
   @UpdateDateColumn({ name: "fecha_actualizacion" })
   fechaActualizacion!: Date;
+
+  @Column({ name: "url_imagen", type: "text", nullable: false })
+  urlImagen!: string;
 }
