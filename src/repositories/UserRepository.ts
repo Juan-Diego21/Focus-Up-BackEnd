@@ -7,6 +7,7 @@ import {
   UserUpdateInput,
   IUserRepository,
 } from "../types/User";
+import logger from "../utils/logger";
 
 export class UserRepository implements IUserRepository {
   private repository: Repository<UserEntity>;
@@ -14,6 +15,7 @@ export class UserRepository implements IUserRepository {
   constructor() {
     this.repository = AppDataSource.getRepository(UserEntity);
   }
+  
 
   async create(userInput: UserCreateInput): Promise<User> {
     const user = this.repository.create({
@@ -38,20 +40,38 @@ export class UserRepository implements IUserRepository {
   }
 
   async findByEmail(email: string): Promise<User | null> {
+  try {
+    console.log('🔍 REPOSITORY - Buscando por email:', email);
+    
     const user = await this.repository.findOne({
       where: { correo: email.toLowerCase() },
       relations: ['usuarioIntereses', 'usuarioDistracciones']
     });
+    
+    console.log('📧 REPOSITORY - Resultado email:', user ? `ENCONTRADO: ${user.idUsuario}` : 'NO ENCONTRADO');
     return user ? this.mapToUserDTO(user) : null;
+  } catch (error) {
+    console.error('💥 REPOSITORY - Error en findByEmail:', error);
+    return null;
   }
+}
 
-  async findByUsername(username: string): Promise<User | null> {
+async findByUsername(username: string): Promise<User | null> {
+  try {
+    console.log('🔍 REPOSITORY - Buscando por username:', username);
+    
     const user = await this.repository.findOne({
       where: { nombreUsuario: username },
       relations: ['usuarioIntereses', 'usuarioDistracciones']
     });
+    
+    console.log('👤 REPOSITORY - Resultado username:', user ? `ENCONTRADO: ${user.idUsuario}` : 'NO ENCONTRADO');
     return user ? this.mapToUserDTO(user) : null;
+  } catch (error) {
+    console.error('💥 REPOSITORY - Error en findByUsername:', error);
+    return null;
   }
+}
 
   async update(id: number, updates: UserUpdateInput): Promise<User | null> {
     const updateData: any = {};
@@ -137,7 +157,22 @@ export class UserRepository implements IUserRepository {
       intereses: entity.usuarioIntereses?.map(ui => ui.idInteres) || [],
       distracciones: entity.usuarioDistracciones?.map(ud => ud.idDistraccion) || [],
     };
+  
   }
+
+  //email
+  async updatePassword(userId: number, hashedPassword: string): Promise<boolean> {
+      try {
+        const result = await this.repository.update(userId, {
+          contrasena: hashedPassword
+        });
+        return !!(result.affected && result.affected > 0);
+      } catch (error) {
+        logger.error("Error en UserRepository.updatePassword:", error);
+        return false;
+      }
+    }
+  
 }
 
 // Exportar con tipo específico

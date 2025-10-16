@@ -61,6 +61,7 @@ router.use("/eventos", eventosRutas)
 // Rutas de musica
 router.use("/musica", musicaRoutes);
 
+
 // Ruta por defecto para manejar endpoints no encontrados
 router.use("*", (req, res) => {
   res.status(404).json({

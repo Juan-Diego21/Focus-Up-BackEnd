@@ -4,7 +4,7 @@ import { ApiResponse } from "../types/ApiResponse";
 import { JwtUtils } from "../utils/jwt";
 import { JwtPayload } from "../utils/jwt";
 import logger from "../utils/logger";
-
+import { Transporter } from "nodemailer";
 /**
  * @swagger
  * tags:
@@ -366,6 +366,82 @@ export class UserController {
     };
 
     res.status(result.success ? 200 : 404).json(response);
+  }
+
+  // Enviar email de prueba
+    async forgotPassword(req: Request, res: Response) {
+    try {
+      const { emailOrUsername } = req.body;
+
+      if (!emailOrUsername) {
+        const response: ApiResponse = {
+          success: false,
+          message: "Email o nombre de usuario es requerido",
+          timestamp: new Date(),
+        };
+        return res.status(400).json(response);
+      }
+
+      const result = await userService.sendPasswordResetLink(emailOrUsername);
+
+      const response: ApiResponse = {
+        success: result.success,
+        message: result.message,
+        timestamp: new Date(),
+      };
+
+      res.status(result.success ? 200 : 404).json(response);
+
+    } catch (error) {
+      logger.error("Error en UserController.forgotPassword:", error);
+
+      const response: ApiResponse = {
+        success: false,
+        message: "Error interno del servidor",
+        timestamp: new Date(),
+      };
+
+      res.status(500).json(response);
+    }
+  }
+
+  /**
+   * Restablecer contraseña con token
+   */
+  async resetPassword(req: Request, res: Response) {
+    try {
+      const { token, newPassword } = req.body;
+
+      if (!token || !newPassword) {
+        const response: ApiResponse = {
+          success: false,
+          message: "Token y nueva contraseña son requeridos",
+          timestamp: new Date(),
+        };
+        return res.status(400).json(response);
+      }
+
+      const result = await userService.resetPassword(token, newPassword);
+
+      const response: ApiResponse = {
+        success: result.success,
+        message: result.message,
+        timestamp: new Date(),
+      };
+
+      res.status(result.success ? 200 : 400).json(response);
+
+    } catch (error) {
+      logger.error("Error en UserController.resetPassword:", error);
+
+      const response: ApiResponse = {
+        success: false,
+        message: "Error interno del servidor",
+        timestamp: new Date(),
+      };
+
+      res.status(500).json(response);
+    }
   }
 }
 
