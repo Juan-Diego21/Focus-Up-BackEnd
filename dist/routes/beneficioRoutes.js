@@ -2,10 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const BeneficioController_1 = require("../controllers/BeneficioController");
+const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
-router.get("/", BeneficioController_1.beneficioController.getAllBeneficios.bind(BeneficioController_1.beneficioController));
-router.get("/:id", BeneficioController_1.beneficioController.getBeneficioById.bind(BeneficioController_1.beneficioController));
-router.post("/", BeneficioController_1.beneficioController.createBeneficio.bind(BeneficioController_1.beneficioController));
-router.put("/:id", BeneficioController_1.beneficioController.updateBeneficio.bind(BeneficioController_1.beneficioController));
-router.delete("/:id", BeneficioController_1.beneficioController.deleteBeneficio.bind(BeneficioController_1.beneficioController));
+router.get("/", auth_1.authenticateToken, BeneficioController_1.beneficioController.getAllBeneficios.bind(BeneficioController_1.beneficioController));
+router.get("/:id", auth_1.authenticateToken, BeneficioController_1.beneficioController.getBeneficioById.bind(BeneficioController_1.beneficioController));
+router.post("/", auth_1.authenticateToken, BeneficioController_1.beneficioController.createBeneficio.bind(BeneficioController_1.beneficioController));
+router.put("/:id", auth_1.authenticateToken, BeneficioController_1.beneficioController.updateBeneficio.bind(BeneficioController_1.beneficioController));
+router.delete("/:id", auth_1.authenticateToken, BeneficioController_1.beneficioController.deleteBeneficio.bind(BeneficioController_1.beneficioController));
 exports.default = router;

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { JwtUtils, JwtPayload } from "../utils/jwt";
 import { ApiResponse } from "../types/ApiResponse";
+import logger from "../utils/logger";
 
 export const authenticateToken = (
   req: Request,
@@ -9,29 +10,50 @@ export const authenticateToken = (
 ) => {
   try {
     const authHeader = req.headers["authorization"];
+    logger.info(`Auth header received: ${authHeader ? 'present' : 'missing'} for ${req.method} ${req.originalUrl}`);
+
     const token = JwtUtils.extractTokenFromHeader(authHeader);
+    logger.info(`Token extracted: ${token ? 'present' : 'missing'}`);
 
     if (!token) {
+      logger.warn(`Acceso no autorizado - Token faltante: ${req.method} ${req.originalUrl} desde ${req.ip}`);
       const response: ApiResponse = {
         success: false,
-        message: "Token de acceso requerido",
+        message: "Acceso no autorizado. Token requerido.",
         timestamp: new Date(),
       };
       return res.status(401).json(response);
     }
 
     const decoded = JwtUtils.verifyAccessToken(token);
+    logger.info(`Token decoded successfully for userId: ${decoded.userId}, email: ${decoded.email}`);
     (req as any).user = decoded; // Adjuntar información del usuario al request
     next();
-  } catch (error) {
-    console.error("Error en autenticación:", error);
+  } catch (error: any) {
+    let reason = "desconocido";
+    let statusCode = 401;
+
+    if (error.name === "TokenExpiredError") {
+      reason = "expirado";
+      statusCode = 401;
+    } else if (error.name === "JsonWebTokenError") {
+      reason = "malformado";
+      statusCode = 401;
+    } else if (error.name === "NotBeforeError") {
+      reason = "no válido aún";
+      statusCode = 401;
+    } else {
+      statusCode = 403;
+    }
+
+    logger.warn(`Acceso no autorizado - Token ${reason}: ${req.method} ${req.originalUrl} desde ${req.ip} - Error: ${error.message}`);
 
     const response: ApiResponse = {
       success: false,
-      message: "Token inválido o expirado",
+      message: "Acceso no autorizado. Token inválido o expirado.",
       timestamp: new Date(),
     };
-    res.status(403).json(response);
+    res.status(statusCode).json(response);
   }
 };
 

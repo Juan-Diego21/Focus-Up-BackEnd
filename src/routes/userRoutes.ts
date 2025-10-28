@@ -4,11 +4,12 @@ import {
   validateUserCreate,
   validateUserUpdate,
 } from "../middleware/validation";
+import { authenticateToken } from "../middleware/auth";
 
 const router = Router();
 
 // GET /api/v1/users - Obtener todos los usuarios
-router.get("/", userController.getAllUsers.bind(userController));
+router.get("/", authenticateToken, userController.getAllUsers.bind(userController));
 
 /**
  * @swagger
@@ -32,7 +33,7 @@ router.get("/", userController.getAllUsers.bind(userController));
  */
 
 // GET /api/v1/users/:id - Obtener usuario por ID
-router.get("/:id", userController.getUserById.bind(userController));
+router.get("/:id", authenticateToken, userController.getUserById.bind(userController));
 
 /**
  * @swagger
@@ -67,7 +68,7 @@ router.get("/:id", userController.getUserById.bind(userController));
  */
 
 // GET /api/v1/users/email/:email - Obtener usuario por email
-router.get("/email/:email", userController.getUserByEmail.bind(userController));
+router.get("/email/:email", authenticateToken, userController.getUserByEmail.bind(userController));
 
 /**
  * @swagger
@@ -187,6 +188,7 @@ router.post(
 // PUT /api/v1/users/:id - Actualizar usuario por id
 router.put(
   "/:id",
+  authenticateToken,
   validateUserUpdate,
   userController.updateUser.bind(userController)
 );
@@ -331,7 +333,7 @@ router.post("/login", userController.login.bind(userController));
  */
 
 // DELETE /api/v1/users/:id - eliminar usuario
-router.delete("/:id", userController.deleteUser.bind(userController));
+router.delete("/:id", authenticateToken, userController.deleteUser.bind(userController));
 
 /**
  * @swagger

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { metodoEstudioController } from "../controllers/MetodoEstudioController";
+import { authenticateToken } from "../middleware/auth";
 
 const router = Router();
 
@@ -11,7 +12,7 @@ const router = Router();
  */
 
 // GET /api/v1/metodos-estudio - List all study methods
-router.get("/", metodoEstudioController.getAllMetodosEstudio.bind(metodoEstudioController));
+router.get("/", authenticateToken, metodoEstudioController.getAllMetodosEstudio.bind(metodoEstudioController));
 
 /**
  * @swagger
@@ -65,7 +66,7 @@ router.get("/", metodoEstudioController.getAllMetodosEstudio.bind(metodoEstudioC
  */
 
 // GET /api/v1/metodos-estudio/:id - Get study method by ID
-router.get("/:id", metodoEstudioController.getMetodoEstudioById.bind(metodoEstudioController));
+router.get("/:id", authenticateToken, metodoEstudioController.getMetodoEstudioById.bind(metodoEstudioController));
 
 /**
  * @swagger
@@ -126,7 +127,7 @@ router.get("/:id", metodoEstudioController.getMetodoEstudioById.bind(metodoEstud
  */
 
 // POST /api/v1/metodos-estudio - Create a new study method
-router.post("/", metodoEstudioController.createMetodoEstudio.bind(metodoEstudioController));
+router.post("/", authenticateToken, metodoEstudioController.createMetodoEstudio.bind(metodoEstudioController));
 
 /**
  * @swagger
@@ -173,7 +174,7 @@ router.post("/", metodoEstudioController.createMetodoEstudio.bind(metodoEstudioC
  */
 
 // PUT /api/v1/metodos-estudio/:id - Update a study method
-router.put("/:id", metodoEstudioController.updateMetodoEstudio.bind(metodoEstudioController));
+router.put("/:id", authenticateToken, metodoEstudioController.updateMetodoEstudio.bind(metodoEstudioController));
 
 /**
  * @swagger
@@ -227,7 +228,7 @@ router.put("/:id", metodoEstudioController.updateMetodoEstudio.bind(metodoEstudi
  */
 
 // DELETE /api/v1/metodos-estudio/:id - Delete a study method
-router.delete("/:id", metodoEstudioController.deleteMetodoEstudio.bind(metodoEstudioController));
+router.delete("/:id", authenticateToken, metodoEstudioController.deleteMetodoEstudio.bind(metodoEstudioController));
 
 /**
  * @swagger
@@ -266,7 +267,7 @@ router.delete("/:id", metodoEstudioController.deleteMetodoEstudio.bind(metodoEst
  */
 
 // GET /api/v1/metodos-estudio/:id/beneficios - Get all benefits for a specific method
-router.get("/:id/beneficios", metodoEstudioController.getBeneficiosForMetodo.bind(metodoEstudioController));
+router.get("/:id/beneficios", authenticateToken, metodoEstudioController.getBeneficiosForMetodo.bind(metodoEstudioController));
 
 /**
  * @swagger
@@ -309,7 +310,7 @@ router.get("/:id/beneficios", metodoEstudioController.getBeneficiosForMetodo.bin
  */
 
 // POST /api/v1/metodos-estudio/:id_metodo/beneficios/:id_beneficio - Associate benefit with method
-router.post("/:id_metodo/beneficios/:id_beneficio", metodoEstudioController.addBeneficioToMetodo.bind(metodoEstudioController));
+router.post("/:id_metodo/beneficios/:id_beneficio", authenticateToken, metodoEstudioController.addBeneficioToMetodo.bind(metodoEstudioController));
 
 /**
  * @swagger
@@ -354,7 +355,7 @@ router.post("/:id_metodo/beneficios/:id_beneficio", metodoEstudioController.addB
  */
 
 // DELETE /api/v1/metodos-estudio/:id_metodo/beneficios/:id_beneficio - Remove association
-router.delete("/:id_metodo/beneficios/:id_beneficio", metodoEstudioController.removeBeneficioFromMetodo.bind(metodoEstudioController));
+router.delete("/:id_metodo/beneficios/:id_beneficio", authenticateToken, metodoEstudioController.removeBeneficioFromMetodo.bind(metodoEstudioController));
 
 /**
  * @swagger
