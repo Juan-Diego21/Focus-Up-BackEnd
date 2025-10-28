@@ -12,5 +12,6 @@ export declare class UserRepository implements IUserRepository {
     emailExists(email: string, excludeUserId?: number): Promise<boolean>;
     usernameExists(username: string, excludeUserId?: number): Promise<boolean>;
     private mapToUserDTO;
+    updatePassword(userId: number, hashedPassword: string): Promise<boolean>;
 }
 export declare const userRepository: IUserRepository;

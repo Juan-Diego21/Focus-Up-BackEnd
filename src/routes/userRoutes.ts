@@ -385,14 +385,14 @@ router.delete("/:id", userController.deleteUser.bind(userController));
  *         description: No autorizado
  */
 
-// POST /api/v1/users/forgot-password - Solicitar restablecimiento de contraseña
-router.post('/forgot-password', userController.forgotPassword.bind(userController));
+// POST /api/v1/users/request-password-reset - Solicitar código de verificación para restablecer contraseña
+router.post('/request-password-reset', userController.requestPasswordReset.bind(userController));
 
 /**
  * @swagger
- * /users/forgot-password:
+ * /users/request-password-reset:
  *   post:
- *     summary: Solicitar restablecimiento de contraseña
+ *     summary: Solicitar código de verificación para restablecer contraseña
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -405,13 +405,13 @@ router.post('/forgot-password', userController.forgotPassword.bind(userControlle
  *             properties:
  *               emailOrUsername:
  *                 type: string
- *                 description: "Email o nombre de usuario del usuario"
+ *                 description: "Correo electrónico o nombre de usuario del usuario"
  *                 example: "john@example.com"
  *             example:
  *               emailOrUsername: "john@example.com"
  *     responses:
  *       200:
- *         description: Enlace de restablecimiento enviado al email
+ *         description: Código de verificación enviado al correo electrónico
  *         content:
  *           application/json:
  *             schema:
@@ -422,12 +422,12 @@ router.post('/forgot-password', userController.forgotPassword.bind(userControlle
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: "Se ha enviado un enlace de restablecimiento a tu email."
+ *                   example: "Si el correo o nombre de usuario existe, recibirás un código para restablecer tu contraseña."
  *                 timestamp:
  *                   type: string
  *                   format: date-time
  *       400:
- *         description: Email o nombre de usuario requerido
+ *         description: Correo electrónico o nombre de usuario requerido
  *         content:
  *           application/json:
  *             schema:
@@ -438,7 +438,7 @@ router.post('/forgot-password', userController.forgotPassword.bind(userControlle
  *                   example: false
  *                 message:
  *                   type: string
- *                   example: "Email o nombre de usuario es requerido"
+ *                   example: "El correo electrónico o nombre de usuario es requerido"
  *                 timestamp:
  *                   type: string
  *                   format: date-time
@@ -460,14 +460,14 @@ router.post('/forgot-password', userController.forgotPassword.bind(userControlle
  *                   format: date-time
  */
 
-// POST /api/v1/users/reset-password - Restablecer contraseña con token
-router.post('/reset-password', userController.resetPassword.bind(userController));
+// POST /api/v1/users/reset-password-with-code - Verificar código y restablecer contraseña
+router.post('/reset-password-with-code', userController.resetPasswordWithCode.bind(userController));
 
 /**
  * @swagger
- * /users/reset-password:
+ * /users/reset-password-with-code:
  *   post:
- *     summary: Restablecer contraseña con token
+ *     summary: Verificar código y restablecer contraseña
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -476,20 +476,27 @@ router.post('/reset-password', userController.resetPassword.bind(userController)
  *           schema:
  *             type: object
  *             required:
- *               - token
+ *               - email
+ *               - code
  *               - newPassword
  *             properties:
- *               token:
+ *               email:
  *                 type: string
- *                 description: "Token de restablecimiento recibido por email"
- *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 format: email
+ *                 description: "Correo electrónico del usuario"
+ *                 example: "john@example.com"
+ *               code:
+ *                 type: string
+ *                 description: "Código de verificación de 6 dígitos recibido por email"
+ *                 example: "123456"
  *               newPassword:
  *                 type: string
  *                 format: password
  *                 description: "Nueva contraseña. Debe tener al menos 8 caracteres, una mayúscula y un número."
  *                 example: "NewSecurePassword123"
  *             example:
- *               token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *               email: "john@example.com"
+ *               code: "123456"
  *               newPassword: "NewSecurePassword123"
  *     responses:
  *       200:
@@ -504,12 +511,12 @@ router.post('/reset-password', userController.resetPassword.bind(userController)
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: "Contraseña restablecida exitosamente"
+ *                   example: "Tu contraseña ha sido restablecida exitosamente."
  *                 timestamp:
  *                   type: string
  *                   format: date-time
  *       400:
- *         description: Token inválido o contraseña no cumple requisitos
+ *         description: Código inválido, expirado o contraseña no cumple requisitos
  *         content:
  *           application/json:
  *             schema:
@@ -520,7 +527,7 @@ router.post('/reset-password', userController.resetPassword.bind(userController)
  *                   example: false
  *                 message:
  *                   type: string
- *                   example: "Token inválido o expirado"
+ *                   example: "Código inválido o expirado. Solicita uno nuevo."
  *                 timestamp:
  *                   type: string
  *                   format: date-time

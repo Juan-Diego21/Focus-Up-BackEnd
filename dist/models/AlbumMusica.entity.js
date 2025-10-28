@@ -30,6 +30,10 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)({ name: "fecha_actualizacion" }),
     __metadata("design:type", Date)
 ], AlbumMusicaEntity.prototype, "fechaActualizacion", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: "url_imagen", type: "text", nullable: false }),
+    __metadata("design:type", String)
+], AlbumMusicaEntity.prototype, "urlImagen", void 0);
 exports.AlbumMusicaEntity = AlbumMusicaEntity = __decorate([
     (0, typeorm_1.Entity)("albummusica")
 ], AlbumMusicaEntity);

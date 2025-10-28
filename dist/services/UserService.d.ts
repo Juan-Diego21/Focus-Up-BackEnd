@@ -42,5 +42,14 @@ export declare class UserService {
         success: boolean;
         error?: string;
     }>;
+    sendPasswordResetLink(emailOrUsername: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    resetPassword(token: string, newPassword: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    private sendResetEmail;
 }
 export declare const userService: UserService;

@@ -1,8 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userRepository = exports.UserRepository = void 0;
 const ormconfig_1 = require("../config/ormconfig");
 const User_entity_1 = require("../models/User.entity");
+const logger_1 = __importDefault(require("../utils/logger"));
 class UserRepository {
     constructor() {
         this.repository = ormconfig_1.AppDataSource.getRepository(User_entity_1.UserEntity);
@@ -27,18 +31,34 @@ class UserRepository {
         return user ? this.mapToUserDTO(user) : null;
     }
     async findByEmail(email) {
-        const user = await this.repository.findOne({
-            where: { correo: email.toLowerCase() },
-            relations: ['usuarioIntereses', 'usuarioDistracciones']
-        });
-        return user ? this.mapToUserDTO(user) : null;
+        try {
+            console.log('🔍 REPOSITORY - Buscando por email:', email);
+            const user = await this.repository.findOne({
+                where: { correo: email.toLowerCase() },
+                relations: ['usuarioIntereses', 'usuarioDistracciones']
+            });
+            console.log('📧 REPOSITORY - Resultado email:', user ? `ENCONTRADO: ${user.idUsuario}` : 'NO ENCONTRADO');
+            return user ? this.mapToUserDTO(user) : null;
+        }
+        catch (error) {
+            console.error('💥 REPOSITORY - Error en findByEmail:', error);
+            return null;
+        }
     }
     async findByUsername(username) {
-        const user = await this.repository.findOne({
-            where: { nombreUsuario: username },
-            relations: ['usuarioIntereses', 'usuarioDistracciones']
-        });
-        return user ? this.mapToUserDTO(user) : null;
+        try {
+            console.log('🔍 REPOSITORY - Buscando por username:', username);
+            const user = await this.repository.findOne({
+                where: { nombreUsuario: username },
+                relations: ['usuarioIntereses', 'usuarioDistracciones']
+            });
+            console.log('👤 REPOSITORY - Resultado username:', user ? `ENCONTRADO: ${user.idUsuario}` : 'NO ENCONTRADO');
+            return user ? this.mapToUserDTO(user) : null;
+        }
+        catch (error) {
+            console.error('💥 REPOSITORY - Error en findByUsername:', error);
+            return null;
+        }
     }
     async update(id, updates) {
         const updateData = {};
@@ -111,6 +131,18 @@ class UserRepository {
             intereses: entity.usuarioIntereses?.map(ui => ui.idInteres) || [],
             distracciones: entity.usuarioDistracciones?.map(ud => ud.idDistraccion) || [],
         };
+    }
+    async updatePassword(userId, hashedPassword) {
+        try {
+            const result = await this.repository.update(userId, {
+                contrasena: hashedPassword
+            });
+            return !!(result.affected && result.affected > 0);
+        }
+        catch (error) {
+            logger_1.default.error("Error en UserRepository.updatePassword:", error);
+            return false;
+        }
     }
 }
 exports.UserRepository = UserRepository;

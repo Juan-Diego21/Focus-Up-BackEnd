@@ -15,6 +15,8 @@ class MetodoEstudioRepository {
         const metodo = this.repository.create({
             nombreMetodo: metodoInput.nombre_metodo,
             descripcion: metodoInput.descripcion,
+            urlImagen: metodoInput.url_imagen,
+            colorHexa: metodoInput.color_hexa,
         });
         const savedMetodo = await this.repository.save(metodo);
         return this.mapToMetodoEstudioDTO(savedMetodo);
@@ -22,7 +24,7 @@ class MetodoEstudioRepository {
     async findById(id) {
         const metodo = await this.repository.findOne({
             where: { idMetodo: id },
-            relations: ['beneficios'],
+            relations: ["beneficios"],
         });
         return metodo ? this.mapToMetodoEstudioDTO(metodo) : null;
     }
@@ -32,6 +34,10 @@ class MetodoEstudioRepository {
             updateData.nombreMetodo = updates.nombre_metodo;
         if (updates.descripcion !== undefined)
             updateData.descripcion = updates.descripcion;
+        if (updates.url_imagen !== undefined)
+            updateData.urlImagen = updates.url_imagen;
+        if (updates.color_hexa !== undefined)
+            updateData.colorHexa = updates.color_hexa;
         const result = await this.repository.update(id, updateData);
         if (result.affected && result.affected > 0) {
             return this.findById(id);
@@ -40,17 +46,21 @@ class MetodoEstudioRepository {
     }
     async delete(id) {
         const result = await this.repository.delete(id);
-        return result.affected !== null && result.affected !== undefined && result.affected > 0;
+        return (result.affected !== null &&
+            result.affected !== undefined &&
+            result.affected > 0);
     }
     async findAll() {
         const metodos = await this.repository.find({
-            relations: ['beneficios'],
+            relations: ["beneficios"],
         });
         return metodos.map((metodo) => this.mapToMetodoEstudioDTO(metodo));
     }
     async addBeneficio(idMetodo, idBeneficio) {
         const metodo = await this.repository.findOne({ where: { idMetodo } });
-        const beneficio = await this.beneficioRepository.findOne({ where: { idBeneficio } });
+        const beneficio = await this.beneficioRepository.findOne({
+            where: { idBeneficio },
+        });
         if (!metodo || !beneficio)
             return false;
         const existing = await this.metodoBeneficiosRepository.findOne({
@@ -70,16 +80,18 @@ class MetodoEstudioRepository {
             idMetodo,
             idBeneficio,
         });
-        return result.affected !== null && result.affected !== undefined && result.affected > 0;
+        return (result.affected !== null &&
+            result.affected !== undefined &&
+            result.affected > 0);
     }
     async getBeneficios(idMetodo) {
         const metodo = await this.repository.findOne({
             where: { idMetodo },
-            relations: ['beneficios'],
+            relations: ["beneficios"],
         });
         if (!metodo || !metodo.beneficios)
             return [];
-        return metodo.beneficios.map(b => ({
+        return metodo.beneficios.map((b) => ({
             id_beneficio: b.idBeneficio,
             descripcion_beneficio: b.descripcionBeneficio,
             fecha_creacion: b.fechaCreacion,
@@ -91,14 +103,18 @@ class MetodoEstudioRepository {
             id_metodo: entity.idMetodo,
             nombre_metodo: entity.nombreMetodo,
             descripcion: entity.descripcion,
+            url_imagen: entity.urlImagen,
+            color_hexa: entity.colorHexa,
             fecha_creacion: entity.fechaCreacion,
             fecha_actualizacion: entity.fechaActualizacion,
-            beneficios: entity.beneficios ? entity.beneficios.map(b => ({
-                id_beneficio: b.idBeneficio,
-                descripcion_beneficio: b.descripcionBeneficio,
-                fecha_creacion: b.fechaCreacion,
-                fecha_actualizacion: b.fechaActualizacion,
-            })) : [],
+            beneficios: entity.beneficios
+                ? entity.beneficios.map((b) => ({
+                    id_beneficio: b.idBeneficio,
+                    descripcion_beneficio: b.descripcionBeneficio,
+                    fecha_creacion: b.fechaCreacion,
+                    fecha_actualizacion: b.fechaActualizacion,
+                }))
+                : [],
         };
     }
 }

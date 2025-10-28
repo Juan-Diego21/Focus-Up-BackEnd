@@ -28,6 +28,14 @@ __decorate([
     __metadata("design:type", String)
 ], MetodoEstudioEntity.prototype, "descripcion", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ name: "url_imagen", type: "text", nullable: false }),
+    __metadata("design:type", String)
+], MetodoEstudioEntity.prototype, "urlImagen", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: "color_hexa", type: "text", nullable: false }),
+    __metadata("design:type", String)
+], MetodoEstudioEntity.prototype, "colorHexa", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)({ name: "fecha_creacion" }),
     __metadata("design:type", Date)
 ], MetodoEstudioEntity.prototype, "fechaCreacion", void 0);
@@ -36,11 +44,14 @@ __decorate([
     __metadata("design:type", Date)
 ], MetodoEstudioEntity.prototype, "fechaActualizacion", void 0);
 __decorate([
-    (0, typeorm_1.ManyToMany)(() => Beneficio_entity_1.BeneficioEntity, beneficio => beneficio.metodos),
+    (0, typeorm_1.ManyToMany)(() => Beneficio_entity_1.BeneficioEntity, (beneficio) => beneficio.metodos),
     (0, typeorm_1.JoinTable)({
         name: "metodobeneficios",
         joinColumn: { name: "id_metodo", referencedColumnName: "idMetodo" },
-        inverseJoinColumn: { name: "id_beneficio", referencedColumnName: "idBeneficio" },
+        inverseJoinColumn: {
+            name: "id_beneficio",
+            referencedColumnName: "idBeneficio",
+        },
     }),
     __metadata("design:type", Array)
 ], MetodoEstudioEntity.prototype, "beneficios", void 0);

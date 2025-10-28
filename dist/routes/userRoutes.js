@@ -11,4 +11,6 @@ router.post("/", validation_1.validateUserCreate, UserController_1.userControlle
 router.put("/:id", validation_1.validateUserUpdate, UserController_1.userController.updateUser.bind(UserController_1.userController));
 router.post("/login", UserController_1.userController.login.bind(UserController_1.userController));
 router.delete("/:id", UserController_1.userController.deleteUser.bind(UserController_1.userController));
+router.post('/request-password-reset', UserController_1.userController.requestPasswordReset.bind(UserController_1.userController));
+router.post('/reset-password-with-code', UserController_1.userController.resetPasswordWithCode.bind(UserController_1.userController));
 exports.default = router;

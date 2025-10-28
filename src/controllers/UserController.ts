@@ -368,21 +368,22 @@ export class UserController {
     res.status(result.success ? 200 : 404).json(response);
   }
 
-  // Enviar email de prueba
-    async forgotPassword(req: Request, res: Response) {
+  // Solicitar código de verificación para restablecer contraseña
+  async requestPasswordReset(req: Request, res: Response) {
     try {
       const { emailOrUsername } = req.body;
 
       if (!emailOrUsername) {
         const response: ApiResponse = {
           success: false,
-          message: "Email o nombre de usuario es requerido",
+          message: "El correo electrónico o nombre de usuario es requerido",
           timestamp: new Date(),
         };
         return res.status(400).json(response);
       }
 
-      const result = await userService.sendPasswordResetLink(emailOrUsername);
+      const { passwordResetService } = await import("../services/PasswordResetService");
+      const result = await passwordResetService.requestPasswordReset(emailOrUsername);
 
       const response: ApiResponse = {
         success: result.success,
@@ -390,10 +391,10 @@ export class UserController {
         timestamp: new Date(),
       };
 
-      res.status(result.success ? 200 : 404).json(response);
+      res.status(result.success ? 200 : 400).json(response);
 
     } catch (error) {
-      logger.error("Error en UserController.forgotPassword:", error);
+      logger.error("Error en UserController.requestPasswordReset:", error);
 
       const response: ApiResponse = {
         success: false,
@@ -406,22 +407,23 @@ export class UserController {
   }
 
   /**
-   * Restablecer contraseña con token
-   */
-  async resetPassword(req: Request, res: Response) {
+    * Verificar código y restablecer contraseña
+    */
+   async resetPasswordWithCode(req: Request, res: Response) {
     try {
-      const { token, newPassword } = req.body;
+      const { email, code, newPassword } = req.body;
 
-      if (!token || !newPassword) {
+      if (!email || !code || !newPassword) {
         const response: ApiResponse = {
           success: false,
-          message: "Token y nueva contraseña son requeridos",
+          message: "El correo electrónico, código y nueva contraseña son requeridos",
           timestamp: new Date(),
         };
         return res.status(400).json(response);
       }
 
-      const result = await userService.resetPassword(token, newPassword);
+      const { passwordResetService } = await import("../services/PasswordResetService");
+      const result = await passwordResetService.verifyResetCodeAndResetPassword(email, code, newPassword);
 
       const response: ApiResponse = {
         success: result.success,
@@ -432,7 +434,7 @@ export class UserController {
       res.status(result.success ? 200 : 400).json(response);
 
     } catch (error) {
-      logger.error("Error en UserController.resetPassword:", error);
+      logger.error("Error en UserController.resetPasswordWithCode:", error);
 
       const response: ApiResponse = {
         success: false,

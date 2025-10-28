@@ -1,27 +1,30 @@
-
-import nodemailer from "nodemailer";
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
-  auth: {
-    user: process.env.EMAIL_USER!,
-    pass: process.env.EMAIL_PASS!,
-  },
-  tls: {
-    rejectUnauthorized: false, // Allow self-signed certificates if needed
-  },
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendResetEmail = sendResetEmail;
+const nodemailer_1 = __importDefault(require("nodemailer"));
+const transporter = nodemailer_1.default.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "587"),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+    tls: {
+        rejectUnauthorized: false,
+    },
 });
-import logger from "./logger";
-
-export async function sendResetEmail(to: string, name: string, code: string): Promise<void> {
-  try {
-    const mailOptions = {
-      from: `"Focus-Up" <${process.env.EMAIL_USER}>`,
-      to,
-      subject: "Código de verificación para restablecer contraseña",
-      html: `
+const logger_1 = __importDefault(require("./logger"));
+async function sendResetEmail(to, name, code) {
+    try {
+        const mailOptions = {
+            from: `"Focus-Up" <${process.env.EMAIL_USER}>`,
+            to,
+            subject: "Código de verificación para restablecer contraseña",
+            html: `
         <!DOCTYPE html>
         <html lang="es">
         <head>
@@ -133,12 +136,12 @@ export async function sendResetEmail(to: string, name: string, code: string): Pr
         </body>
         </html>
       `,
-    };
-
-    await transporter.sendMail(mailOptions);
-    logger.info(`Código de verificación enviado exitosamente a: ${to}`);
-  } catch (error) {
-    logger.error("Error enviando código de verificación por email:", error);
-    throw error;
-  }
+        };
+        await transporter.sendMail(mailOptions);
+        logger_1.default.info(`Código de verificación enviado exitosamente a: ${to}`);
+    }
+    catch (error) {
+        logger_1.default.error("Error enviando código de verificación por email:", error);
+        throw error;
+    }
 }
