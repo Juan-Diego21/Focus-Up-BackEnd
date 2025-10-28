@@ -30,6 +30,11 @@ const swaggerOptions: swaggerJSDoc.Options = {
         description: "Servidor de producción",
       },
     ],
+    security: [
+      {
+        BearerAuth: [],
+      },
+    ],
     components: {
       securitySchemes: {
         BearerAuth: {
