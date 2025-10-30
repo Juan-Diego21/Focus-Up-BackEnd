@@ -25,6 +25,7 @@ exports.AppDataSource = new typeorm_1.DataSource({
         __dirname + "/../models/Beneficio.entity{.ts,.js}",
         __dirname + "/../models/MetodoEstudio.entity{.ts,.js}",
         __dirname + "/../models/MetodoBeneficios.entity{.ts,.js}",
+        __dirname + "/../models/PasswordReset.entity{.ts,.js}",
     ],
     migrations: [__dirname + "/../migrations/*{.ts,.js}"],
     subscribers: [],

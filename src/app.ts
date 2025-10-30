@@ -21,8 +21,10 @@ app.use(helmet());
 // 2. CORS: Permitir requests desde el frontend
 app.use(
   cors({
-    origin:"*",
+    origin: "*",
     credentials: true,
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type,Authorization",
   })
 );
 

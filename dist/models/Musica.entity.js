@@ -47,9 +47,13 @@ __decorate([
     __metadata("design:type", Date)
 ], MusicaEntity.prototype, "fechaActualizacion", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: "url_archivo", type: "text", nullable: false }),
+    (0, typeorm_1.Column)({ name: "url_musica", type: "text", nullable: false }),
     __metadata("design:type", String)
-], MusicaEntity.prototype, "urlArchivo", void 0);
+], MusicaEntity.prototype, "urlMusica", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: "url_imagen", type: "text", nullable: false }),
+    __metadata("design:type", String)
+], MusicaEntity.prototype, "urlImagen", void 0);
 exports.MusicaEntity = MusicaEntity = __decorate([
     (0, typeorm_1.Entity)("musica")
 ], MusicaEntity);

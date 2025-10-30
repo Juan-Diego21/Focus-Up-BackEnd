@@ -1,0 +1,6 @@
+projectKey=focusup.backend
+serverUrl=http://localhost:9000
+serverVersion=25.10.0.114319
+dashboardUrl=http://localhost:9000/dashboard?id=focusup.backend
+ceTaskId=43936d5e-4f4a-48ba-b6b0-1a62e12831af
+ceTaskUrl=http://localhost:9000/api/ce/task?id=43936d5e-4f4a-48ba-b6b0-1a62e12831af

@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { eventosController } from '../controllers/EventoController';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
 // Listar eventos
-router.get('/', eventosController.listEventos.bind(eventosController));
+router.get('/', authenticateToken, eventosController.listEventos.bind(eventosController));
 /**
  * @swagger
  * /eventos:
@@ -17,7 +18,7 @@ router.get('/', eventosController.listEventos.bind(eventosController));
  */
 
 // Crear evento
-router.post('/crear', eventosController.crearEvento.bind(eventosController));
+router.post('/crear', authenticateToken, eventosController.crearEvento.bind(eventosController));
 /**
  * @swagger
  * /eventos/crear:
@@ -50,7 +51,7 @@ router.post('/crear', eventosController.crearEvento.bind(eventosController));
  */
 
 // Actualizar evento
-router.put('/:id', eventosController.updateEvento.bind(eventosController));
+router.put('/:id', authenticateToken, eventosController.updateEvento.bind(eventosController));
 /**
  * @swagger
  * /eventos/{id}:
@@ -90,7 +91,7 @@ router.put('/:id', eventosController.updateEvento.bind(eventosController));
  */
 
 // Eliminar evento
-router.delete('/:id', eventosController.deleteEvento.bind(eventosController));
+router.delete('/:id', authenticateToken, eventosController.deleteEvento.bind(eventosController));
 /**
  * @swagger
  * /eventos/{id}:

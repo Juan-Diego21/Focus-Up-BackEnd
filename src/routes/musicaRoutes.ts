@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { musicController } from "../controllers/MusicController";
+import { authenticateToken } from "../middleware/auth";
 
 const router = Router();
 
@@ -11,7 +12,7 @@ const router = Router();
  */
 
 // GET /api/v1/musica - Obtener todas las canciones
-router.get("/", musicController.getAllCanciones.bind(musicController));
+router.get("/", authenticateToken, musicController.getAllCanciones.bind(musicController));
 
 /**
  * @swagger
@@ -27,6 +28,7 @@ router.get("/", musicController.getAllCanciones.bind(musicController));
 // GET /api/v1/musica/nombre/:nombre - Obtener cancion por nombre
 router.get(
   "/nombre/:nombre",
+  authenticateToken,
   musicController.getCancionByNombre.bind(musicController)
 );
 
@@ -48,7 +50,7 @@ router.get(
  */
 
 // GET /api/v1/musica/albums - Obtener todos los albums
-router.get("/albums", musicController.getAllAlbums.bind(musicController));
+router.get("/albums", authenticateToken, musicController.getAllAlbums.bind(musicController));
 
 /**
  * @swagger
@@ -64,6 +66,7 @@ router.get("/albums", musicController.getAllAlbums.bind(musicController));
 // GET /api/v1/musica/albums/:id/canciones - Obtener canciones por id de álbum
 router.get(
   "/albums/:id/canciones",
+  authenticateToken,
   musicController.getCancionesByAlbum.bind(musicController)
 );
 
@@ -85,7 +88,7 @@ router.get(
  */
 
 // GET /api/v1/musica/:id - Obtener cancion por id
-router.get("/:id", musicController.getCancionById.bind(musicController));
+router.get("/:id", authenticateToken, musicController.getCancionById.bind(musicController));
 /**
  * @swagger
  * /musica/{id}:
@@ -106,7 +109,7 @@ router.get("/:id", musicController.getCancionById.bind(musicController));
  */
 
 // GET /api/v1/musica/albums/:id - Obtener álbum por ID
-router.get("/albums/:id", musicController.getAlbumById.bind(musicController));
+router.get("/albums/:id", authenticateToken, musicController.getAlbumById.bind(musicController));
 
 /**
  * @swagger
@@ -130,6 +133,7 @@ router.get("/albums/:id", musicController.getAlbumById.bind(musicController));
 // GET /api/v1/musica/albums/nombre/:nombre - Obtener álbum por nombre
 router.get(
   "/albums/nombre/:nombre",
+  authenticateToken,
   musicController.getAlbumByNombre.bind(musicController)
 );
 

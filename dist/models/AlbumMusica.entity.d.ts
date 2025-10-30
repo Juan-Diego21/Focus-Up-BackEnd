@@ -3,4 +3,5 @@ export declare class AlbumMusicaEntity {
     nombreAlbum: string;
     fechaCreacion: Date;
     fechaActualizacion: Date;
+    urlImagen: string;
 }

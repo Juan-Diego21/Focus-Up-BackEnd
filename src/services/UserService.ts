@@ -6,6 +6,8 @@ import { UsuarioInteresesEntity } from "../models/UsuarioIntereses.entity";
 import { UsuarioDistraccionesEntity } from "../models/UsuarioDistracciones.entity";
 import { UserEntity } from "../models/User.entity";
 import logger from "../utils/logger";
+import { JwtUtils } from "../utils/jwt";
+import nodemailer from "nodemailer";
 
 export class UserService {
   private static readonly SALT_ROUNDS = parseInt(
@@ -453,6 +455,154 @@ export class UserService {
       return { success: false, error: "Error eliminando usuario" };
     }
   }
+  //Correo 
+  async sendPasswordResetLink(emailOrUsername: string): Promise<{
+  success: boolean;
+  message: string;
+}> {
+  try {
+    console.log('🚀 SERVICE - Iniciando sendPasswordResetLink con:', emailOrUsername);
+    
+    // Buscar usuario por email o username
+    console.log('🔍 SERVICE - Buscando por email...');
+    let user = await userRepository.findByEmail(emailOrUsername);
+    
+    if (!user) {
+      console.log('🔍 SERVICE - Buscando por username...');
+      user = await userRepository.findByUsername(emailOrUsername);
+    }
+
+    console.log('📊 SERVICE - Resultado final de búsqueda:', user ? 'USUARIO ENCONTRADO' : 'USUARIO NO ENCONTRADO');
+
+    // Mensaje genérico por seguridad
+    if (!user) {
+      console.log('❌ SERVICE - Retornando mensaje genérico');
+      return {
+        success: true,
+        message: "Si el usuario existe, recibirás un enlace para restablecer tu contraseña."
+      };
+    }
+
+    console.log('✅ SERVICE - Usuario encontrado, generando token...');
+
+    // Generar token
+    const tokenPayload = {
+      userId: user.id_usuario!,
+      email: user.correo,
+    };
+
+    const resetToken = JwtUtils.generateAccessToken(tokenPayload);
+    
+    // Crear enlace
+    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+
+    console.log('📧 SERVICE - Enviando email a:', user.correo);
+
+    // Enviar email
+    await this.sendResetEmail(user.correo, resetLink, user.nombre_usuario);
+
+    console.log('✅ SERVICE - Proceso completado exitosamente');
+
+    return {
+      success: true,
+      message: "Se ha enviado un enlace de restablecimiento a tu email."
+    };
+
+  } catch (error) {
+    console.error('💥 SERVICE - Error en sendPasswordResetLink:', error);
+    
+    // Por seguridad, siempre retornar éxito
+    return {
+      success: true,
+      message: "Si el usuario existe, recibirás un enlace para restablecer tu contraseña."
+    };
+  }
+}
+
+  /**
+   * Restablecer contraseña con token
+   */
+  async resetPassword(token: string, newPassword: string): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    try {
+      // Verificar token
+      const decoded = JwtUtils.verifyAccessToken(token);
+
+      // Validar nueva contraseña
+      if (!ValidationUtils.isValidPassword(newPassword)) {
+        return {
+          success: false,
+          message: "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número"
+        };
+      }
+
+      // Hash nueva contraseña
+      const hashedPassword = await UserService.hashPassword(newPassword);
+
+      const update  = await userRepository.updatePassword(decoded.userId, hashedPassword);
+      
+      if (!update) {
+        return {
+          success: false,
+          message: "Usuario no encontrado"
+        };
+      }
+
+      return {
+        success: true,
+        message: "Contraseña restablecida exitosamente"
+      };
+
+    } catch (error) {
+      logger.error("Error en UserService.resetPassword:", error);
+      
+      return {
+        success: false,
+        message: "Token inválido o expirado"
+      };
+    }
+  }
+
+  /**
+   * Enviar email de restablecimiento
+   */
+  private async sendResetEmail(email: string, resetLink: string, username: string): Promise<void> {
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER!,
+          pass: process.env.EMAIL_PASS!,
+        }
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER!,
+        to: email,
+        subject: "Restablecer tu contraseña",
+        html: `
+          <h2>Hola ${username}</h2>
+          <p>Has solicitado restablecer tu contraseña.</p>
+          <p>Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+          <a href="${resetLink}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Restablecer Contraseña
+          </a>
+          <p>Este enlace expirará en 15 minutos.</p>
+          <p>Si no solicitaste este cambio, ignora este email.</p>
+        `
+      };
+
+      await transporter.sendMail(mailOptions);
+      logger.info(`Email de restablecimiento enviado a: ${email}`);
+
+    } catch (error) {
+      logger.error("Error enviando email de restablecimiento:", error);
+      throw error;
+    }
+  }
+
 }
 
 export const userService = new UserService();

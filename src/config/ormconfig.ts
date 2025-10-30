@@ -2,6 +2,20 @@
 import { DataSource } from "typeorm";
 import { env } from "./env";
 
+// Importar todas las entidades para registro directo
+import { UserEntity } from "../models/User.entity";
+import { InterestEntity } from "../models/Interest.entity";
+import { DistractionEntity } from "../models/Distraction.entity";
+import { UsuarioInteresesEntity } from "../models/UsuarioIntereses.entity";
+import { UsuarioDistraccionesEntity } from "../models/UsuarioDistracciones.entity";
+import { BeneficioEntity } from "../models/Beneficio.entity";
+import { MetodoEstudioEntity } from "../models/MetodoEstudio.entity";
+import { MetodoBeneficiosEntity } from "../models/MetodoBeneficios.entity";
+import { MusicaEntity } from "../models/Musica.entity";
+import { AlbumMusicaEntity } from "../models/AlbumMusica.entity";
+import { EventoEntity } from "../models/Evento.entity";
+import { PasswordResetEntity } from "../models/PasswordReset.entity";
+
 // Exportar la instancia para uso global
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -10,21 +24,32 @@ export const AppDataSource = new DataSource({
   username: env.PGUSER,
   password: env.PGPASSWORD,
   database: env.PGDATABASE,
+  schema: "public", // Explicitly set schema to public
   ssl: env.PGSSLMODE === "require" ? { rejectUnauthorized: false } : false,
   synchronize: false,
   logging: env.NODE_ENV === "development",
   entities: [
-    __dirname + "/../models/User.entity{.ts,.js}",
-    __dirname + "/../models/Interest.entity{.ts,.js}",
-    __dirname + "/../models/Distraction.entity{.ts,.js}",
-    __dirname + "/../models/UsuarioIntereses.entity{.ts,.js}",
-    __dirname + "/../models/UsuarioDistracciones.entity{.ts,.js}",
-    __dirname + "/../models/Evento.entity{.ts,.js}",
-    __dirname + "/../models/Musica.entity{.ts,.js}",
-    __dirname + "/../models/AlbumMusica.entity{.ts,.js}",
-    __dirname + "/../models/Beneficio.entity{.ts,.js}",
-    __dirname + "/../models/MetodoEstudio.entity{.ts,.js}",
-    __dirname + "/../models/MetodoBeneficios.entity{.ts,.js}",
+    // Entidades principales de usuario
+    UserEntity,
+    InterestEntity,
+    DistractionEntity,
+    UsuarioInteresesEntity,
+    UsuarioDistraccionesEntity,
+
+    // Entidades de contenido educativo
+    BeneficioEntity,
+    MetodoEstudioEntity,
+    MetodoBeneficiosEntity,
+
+    // Entidades de música
+    MusicaEntity,
+    AlbumMusicaEntity,
+
+    // Entidades de eventos
+    EventoEntity,
+
+    // Entidades de recuperación de contraseña
+    PasswordResetEntity,
   ],
   migrations: [__dirname + "/../migrations/*{.ts,.js}"],
   subscribers: [],
@@ -40,6 +65,53 @@ export const initializeDatabase = async (): Promise<void> => {
   try {
     await AppDataSource.initialize();
     console.log("✅ TypeORM conectado a PostgreSQL correctamente");
+
+    // Log connection details
+    console.log(`👤 Conectado como usuario: ${env.PGUSER}`);
+    console.log(`🗄️ Base de datos: ${env.PGDATABASE}`);
+
+    // Log entities loaded
+    const entityMetadatas = AppDataSource.entityMetadatas;
+    console.log(`📊 Entidades cargadas por TypeORM: ${entityMetadatas.length}`);
+    entityMetadatas.forEach(entity => {
+      console.log(`  - ${entity.name} -> tabla: ${entity.tableName} (schema: ${entity.schema || 'public'})`);
+    });
+
+    // Test basic connection and schema
+    const queryRunner = AppDataSource.createQueryRunner();
+    try {
+      const schemaResult = await queryRunner.query('SELECT current_schema() as schema, current_user as user');
+      console.log(`📍 Schema actual: ${schemaResult[0].schema}`);
+      console.log(`👤 Usuario de BD: ${schemaResult[0].user}`);
+
+      // Test if usuario table exists
+      const tableCheck = await queryRunner.query(`
+        SELECT schemaname, tablename, tableowner
+        FROM pg_tables
+        WHERE tablename = 'usuario'
+        AND schemaname = 'public'
+      `);
+
+      if (tableCheck.length > 0) {
+        console.log(`✅ Tabla 'usuario' encontrada en schema '${tableCheck[0].schemaname}' - Owner: ${tableCheck[0].tableowner}`);
+      } else {
+        console.log(`❌ Tabla 'usuario' NO encontrada en schema 'public'`);
+        // List all tables in public schema
+        const allTables = await queryRunner.query(`
+          SELECT schemaname, tablename, tableowner
+          FROM pg_tables
+          WHERE schemaname = 'public'
+          ORDER BY tablename
+        `);
+        console.log(`📋 Tablas disponibles en schema 'public':`);
+        allTables.forEach((table: any) => {
+          console.log(`  - ${table.tablename} (owner: ${table.tableowner})`);
+        });
+      }
+    } finally {
+      await queryRunner.release();
+    }
+
   } catch (error) {
     console.error("❌ Error conectando TypeORM a PostgreSQL:", error);
     throw error;

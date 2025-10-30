@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { beneficioController } from "../controllers/BeneficioController";
+import { authenticateToken } from "../middleware/auth";
 
 const router = Router();
 
@@ -11,7 +12,7 @@ const router = Router();
  */
 
 // GET /api/v1/beneficios - List all benefits
-router.get("/", beneficioController.getAllBeneficios.bind(beneficioController));
+router.get("/", authenticateToken, beneficioController.getAllBeneficios.bind(beneficioController));
 
 /**
  * @swagger
@@ -45,7 +46,7 @@ router.get("/", beneficioController.getAllBeneficios.bind(beneficioController));
  */
 
 // GET /api/v1/beneficios/:id - Get benefit by ID
-router.get("/:id", beneficioController.getBeneficioById.bind(beneficioController));
+router.get("/:id", authenticateToken, beneficioController.getBeneficioById.bind(beneficioController));
 
 /**
  * @swagger
@@ -86,7 +87,7 @@ router.get("/:id", beneficioController.getBeneficioById.bind(beneficioController
  */
 
 // POST /api/v1/beneficios - Create a new benefit
-router.post("/", beneficioController.createBeneficio.bind(beneficioController));
+router.post("/", authenticateToken, beneficioController.createBeneficio.bind(beneficioController));
 
 /**
  * @swagger
@@ -130,7 +131,7 @@ router.post("/", beneficioController.createBeneficio.bind(beneficioController));
  */
 
 // PUT /api/v1/beneficios/:id - Update a benefit
-router.put("/:id", beneficioController.updateBeneficio.bind(beneficioController));
+router.put("/:id", authenticateToken, beneficioController.updateBeneficio.bind(beneficioController));
 
 /**
  * @swagger
@@ -181,7 +182,7 @@ router.put("/:id", beneficioController.updateBeneficio.bind(beneficioController)
  */
 
 // DELETE /api/v1/beneficios/:id - Delete a benefit
-router.delete("/:id", beneficioController.deleteBeneficio.bind(beneficioController));
+router.delete("/:id", authenticateToken, beneficioController.deleteBeneficio.bind(beneficioController));
 
 /**
  * @swagger

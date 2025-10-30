@@ -4,11 +4,12 @@ import {
   validateUserCreate,
   validateUserUpdate,
 } from "../middleware/validation";
+import { authenticateToken } from "../middleware/auth";
 
 const router = Router();
 
 // GET /api/v1/users - Obtener todos los usuarios
-router.get("/", userController.getAllUsers.bind(userController));
+router.get("/", authenticateToken, userController.getAllUsers.bind(userController));
 
 /**
  * @swagger
@@ -32,7 +33,7 @@ router.get("/", userController.getAllUsers.bind(userController));
  */
 
 // GET /api/v1/users/:id - Obtener usuario por ID
-router.get("/:id", userController.getUserById.bind(userController));
+router.get("/:id", authenticateToken, userController.getUserById.bind(userController));
 
 /**
  * @swagger
@@ -67,7 +68,7 @@ router.get("/:id", userController.getUserById.bind(userController));
  */
 
 // GET /api/v1/users/email/:email - Obtener usuario por email
-router.get("/email/:email", userController.getUserByEmail.bind(userController));
+router.get("/email/:email", authenticateToken, userController.getUserByEmail.bind(userController));
 
 /**
  * @swagger
@@ -187,6 +188,7 @@ router.post(
 // PUT /api/v1/users/:id - Actualizar usuario por id
 router.put(
   "/:id",
+  authenticateToken,
   validateUserUpdate,
   userController.updateUser.bind(userController)
 );
@@ -331,7 +333,7 @@ router.post("/login", userController.login.bind(userController));
  */
 
 // DELETE /api/v1/users/:id - eliminar usuario
-router.delete("/:id", userController.deleteUser.bind(userController));
+router.delete("/:id", authenticateToken, userController.deleteUser.bind(userController));
 
 /**
  * @swagger
@@ -384,4 +386,170 @@ router.delete("/:id", userController.deleteUser.bind(userController));
  *       401:
  *         description: No autorizado
  */
+
+// POST /api/v1/users/request-password-reset - Solicitar código de verificación para restablecer contraseña
+router.post('/request-password-reset', userController.requestPasswordReset.bind(userController));
+
+/**
+ * @swagger
+ * /users/request-password-reset:
+ *   post:
+ *     summary: Solicitar código de verificación para restablecer contraseña
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - emailOrUsername
+ *             properties:
+ *               emailOrUsername:
+ *                 type: string
+ *                 description: "Correo electrónico o nombre de usuario del usuario"
+ *                 example: "john@example.com"
+ *             example:
+ *               emailOrUsername: "john@example.com"
+ *     responses:
+ *       200:
+ *         description: Código de verificación enviado al correo electrónico
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Si el correo o nombre de usuario existe, recibirás un código para restablecer tu contraseña."
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Correo electrónico o nombre de usuario requerido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "El correo electrónico o nombre de usuario es requerido"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Error interno del servidor"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ */
+
+// POST /api/v1/users/reset-password-with-code - Verificar código y restablecer contraseña
+router.post('/reset-password-with-code', userController.resetPasswordWithCode.bind(userController));
+
+/**
+ * @swagger
+ * /users/reset-password-with-code:
+ *   post:
+ *     summary: Verificar código y restablecer contraseña
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - code
+ *               - newPassword
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: "Correo electrónico del usuario"
+ *                 example: "john@example.com"
+ *               code:
+ *                 type: string
+ *                 description: "Código de verificación de 6 dígitos recibido por email"
+ *                 example: "123456"
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 description: "Nueva contraseña. Debe tener al menos 8 caracteres, una mayúscula y un número."
+ *                 example: "NewSecurePassword123"
+ *             example:
+ *               email: "john@example.com"
+ *               code: "123456"
+ *               newPassword: "NewSecurePassword123"
+ *     responses:
+ *       200:
+ *         description: Contraseña restablecida exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Tu contraseña ha sido restablecida exitosamente."
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Código inválido, expirado o contraseña no cumple requisitos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Código inválido o expirado. Solicita uno nuevo."
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Error interno del servidor"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ */
+
+
 export default router;

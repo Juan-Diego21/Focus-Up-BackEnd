@@ -52,4 +52,5 @@ export interface IUserRepository {
     findAll(): Promise<User[]>;
     emailExists(email: string, excludeUserId?: number): Promise<boolean>;
     usernameExists(username: string, excludeUserId?: number): Promise<boolean>;
+    updatePassword(userId: number, hashedPassword: string): Promise<boolean>;
 }

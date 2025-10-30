@@ -17,6 +17,8 @@ app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
     origin: "*",
     credentials: true,
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type,Authorization",
 }));
 app.use((0, morgan_1.default)(env_1.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(express_1.default.json({ limit: "10mb" }));

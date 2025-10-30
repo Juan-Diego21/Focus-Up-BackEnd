@@ -19,7 +19,8 @@ class MusicRepository {
             id_album: entity.idAlbum ?? null,
             fecha_creacion: entity.fechaCreacion,
             fecha_actualizacion: entity.fechaActualizacion,
-            url_archivo: entity.urlArchivo,
+            url_musica: entity.urlMusica,
+            url_imagen: entity.urlImagen,
         };
     }
     mapToAlbumDTO(entity) {
@@ -28,6 +29,7 @@ class MusicRepository {
             nombre_album: entity.nombreAlbum,
             fecha_creacion: entity.fechaCreacion,
             fecha_actualizacion: entity.fechaActualizacion,
+            url_imagen: entity.urlImagen,
         };
     }
     async findAll() {

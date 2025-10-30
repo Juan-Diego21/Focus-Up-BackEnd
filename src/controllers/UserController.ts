@@ -4,7 +4,7 @@ import { ApiResponse } from "../types/ApiResponse";
 import { JwtUtils } from "../utils/jwt";
 import { JwtPayload } from "../utils/jwt";
 import logger from "../utils/logger";
-
+import { Transporter } from "nodemailer";
 /**
  * @swagger
  * tags:
@@ -366,6 +366,84 @@ export class UserController {
     };
 
     res.status(result.success ? 200 : 404).json(response);
+  }
+
+  // Solicitar código de verificación para restablecer contraseña
+  async requestPasswordReset(req: Request, res: Response) {
+    try {
+      const { emailOrUsername } = req.body;
+
+      if (!emailOrUsername) {
+        const response: ApiResponse = {
+          success: false,
+          message: "El correo electrónico o nombre de usuario es requerido",
+          timestamp: new Date(),
+        };
+        return res.status(400).json(response);
+      }
+
+      const { passwordResetService } = await import("../services/PasswordResetService");
+      const result = await passwordResetService.requestPasswordReset(emailOrUsername);
+
+      const response: ApiResponse = {
+        success: result.success,
+        message: result.message,
+        timestamp: new Date(),
+      };
+
+      res.status(result.success ? 200 : 400).json(response);
+
+    } catch (error) {
+      logger.error("Error en UserController.requestPasswordReset:", error);
+
+      const response: ApiResponse = {
+        success: false,
+        message: "Error interno del servidor",
+        timestamp: new Date(),
+      };
+
+      res.status(500).json(response);
+    }
+  }
+
+  /**
+    * Verificar código y restablecer contraseña
+    */
+   async resetPasswordWithCode(req: Request, res: Response) {
+    try {
+      const { email, code, newPassword } = req.body;
+
+      if (!email || !code || !newPassword) {
+        const response: ApiResponse = {
+          success: false,
+          message: "El correo electrónico, código y nueva contraseña son requeridos",
+          timestamp: new Date(),
+        };
+        return res.status(400).json(response);
+      }
+
+      const { passwordResetService } = await import("../services/PasswordResetService");
+      const result = await passwordResetService.verifyResetCodeAndResetPassword(email, code, newPassword);
+
+      const response: ApiResponse = {
+        success: result.success,
+        message: result.message,
+        timestamp: new Date(),
+      };
+
+      res.status(result.success ? 200 : 400).json(response);
+
+    } catch (error) {
+      logger.error("Error en UserController.resetPasswordWithCode:", error);
+
+      const response: ApiResponse = {
+        success: false,
+        message: "Error interno del servidor",
+        timestamp: new Date(),
+      };
+
+      res.status(500).json(response);
+    }
   }
 }
 
