@@ -1,286 +1,249 @@
 ---
-# 🎯 Focus Up Backend API - Manual Técnico de Arquitectura
+# 🎯 Focus Up Backend API — Documentación y Manual Técnico
 
-Un manual técnico completo para la aplicación **Focus Up Backend**, que detalla la arquitectura de software, patrones de diseño, buenas prácticas y estándares de desarrollo utilizados en esta aplicación **Node.js / Express / TypeScript**.
+Documentación completa y unificada del **Backend de Focus Up**, una aplicación construida en **Node.js / Express / TypeScript** para la gestión del enfoque y la productividad personal.
+Incluye detalles de **arquitectura, estructura de carpetas, módulos funcionales, principios de diseño, patrones, buenas prácticas** y **configuración de desarrollo**.
 ---
 
-## 📋 Tabla de Contenido
+## 📘 Tabla de Contenido
 
-- [1. Descripción General de la Arquitectura](#1-descripción-general-de-la-arquitectura)
-- [2. Componentes Principales](#2-componentes-principales)
-- [3. Manual de Buenas Prácticas](#3-manual-de-buenas-prácticas)
-- [4. Principios de Diseño](#4-principios-de-diseño)
-- [5. Patrones Usados o Recomendados](#5-patrones-usados-o-recomendados)
-- [6. Configuración de Desarrollo](#6-configuración-de-desarrollo)
-- [7. Documentación de la API](#7-documentación-de-la-api)
+1. [Arquitectura General](#1-arquitectura-general)
+2. [Estructura de Carpetas](#2-estructura-de-carpetas)
+3. [Módulos Funcionales](#3-módulos-funcionales)
+4. [Flujo de Datos](#4-flujo-de-datos)
+5. [Manual de Buenas Prácticas](#5-manual-de-buenas-prácticas)
+6. [Principios de Diseño](#6-principios-de-diseño)
+7. [Patrones Usados o Recomendados](#7-patrones-usados-o-recomendados)
+8. [Configuración y Desarrollo](#8-configuración-y-desarrollo)
+9. [Documentación de la API](#9-documentación-de-la-api)
 
 ---
 
-## 1. Descripción General de la Arquitectura
+## 1. Arquitectura General
 
 ### Tipo de Arquitectura: **Layered Architecture (Arquitectura por Capas)**
 
-Esta aplicación backend implementa una **Layered Architecture** (también conocida como arquitectura en N capas), la cual promueve la **separación de responsabilidades** al organizar el código en capas con funciones específicas. Esta arquitectura ofrece:
-
-- **Mantenibilidad:** Los cambios en una capa no afectan las demás.
-- **Testabilidad:** Cada capa puede probarse de forma independiente.
-- **Escalabilidad:** Las capas pueden escalarse de manera individual.
-- **Reusabilidad:** La lógica de negocio puede reutilizarse en diferentes interfaces.
-
-### Capas Principales
+La aplicación está diseñada bajo una **arquitectura por capas**, que separa responsabilidades y mejora la mantenibilidad, testabilidad y escalabilidad del sistema.
 
 ```
-┌─────────────────┐
-│   Controllers   │ ← Manejo de solicitudes/respuestas HTTP
-├─────────────────┤
-│    Services     │ ← Lógica de negocio y validaciones
-├─────────────────┤
-│  Repositories   │ ← Abstracción de persistencia de datos
-├─────────────────┤
-│    Entities     │ ← Definición del esquema de base de datos
-└─────────────────┘
+Cliente HTTP
+    ↓
+Middleware (Auth, Validation)
+    ↓
+Controllers (HTTP Request/Response)
+    ↓
+Services (Business Logic)
+    ↓
+Repositories (Data Access)
+    ↓
+Entities (Database Schema)
+    ↓
+PostgreSQL Database
 ```
 
-**Flujo de Datos:**
+### Tecnologías Principales
 
-1. **Request** → El Controller recibe la solicitud HTTP
-2. **Validation** → El Middleware valida los datos de entrada
-3. **Delegation** → El Controller delega la operación al Service
-4. **Business Logic** → El Service ejecuta las reglas de negocio
-5. **Data Access** → El Service llama los métodos del Repository
-6. **Persistence** → El Repository interactúa con las Entities de TypeORM
-7. **Database** → TypeORM gestiona las operaciones con PostgreSQL
-8. **Response** → Los datos regresan a través de las capas hacia el Controller
-9. **Response** → El Controller devuelve la respuesta HTTP
-
-### Integración Tecnológica
-
-- **Express.js:** Proporciona el framework web y el enrutamiento.
-- **TypeScript:** Añade tipado estático y mejor soporte en IDE.
-- **TypeORM:** ORM (Object-Relational Mapping) para operaciones con base de datos.
-- **PostgreSQL:** Base de datos relacional usada para la persistencia de datos.
+- **Node.js / Express** — Framework web y enrutamiento
+- **TypeScript** — Tipado estático y desarrollo robusto
+- **TypeORM** — ORM para operaciones de base de datos
+- **PostgreSQL** — Base de datos relacional
+- **JWT** — Autenticación sin estado
+- **Swagger** — Documentación interactiva de API
+- **Winston** — Logging estructurado
+- **Helmet / Morgan** — Seguridad y registro de solicitudes
 
 ---
 
-## 2. Componentes Principales
-
-### Controllers
-
-Los Controllers manejan las solicitudes y respuestas HTTP, actuando como punto de entrada a los endpoints de la API. Están diseñados para ser **delgados** y centrarse en:
-
-- Manejo de request/response
-- Códigos de estado HTTP
-- Delegación de validaciones básicas
-- Llamado a métodos del Service correspondiente
-
-**Características Clave:**
-
-- Sin lógica de negocio
-- Formato consistente de errores
-- Anotaciones de documentación Swagger
-- Inyección de dependencias de servicios
-
----
-
-### Services
-
-Los Services contienen la lógica de negocio central y orquestan las operaciones entre los Repositories. Se encargan de:
-
-- Reglas de negocio y validaciones
-- Manejo de transacciones
-- Transformación de datos
-- Operaciones de seguridad (hashing de contraseñas, etc.)
-- Comunicación con servicios externos
-
-**Características Clave:**
-
-- Sin preocupaciones HTTP
-- Manejo completo de errores
-- Sanitización de datos
-- Implementación segura de procesos de autenticación
-
----
-
-### Repositories (TypeORM)
-
-Los Repositories abstraen la lógica de persistencia, proporcionando una interfaz limpia para las operaciones de base de datos bajo el **Repository Pattern**.
-
-- Encapsulan la lógica de acceso a datos
-- Proveen operaciones CRUD
-- Manejan consultas complejas
-- Administran relaciones entre Entities
-
----
-
-### Entities
-
-Las Entities definen el esquema de la base de datos y las relaciones usando decoradores de TypeORM. Representan:
-
-- Tablas y columnas de la base de datos
-- Relaciones entre entidades
-- Índices y restricciones
-- Validaciones a nivel de esquema
-
----
-
-### Middlewares
-
-Manejan preocupaciones transversales aplicadas a las solicitudes:
-
-- **Authentication:** Verificación de tokens JWT
-- **Validation:** Validación de datos de entrada
-- **Security:** CORS, Helmet headers
-- **Logging:** Registro de solicitudes con Morgan
-- **Error Handling:** Manejo centralizado de errores
-
----
-
-### Capa de Configuración
-
-Administra la configuración de la aplicación a través de:
-
-- **Environment Variables**
-- **TypeORM Config**
-- **Swagger Config**
-
----
-
-## 3. Manual de Buenas Prácticas
-
-### a. Organización del Código
-
-#### Estructura de Carpetas
+## 2. Estructura de Carpetas
 
 ```
 src/
-├── controllers/     # Manejadores HTTP
-├── services/        # Lógica de negocio
-├── repositories/    # Capa de acceso a datos
-├── models/          # Entities de TypeORM
-├── middleware/      # Middlewares de Express
-├── routes/          # Definiciones de rutas
-├── types/           # Interfaces TypeScript
-├── utils/           # Funciones utilitarias
-├── config/          # Archivos de configuración
-└── scripts/         # Scripts de mantenimiento
+├── app.ts                 # Punto de entrada principal
+├── config/                # Configuración general
+│   ├── env.ts             # Variables de entorno
+│   ├── ormconfig.ts       # Conexión TypeORM/PostgreSQL
+│   └── swagger.ts         # Configuración Swagger
+├── controllers/           # Controladores HTTP
+│   ├── BeneficioController.ts
+│   ├── EventoController.ts
+│   ├── MetodoEstudioController.ts
+│   ├── MusicController.ts
+│   └── UserController.ts
+├── middleware/            # Middlewares transversales
+│   ├── auth.ts
+│   ├── validation.ts
+│   └── errorHandler.ts
+├── models/                # Entities (TypeORM)
+│   ├── *.entity.ts
+│   └── User.ts
+├── repositories/          # Repositories (acceso a datos)
+│   ├── BeneficioRepository.ts
+│   ├── EventoRepository.ts
+│   ├── MetodoEstudioRepository.ts
+│   ├── MusicRepository.ts
+│   └── UserRepository.ts
+├── routes/                # Definición de rutas
+│   ├── beneficioRoutes.ts
+│   ├── eventosRutas.ts
+│   ├── metodoEstudioRoutes.ts
+│   ├── musicaRoutes.ts
+│   ├── userRoutes.ts
+│   └── index.ts
+├── services/              # Lógica de negocio
+│   ├── BeneficioService.ts
+│   ├── EventosService.ts
+│   ├── MetodoEstudioService.ts
+│   ├── MusicService.ts
+│   ├── PasswordResetService.ts
+│   └── UserService.ts
+├── types/                 # Tipos e interfaces TypeScript
+│   ├── ApiResponse.ts
+│   ├── Beneficio.ts
+│   ├── IEventoCreate.ts
+│   ├── MetodoEstudio.ts
+│   ├── Musica.ts
+│   └── User.ts
+├── utils/                 # Utilidades
+│   ├── jwt.ts
+│   ├── logger.ts
+│   ├── mailer.ts
+│   └── validation.ts
+└── scripts/               # Scripts de mantenimiento/testing
+    ├── debug-routes.ts
+    ├── test-db.ts
+    └── test-integration.ts
 ```
 
-- **Un módulo por dominio:** agrupa controllers, services y repositories relacionados.
-- **Dependency Injection:** usa inyección por constructor para facilitar testing.
-- **Separación de responsabilidades:** evita lógica de negocio en los controllers.
+### Interconexión
+
+- `app.ts` → importa configuraciones y rutas
+- **Controllers** → llaman **Services**
+- **Services** → usan **Repositories**
+- **Repositories** → operan sobre **Entities**
+- **Routes** → definen endpoints y aplican **Middleware**
+- **Utils** → soporte común (JWT, mailer, logger)
 
 ---
 
-### b. Manejo de Errores
+## 3. Módulos Funcionales
 
-Uso de un **Error Handler centralizado**, **Custom Error Classes**, y formato de error uniforme.
+### 🔐 Módulo de Usuario
 
-Cada error sigue el formato:
+Gestión de autenticación, registro y perfiles.
+Incluye autenticación JWT, hashing de contraseñas y recuperación de cuenta.
+
+### 📚 Módulo de Métodos de Estudio
+
+Administra técnicas y estrategias de estudio, relacionadas con beneficios.
+
+### 🎵 Módulo de Música
+
+Gestiona el catálogo de música, búsqueda, organización por álbumes y URLs de streaming.
+
+### 📅 Módulo de Eventos
+
+Programación de eventos y sesiones de estudio, vinculadas con métodos.
+
+### 💡 Módulo de Beneficios
+
+Administra los beneficios asociados a los métodos de estudio (relación muchos a muchos).
+
+---
+
+## 4. Flujo de Datos
+
+```
+Cliente HTTP Request
+       ↓
+   Middleware (auth, validation)
+       ↓
+   Routes
+       ↓
+   Controller
+       ↓
+   Service
+       ↓
+   Repository
+       ↓
+   Entity
+       ↓
+   PostgreSQL Database
+```
+
+**Ejemplo:**
+Creación de usuario → Route → Controller → Service → Repository → Entity → Base de Datos → Respuesta.
+
+---
+
+## 5. Manual de Buenas Prácticas
+
+### ✅ Organización del Código
+
+- Un módulo por dominio.
+- Controllers delgados (sin lógica de negocio).
+- Services robustos y reutilizables.
+- Uso de **Dependency Injection** cuando sea posible.
+
+### ⚠️ Manejo de Errores
+
+Error handler centralizado con formato uniforme:
 
 ```json
 {
   "success": false,
-  "message": "Mensaje de error",
-  "error": "Descripción detallada",
+  "message": "Error interno del servidor",
+  "error": "Detalle del error",
   "timestamp": "ISO date"
 }
 ```
 
----
+### 🧩 Validaciones
 
-### c. Validaciones
+Múltiples niveles: middleware → service → base de datos.
+Sanitización de entradas contra XSS e inyección SQL.
 
-Validación en **múltiples niveles:**
+### 🔒 Seguridad
 
-1. Middleware (entrada de datos)
-2. Service (reglas de negocio)
-3. Database (restricciones de esquema)
+- Autenticación y autorización por **JWT**
+- Hashing con **bcrypt (12 salt rounds)**
+- Seguridad HTTP con **Helmet**
+- No exponer tokens ni contraseñas
 
-Usando librerías y DTOs para sanitizar la entrada y prevenir ataques (XSS, SQL Injection).
+### 🧾 Logging
 
----
-
-### d. Seguridad
-
-- **Autenticación y Autorización:** basada en **JWT** (stateless).
-- **Seguridad de contraseñas:** **bcrypt** con 12 salt rounds.
-- **Protección de datos:** nunca exponer contraseñas o tokens.
-- **Headers de seguridad:** uso de **Helmet** con políticas CSP.
+Uso de **Winston** y **Morgan** para registro estructurado.
+Seguimiento de errores, autenticaciones y rendimiento.
 
 ---
 
-### e. Manejo de Entorno
+## 6. Principios de Diseño
 
-Archivo `.env` con variables de entorno para:
+### Principios **SOLID**
 
-- Configuración del servidor
-- Conexión a la base de datos
-- Claves de seguridad (JWT, bcrypt, etc.)
+- SRP — Responsabilidad única
+- OCP — Abierto para extensión
+- LSP — Sustitución de Liskov
+- ISP — Interfaces específicas
+- DIP — Inversión de dependencias
 
-Con validación de variables requeridas en el startup de la aplicación.
-
----
-
-### f. Logging y Monitoreo
-
-Uso de **Winston** para registro estructurado de eventos:
-
-- Inicio y cierre del servidor
-- Conexión a la base de datos
-- Fallos de autenticación
-- Errores de API
-- Métricas de rendimiento
+Otros:
+**DRY**, **KISS**, **YAGNI**, **Separation of Concerns**
 
 ---
 
-### g. Capa de Base de Datos
-
-Implementación del **Repository Pattern**, manejo de **migraciones**, y gestión de **relaciones entre entidades** con TypeORM.
-
----
-
-### h. Documentación
-
-Integración de **Swagger/OpenAPI** para documentación interactiva:
-
-- Documentar todos los endpoints
-- Incluir esquemas de request/response
-- Proveer ejemplos actualizados
-
----
-
-## 4. Principios de Diseño
-
-### Principios SOLID
-
-- **SRP (Single Responsibility):** cada clase tiene una sola responsabilidad.
-- **OCP (Open/Closed):** abiertas para extensión, cerradas para modificación.
-- **LSP (Liskov):** las implementaciones pueden sustituirse sin alterar el comportamiento.
-- **ISP (Interface Segregation):** las interfaces deben ser específicas y no forzar dependencias innecesarias.
-- **DIP (Dependency Inversion):** depender de abstracciones, no de implementaciones concretas.
-
-Otros principios:
-
-- **DRY (Don’t Repeat Yourself)**
-- **KISS (Keep It Simple, Stupid)**
-- **YAGNI (You Aren’t Gonna Need It)**
-- **Separación de responsabilidades**
-
----
-
-## 5. Patrones Usados o Recomendados
+## 7. Patrones Usados o Recomendados
 
 - **Repository Pattern**
+- **DTO Pattern**
 - **Dependency Injection Pattern**
-- **DTO Pattern (Data Transfer Object)**
 - **Factory Pattern**
 - **Middleware Pattern**
 
 ---
 
-## 6. Configuración de Desarrollo
+## 8. Configuración y Desarrollo
 
-### Requisitos Previos
+### Requisitos
 
 - Node.js 18+
 - PostgreSQL 12+
@@ -294,53 +257,62 @@ cd focus-up-backend
 npm install
 ```
 
-### Configuración del Entorno
+### Variables de Entorno (.env)
 
-Crear archivo `.env` con las variables requeridas.
+```env
+PORT=3001
+NODE_ENV=development
+API_PREFIX=/api/v1
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=focusup_db
+PGUSER=focusup_user
+PGPASSWORD=your_password
+JWT_SECRET=your_jwt_secret_key
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_password
+BCRYPT_SALT_ROUNDS=12
+```
 
 ### Ejecución
 
 ```bash
-# Desarrollo
-npm run dev
-
-# Producción
-npm run build
-npm start
+npm run dev        # Desarrollo
+npm run build      # Compilación
+npm start          # Producción
 ```
 
-### Pruebas
+### Testing
 
 ```bash
-npm run test:integration
 npm run test:db
+npm run test:integration
+npm run test:routes
 ```
 
 ---
 
-## 7. Documentación de la API
+## 9. Documentación de la API
 
-Documentación interactiva disponible en:
+Accede a Swagger UI en:
+👉 `http://localhost:3001/api-docs`
 
-```
-http://localhost:3001/api-docs
-```
+**Autenticación:** incluir el header
+`Authorization: Bearer <token>`
 
-**Autenticación:** incluir el token JWT en el header `Authorization`.
-
-Formato de respuesta estándar:
+**Formato de respuesta:**
 
 ```json
 {
   "success": true,
   "message": "Operación exitosa",
   "data": {},
-  "timestamp": "ISO date string"
+  "timestamp": "2024-01-01T10:00:00Z"
 }
 ```
 
 ---
 
-Este manual técnico sirve como guía definitiva para mantener, escalar y mejorar la aplicación **Focus Up Backend**. Seguir estos patrones arquitectónicos y buenas prácticas garantiza un desarrollo **consistente, profesional y mantenible**.
+> 📘 **Focus Up Backend** combina una arquitectura modular, principios sólidos de diseño y buenas prácticas de desarrollo para garantizar un sistema **escalable, seguro y mantenible**.
 
 ---
