@@ -32,31 +32,27 @@ class UserRepository {
     }
     async findByEmail(email) {
         try {
-            console.log('🔍 REPOSITORY - Buscando por email:', email);
             const user = await this.repository.findOne({
                 where: { correo: email.toLowerCase() },
                 relations: ['usuarioIntereses', 'usuarioDistracciones']
             });
-            console.log('📧 REPOSITORY - Resultado email:', user ? `ENCONTRADO: ${user.idUsuario}` : 'NO ENCONTRADO');
             return user ? this.mapToUserDTO(user) : null;
         }
         catch (error) {
-            console.error('💥 REPOSITORY - Error en findByEmail:', error);
+            logger_1.default.error("Error en UserRepository.findByEmail:", error);
             return null;
         }
     }
     async findByUsername(username) {
         try {
-            console.log('🔍 REPOSITORY - Buscando por username:', username);
             const user = await this.repository.findOne({
                 where: { nombreUsuario: username },
                 relations: ['usuarioIntereses', 'usuarioDistracciones']
             });
-            console.log('👤 REPOSITORY - Resultado username:', user ? `ENCONTRADO: ${user.idUsuario}` : 'NO ENCONTRADO');
             return user ? this.mapToUserDTO(user) : null;
         }
         catch (error) {
-            console.error('💥 REPOSITORY - Error en findByUsername:', error);
+            logger_1.default.error("Error en UserRepository.findByUsername:", error);
             return null;
         }
     }

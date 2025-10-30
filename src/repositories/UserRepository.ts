@@ -9,6 +9,10 @@ import {
 } from "../types/User";
 import logger from "../utils/logger";
 
+/**
+ * Repositorio para la gestión de usuarios en la base de datos
+ * Implementa operaciones CRUD y consultas específicas para usuarios
+ */
 export class UserRepository implements IUserRepository {
   private repository: Repository<UserEntity>;
 
@@ -39,39 +43,41 @@ export class UserRepository implements IUserRepository {
     return user ? this.mapToUserDTO(user) : null;
   }
 
+  /**
+   * Busca un usuario por su dirección de correo electrónico
+   * Incluye relaciones con intereses y distracciones del usuario
+   */
   async findByEmail(email: string): Promise<User | null> {
-  try {
-    console.log('🔍 REPOSITORY - Buscando por email:', email);
-    
-    const user = await this.repository.findOne({
-      where: { correo: email.toLowerCase() },
-      relations: ['usuarioIntereses', 'usuarioDistracciones']
-    });
-    
-    console.log('📧 REPOSITORY - Resultado email:', user ? `ENCONTRADO: ${user.idUsuario}` : 'NO ENCONTRADO');
-    return user ? this.mapToUserDTO(user) : null;
-  } catch (error) {
-    console.error('💥 REPOSITORY - Error en findByEmail:', error);
-    return null;
-  }
-}
+    try {
+      const user = await this.repository.findOne({
+        where: { correo: email.toLowerCase() },
+        relations: ['usuarioIntereses', 'usuarioDistracciones']
+      });
 
-async findByUsername(username: string): Promise<User | null> {
-  try {
-    console.log('🔍 REPOSITORY - Buscando por username:', username);
-    
-    const user = await this.repository.findOne({
-      where: { nombreUsuario: username },
-      relations: ['usuarioIntereses', 'usuarioDistracciones']
-    });
-    
-    console.log('👤 REPOSITORY - Resultado username:', user ? `ENCONTRADO: ${user.idUsuario}` : 'NO ENCONTRADO');
-    return user ? this.mapToUserDTO(user) : null;
-  } catch (error) {
-    console.error('💥 REPOSITORY - Error en findByUsername:', error);
-    return null;
+      return user ? this.mapToUserDTO(user) : null;
+    } catch (error) {
+      logger.error("Error en UserRepository.findByEmail:", error);
+      return null;
+    }
   }
-}
+
+  /**
+   * Busca un usuario por su nombre de usuario
+   * Incluye relaciones con intereses y distracciones del usuario
+   */
+  async findByUsername(username: string): Promise<User | null> {
+    try {
+      const user = await this.repository.findOne({
+        where: { nombreUsuario: username },
+        relations: ['usuarioIntereses', 'usuarioDistracciones']
+      });
+
+      return user ? this.mapToUserDTO(user) : null;
+    } catch (error) {
+      logger.error("Error en UserRepository.findByUsername:", error);
+      return null;
+    }
+  }
 
   async update(id: number, updates: UserUpdateInput): Promise<User | null> {
     const updateData: any = {};
@@ -160,18 +166,21 @@ async findByUsername(username: string): Promise<User | null> {
   
   }
 
-  //email
+  /**
+   * Actualiza la contraseña hasheada de un usuario
+   * Utilizado en el proceso de restablecimiento de contraseña
+   */
   async updatePassword(userId: number, hashedPassword: string): Promise<boolean> {
-      try {
-        const result = await this.repository.update(userId, {
-          contrasena: hashedPassword
-        });
-        return !!(result.affected && result.affected > 0);
-      } catch (error) {
-        logger.error("Error en UserRepository.updatePassword:", error);
-        return false;
-      }
+    try {
+      const result = await this.repository.update(userId, {
+        contrasena: hashedPassword
+      });
+      return !!(result.affected && result.affected > 0);
+    } catch (error) {
+      logger.error("Error en UserRepository.updatePassword:", error);
+      return false;
     }
+  }
   
 }
 

@@ -2,6 +2,10 @@ import { Request, Response } from "express";
 import { musicService } from "../services/MusicService";
 import { ApiResponse } from "../types/ApiResponse";
 
+/**
+ * Controlador para la gestión de música y álbumes
+ * Maneja consultas de canciones y álbumes para la funcionalidad de música de fondo
+ */
 export class MusicController {
   async getAllCanciones(req: Request, res: Response) {
     const result = await musicService.getAllCanciones();

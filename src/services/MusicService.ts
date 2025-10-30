@@ -1,6 +1,10 @@
 import { musicRepository } from "../repositories/MusicRepository";
 import { Musica, Album } from "../types/Musica";
 
+/**
+ * Servicio para la gestión de música y álbumes
+ * Maneja consultas de canciones y álbumes para la funcionalidad de música de fondo
+ */
 export class MusicService {
   async getAllCanciones(): Promise<{
     success: boolean;

@@ -2,6 +2,10 @@ import { MetodoEstudioCreateInput, MetodoEstudioUpdateInput, MetodoEstudio } fro
 import { metodoEstudioRepository } from "../repositories/MetodoEstudioRepository";
 import logger from "../utils/logger";
 
+/**
+ * Servicio para la gestión de métodos de estudio
+ * Maneja operaciones CRUD de métodos de estudio y sus asociaciones con beneficios
+ */
 export class MetodoEstudioService {
   async createMetodoEstudio(metodoData: MetodoEstudioCreateInput): Promise<{
     success: boolean;

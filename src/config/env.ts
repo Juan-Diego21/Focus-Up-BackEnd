@@ -1,11 +1,18 @@
 import dotenv from "dotenv";
 import path from "path";
 
+/**
+ * Configuración centralizada de variables de entorno
+ * Carga y valida todas las variables necesarias para la aplicación
+ */
+
 // Cargar variables desde .env - CON RUTA ABSOLUTA
 const envPath = path.resolve(__dirname, "../../.env");
 dotenv.config({ path: envPath });
 
-// Interface para tipar nuestras variables de entorno
+/**
+ * Interface para tipar las variables de entorno de la aplicación
+ */
 interface Env {
   // Server Configuration
   PORT: number;
@@ -30,7 +37,7 @@ interface Env {
   BCRYPT_SALT_ROUNDS: number;
 }
 
-// Validar y exportar variables de entorno con tipado
+// Validar y exportar variables de entorno con tipado fuerte
 export const env: Env = {
   // Server Configuration
   PORT: parseInt(process.env.PORT || "3001", 10),
@@ -57,15 +64,17 @@ export const env: Env = {
   BCRYPT_SALT_ROUNDS: parseInt(process.env.BCRYPT_SALT_ROUNDS || "12"),
 };
 
-// Debug: Verificar que las variables se cargan
-console.log("🔍 Variables de entorno cargadas:");
-console.log("PORT:", env.PORT);
-console.log("NODE_ENV:", env.NODE_ENV);
-console.log("API_PREFIX:", env.API_PREFIX);
-console.log("PGHOST:", env.PGHOST ? "✅ Presente" : "❌ Faltante");
-console.log("PGDATABASE:", env.PGDATABASE ? "✅ Presente" : "❌ Faltante");
-console.log("PGUSER:", env.PGUSER ? "✅ Presente" : "❌ Faltante");
-console.log("PGPASSWORD:", env.PGPASSWORD ? "✅ Presente" : "❌ Faltante");
+// Debug: Verificar que las variables se cargan (solo en desarrollo)
+if (env.NODE_ENV === "development") {
+  console.log("🔍 Variables de entorno cargadas:");
+  console.log("PORT:", env.PORT);
+  console.log("NODE_ENV:", env.NODE_ENV);
+  console.log("API_PREFIX:", env.API_PREFIX);
+  console.log("PGHOST:", env.PGHOST ? "✅ Presente" : "❌ Faltante");
+  console.log("PGDATABASE:", env.PGDATABASE ? "✅ Presente" : "❌ Faltante");
+  console.log("PGUSER:", env.PGUSER ? "✅ Presente" : "❌ Faltante");
+  console.log("PGPASSWORD:", env.PGPASSWORD ? "✅ Presente" : "❌ Faltante");
+}
 
 // Validación de variables críticas
 if (!env.PGHOST) throw new Error("❌ PGHOST no está configurada en .env");

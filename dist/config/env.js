@@ -25,14 +25,16 @@ exports.env = {
     JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
     BCRYPT_SALT_ROUNDS: parseInt(process.env.BCRYPT_SALT_ROUNDS || "12"),
 };
-console.log("🔍 Variables de entorno cargadas:");
-console.log("PORT:", exports.env.PORT);
-console.log("NODE_ENV:", exports.env.NODE_ENV);
-console.log("API_PREFIX:", exports.env.API_PREFIX);
-console.log("PGHOST:", exports.env.PGHOST ? "✅ Presente" : "❌ Faltante");
-console.log("PGDATABASE:", exports.env.PGDATABASE ? "✅ Presente" : "❌ Faltante");
-console.log("PGUSER:", exports.env.PGUSER ? "✅ Presente" : "❌ Faltante");
-console.log("PGPASSWORD:", exports.env.PGPASSWORD ? "✅ Presente" : "❌ Faltante");
+if (exports.env.NODE_ENV === "development") {
+    console.log("🔍 Variables de entorno cargadas:");
+    console.log("PORT:", exports.env.PORT);
+    console.log("NODE_ENV:", exports.env.NODE_ENV);
+    console.log("API_PREFIX:", exports.env.API_PREFIX);
+    console.log("PGHOST:", exports.env.PGHOST ? "✅ Presente" : "❌ Faltante");
+    console.log("PGDATABASE:", exports.env.PGDATABASE ? "✅ Presente" : "❌ Faltante");
+    console.log("PGUSER:", exports.env.PGUSER ? "✅ Presente" : "❌ Faltante");
+    console.log("PGPASSWORD:", exports.env.PGPASSWORD ? "✅ Presente" : "❌ Faltante");
+}
 if (!exports.env.PGHOST)
     throw new Error("❌ PGHOST no está configurada en .env");
 if (!exports.env.PGDATABASE)

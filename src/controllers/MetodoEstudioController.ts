@@ -3,6 +3,10 @@ import { metodoEstudioService } from "../services/MetodoEstudioService";
 import { ApiResponse } from "../types/ApiResponse";
 import logger from "../utils/logger";
 
+/**
+ * Controlador para la gestión de métodos de estudio
+ * Maneja operaciones CRUD de métodos de estudio y sus asociaciones con beneficios
+ */
 export class MetodoEstudioController {
   async createMetodoEstudio(req: Request, res: Response) {
     try {

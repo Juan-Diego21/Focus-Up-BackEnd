@@ -2,6 +2,10 @@ import { BeneficioCreateInput, BeneficioUpdateInput, Beneficio } from "../types/
 import { beneficioRepository } from "../repositories/BeneficioRepository";
 import logger from "../utils/logger";
 
+/**
+ * Servicio para la gestión de beneficios de estudio
+ * Maneja operaciones CRUD de beneficios asociados a métodos de estudio
+ */
 export class BeneficioService {
   async createBeneficio(beneficioData: BeneficioCreateInput): Promise<{
     success: boolean;

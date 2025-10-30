@@ -1,6 +1,11 @@
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 
+/**
+ * Utilidades para manejo de tokens JWT
+ * Proporciona métodos para generar, verificar y extraer tokens de autenticación
+ */
+
 // Usar variables de entorno con valores por defecto seguros
 const JWT_SECRET =
   process.env.JWT_SECRET ||
@@ -20,6 +25,10 @@ export interface JwtPayload {
   email: string;
 }
 
+/**
+ * Clase utilitaria para operaciones JWT
+ * Maneja tokens de acceso y refresh con configuración centralizada
+ */
 export class JwtUtils {
   // Generar access token - CON TIPADO EXPLÍCITO
   static generateAccessToken(payload: JwtPayload): string {

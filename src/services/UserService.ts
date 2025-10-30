@@ -1,7 +1,6 @@
 import { UserCreateInput, UserUpdateInput, User } from "../types/User";
 import { userRepository } from "../repositories/UserRepository";
 import { ValidationUtils } from "../utils/validation";
-import { UserModel } from "../models/User";
 import { UsuarioInteresesEntity } from "../models/UsuarioIntereses.entity";
 import { UsuarioDistraccionesEntity } from "../models/UsuarioDistracciones.entity";
 import { UserEntity } from "../models/User.entity";
@@ -9,18 +8,28 @@ import logger from "../utils/logger";
 import { JwtUtils } from "../utils/jwt";
 import nodemailer from "nodemailer";
 
+/**
+ * Servicio para la gestión completa de usuarios
+ * Maneja autenticación, registro, actualización y recuperación de contraseña
+ */
 export class UserService {
   private static readonly SALT_ROUNDS = parseInt(
     process.env.BCRYPT_SALT_ROUNDS || "12"
   );
 
-  // Hash de contraseña
+  /**
+   * Genera un hash seguro de la contraseña usando bcrypt
+   * Utiliza el número de rondas configurado en las variables de entorno
+   */
   private static async hashPassword(password: string): Promise<string> {
     const bcrypt = await import("bcryptjs");
     return bcrypt.hash(password, this.SALT_ROUNDS);
   }
 
-  // Verificar contraseña
+  /**
+   * Verifica si una contraseña en texto plano coincide con su hash
+   * Incluye manejo de errores para contraseñas no hasheadas (retrocompatibilidad)
+   */
   private static async verifyPassword(
     plainPassword: string,
     hashedPassword: string
@@ -29,7 +38,10 @@ export class UserService {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  // Crear un nuevo usuario con validaciones
+  /**
+   * Crea un nuevo usuario en el sistema con validaciones completas
+   * Incluye verificación de unicidad, hash de contraseña y asociaciones con intereses/distracciones
+   */
   async createUser(userData: UserCreateInput): Promise<{
     success: boolean;
     user?: User;
@@ -187,7 +199,10 @@ export class UserService {
     }
   }
 
-  // Obtener usuario por ID
+  /**
+   * Obtiene un usuario específico por su ID único
+   * Retorna null si el usuario no existe
+   */
   async getUserById(
     id: number
   ): Promise<{ success: boolean; user?: User; error?: string }> {
@@ -203,7 +218,10 @@ export class UserService {
     }
   }
 
-  // Obtener usuario por email
+  /**
+   * Obtiene un usuario específico por su dirección de correo electrónico
+   * Utilizado principalmente para validaciones de unicidad
+   */
   async getUserByEmail(
     email: string
   ): Promise<{ success: boolean; user?: User; error?: string }> {
@@ -219,7 +237,10 @@ export class UserService {
     }
   }
 
-  // Actualizar usuario
+  /**
+   * Actualiza la información de un usuario existente
+   * Incluye validaciones de unicidad para email y nombre de usuario
+   */
   async updateUser(
     id: number,
     updateData: UserUpdateInput
@@ -311,7 +332,11 @@ export class UserService {
     }
   }
 
-  // Verificar credenciales de login (acepta email o username)
+  /**
+   * Verifica las credenciales de login de un usuario
+   * Acepta tanto email como nombre de usuario como identificador
+   * Incluye compatibilidad con contraseñas no hasheadas por retrocompatibilidad
+   */
   async verifyCredentials(
     identifier: string,
     password: string
@@ -353,7 +378,10 @@ export class UserService {
     }
   }
 
-  // Obtener todos los usuarios (solo para administración)
+  /**
+   * Obtiene lista completa de todos los usuarios del sistema
+   * Método destinado únicamente para funcionalidades administrativas
+   */
   async getAllUsers(): Promise<{
     success: boolean;
     users?: User[];
@@ -368,7 +396,10 @@ export class UserService {
     }
   }
 
-  // Insertar intereses del usuario
+  /**
+   * Inserta los intereses asociados a un usuario
+   * Método auxiliar para la creación de usuarios con intereses
+   */
   private async insertUserInterests(
     userId: number,
     interestIds: number[]
@@ -386,7 +417,10 @@ export class UserService {
     await usuarioInteresesRepo.save(inserts);
   }
 
-  // Insertar distracciones del usuario
+  /**
+   * Inserta las distracciones asociadas a un usuario
+   * Método auxiliar para la creación de usuarios con distracciones
+   */
   private async insertUserDistractions(
     userId: number,
     distractionIds: number[]
@@ -404,7 +438,10 @@ export class UserService {
     await usuarioDistraccionesRepo.save(inserts);
   }
 
-  // Insertar intereses del usuario en transacción
+  /**
+   * Inserta los intereses del usuario dentro de una transacción de base de datos
+   * Garantiza atomicidad en la creación de usuarios con intereses asociados
+   */
   private async insertUserInterestsInTransaction(
     queryRunner: any,
     userId: number,
@@ -423,7 +460,10 @@ export class UserService {
       .execute();
   }
 
-  // Insertar distracciones del usuario en transacción
+  /**
+   * Inserta las distracciones del usuario dentro de una transacción de base de datos
+   * Garantiza atomicidad en la creación de usuarios con distracciones asociadas
+   */
   private async insertUserDistractionsInTransaction(
     queryRunner: any,
     userId: number,
@@ -442,7 +482,10 @@ export class UserService {
       .execute();
   }
 
-  //Eliminar usuario
+  /**
+   * Elimina un usuario del sistema por su ID
+   * Operación destructiva que requiere validación previa
+   */
   async deleteUser(id: number): Promise<{ success: boolean; error?: string }> {
     try {
       const deleted = await userRepository.delete(id);
@@ -455,35 +498,29 @@ export class UserService {
       return { success: false, error: "Error eliminando usuario" };
     }
   }
-  //Correo 
+  /**
+   * Envía un enlace de restablecimiento de contraseña al usuario
+   * Busca por email o nombre de usuario y envía código de verificación por email
+   */
   async sendPasswordResetLink(emailOrUsername: string): Promise<{
   success: boolean;
   message: string;
 }> {
   try {
-    console.log('🚀 SERVICE - Iniciando sendPasswordResetLink con:', emailOrUsername);
-    
     // Buscar usuario por email o username
-    console.log('🔍 SERVICE - Buscando por email...');
     let user = await userRepository.findByEmail(emailOrUsername);
-    
+
     if (!user) {
-      console.log('🔍 SERVICE - Buscando por username...');
       user = await userRepository.findByUsername(emailOrUsername);
     }
 
-    console.log('📊 SERVICE - Resultado final de búsqueda:', user ? 'USUARIO ENCONTRADO' : 'USUARIO NO ENCONTRADO');
-
     // Mensaje genérico por seguridad
     if (!user) {
-      console.log('❌ SERVICE - Retornando mensaje genérico');
       return {
         success: true,
         message: "Si el usuario existe, recibirás un enlace para restablecer tu contraseña."
       };
     }
-
-    console.log('✅ SERVICE - Usuario encontrado, generando token...');
 
     // Generar token
     const tokenPayload = {
@@ -492,16 +529,12 @@ export class UserService {
     };
 
     const resetToken = JwtUtils.generateAccessToken(tokenPayload);
-    
+
     // Crear enlace
     const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
 
-    console.log('📧 SERVICE - Enviando email a:', user.correo);
-
     // Enviar email
     await this.sendResetEmail(user.correo, resetLink, user.nombre_usuario);
-
-    console.log('✅ SERVICE - Proceso completado exitosamente');
 
     return {
       success: true,
@@ -509,8 +542,8 @@ export class UserService {
     };
 
   } catch (error) {
-    console.error('💥 SERVICE - Error en sendPasswordResetLink:', error);
-    
+    logger.error("Error en sendPasswordResetLink:", error);
+
     // Por seguridad, siempre retornar éxito
     return {
       success: true,
@@ -520,7 +553,8 @@ export class UserService {
 }
 
   /**
-   * Restablecer contraseña con token
+   * Restablece la contraseña de un usuario usando un token JWT
+   * Valida el token y actualiza la contraseña hasheada en la base de datos
    */
   async resetPassword(token: string, newPassword: string): Promise<{
     success: boolean;
@@ -566,7 +600,8 @@ export class UserService {
   }
 
   /**
-   * Enviar email de restablecimiento
+   * Envía el email de restablecimiento de contraseña
+   * Utiliza el servicio de email configurado para enviar el enlace de recuperación
    */
   private async sendResetEmail(email: string, resetLink: string, username: string): Promise<void> {
     try {

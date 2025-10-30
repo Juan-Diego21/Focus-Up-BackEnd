@@ -1,5 +1,10 @@
 import winston from 'winston';
 
+/**
+ * Configuración centralizada del sistema de logging
+ * Utiliza Winston para manejar logs estructurados con diferentes niveles
+ */
+
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),

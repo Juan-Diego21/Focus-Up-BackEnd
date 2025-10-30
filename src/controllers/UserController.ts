@@ -1,19 +1,18 @@
 import { Request, Response } from "express";
 import { userService } from "../services/UserService";
 import { ApiResponse } from "../types/ApiResponse";
-import { JwtUtils } from "../utils/jwt";
-import { JwtPayload } from "../utils/jwt";
+import { JwtUtils, JwtPayload } from "../utils/jwt";
 import logger from "../utils/logger";
-import { Transporter } from "nodemailer";
-/**
- * @swagger
- * tags:
- *   name: Users
- *   description: Gestión de usuarios
- */
 
+/**
+ * Controlador para la gestión de usuarios
+ * Maneja operaciones CRUD de usuarios, autenticación y recuperación de contraseña
+ */
 export class UserController {
-  // Crear un nuevo usuario
+  /**
+   * Crear un nuevo usuario en el sistema
+   * Valida los datos de entrada y registra al usuario con sus intereses y distracciones
+   */
   async createUser(req: Request, res: Response) {
     try {
       const userData = req.body;
@@ -52,7 +51,10 @@ export class UserController {
     }
   }
 
-  // Obtener usuario por ID
+  /**
+   * Obtener un usuario específico por su ID
+   * Requiere autenticación y valida que el ID sea numérico
+   */
   async getUserById(req: Request, res: Response) {
     try {
       const userId = parseInt(req.params.id);
@@ -100,7 +102,10 @@ export class UserController {
     }
   }
 
-  // Obtener usuario por email
+  /**
+   * Obtener un usuario específico por su dirección de correo electrónico
+   * Valida que el email esté presente en los parámetros
+   */
   async getUserByEmail(req: Request, res: Response) {
     try {
       const { email } = req.params;
@@ -148,7 +153,10 @@ export class UserController {
     }
   }
 
-  // Actualizar usuario
+  /**
+   * Actualizar la información de un usuario existente
+   * Valida el ID del usuario y los datos de actualización proporcionados
+   */
   async updateUser(req: Request, res: Response) {
     try {
       const userId = parseInt(req.params.id);
@@ -197,7 +205,11 @@ export class UserController {
     }
   }
 
-  // Verificar credenciales (Login)
+  /**
+   * Autenticar usuario mediante credenciales (login)
+   * Acepta email o nombre de usuario junto con la contraseña
+   * Genera y devuelve un token JWT en caso de éxito
+   */
   async login(req: Request, res: Response) {
     try {
       const { correo, nombre_usuario, contrasena } = req.body;
@@ -268,7 +280,10 @@ export class UserController {
     }
   }
 
-  // Obtener perfil de usuario autenticado
+  /**
+   * Obtener el perfil del usuario actualmente autenticado
+   * Utiliza el token JWT para identificar al usuario
+   */
   async getProfile(req: Request, res: Response) {
     try {
       const userPayload = (req as any).user as JwtPayload;
@@ -307,7 +322,10 @@ export class UserController {
     }
   }
 
-  // Obtener todos los usuarios (solo para administración)
+  /**
+   * Obtener lista completa de todos los usuarios del sistema
+   * Endpoint destinado únicamente para administración
+   */
   async getAllUsers(req: Request, res: Response) {
     try {
       const result = await userService.getAllUsers();
@@ -344,7 +362,10 @@ export class UserController {
     }
   }
 
-  //Eliminar usuario
+  /**
+   * Eliminar un usuario del sistema por su ID
+   * Operación destructiva que requiere validación del ID
+   */
   async deleteUser(req: Request, res: Response) {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -368,7 +389,10 @@ export class UserController {
     res.status(result.success ? 200 : 404).json(response);
   }
 
-  // Solicitar código de verificación para restablecer contraseña
+  /**
+   * Solicitar código de verificación para restablecer contraseña
+   * Envía un código de 6 dígitos al email o nombre de usuario proporcionado
+   */
   async requestPasswordReset(req: Request, res: Response) {
     try {
       const { emailOrUsername } = req.body;
@@ -407,9 +431,10 @@ export class UserController {
   }
 
   /**
-    * Verificar código y restablecer contraseña
-    */
-   async resetPasswordWithCode(req: Request, res: Response) {
+   * Verificar código de verificación y restablecer contraseña
+   * Valida el código de 6 dígitos y actualiza la contraseña del usuario
+   */
+  async resetPasswordWithCode(req: Request, res: Response) {
     try {
       const { email, code, newPassword } = req.body;
 

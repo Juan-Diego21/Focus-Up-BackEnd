@@ -1,5 +1,11 @@
 
 import nodemailer from "nodemailer";
+import logger from "./logger";
+
+/**
+ * Utilidades para envío de correos electrónicos
+ * Configura y maneja el envío de emails para funcionalidades como restablecimiento de contraseña
+ */
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
@@ -13,8 +19,11 @@ const transporter = nodemailer.createTransport({
     rejectUnauthorized: false, // Allow self-signed certificates if needed
   },
 });
-import logger from "./logger";
 
+/**
+ * Envía un email con código de verificación para restablecimiento de contraseña
+ * Utiliza una plantilla HTML profesional con estilos inline
+ */
 export async function sendResetEmail(to: string, name: string, code: string): Promise<void> {
   try {
     const mailOptions = {

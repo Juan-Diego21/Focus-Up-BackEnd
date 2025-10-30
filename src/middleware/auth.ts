@@ -3,6 +3,10 @@ import { JwtUtils, JwtPayload } from "../utils/jwt";
 import { ApiResponse } from "../types/ApiResponse";
 import logger from "../utils/logger";
 
+/**
+ * Middleware de autenticación JWT
+ * Verifica la presencia y validez del token de acceso en las cabeceras de autorización
+ */
 export const authenticateToken = (
   req: Request,
   res: Response,
@@ -57,6 +61,10 @@ export const authenticateToken = (
   }
 };
 
+/**
+ * Middleware de autenticación opcional
+ * Intenta autenticar al usuario si hay un token presente, pero no falla si no lo hay
+ */
 export const optionalAuth = (
   req: Request,
   res: Response,
@@ -71,7 +79,7 @@ export const optionalAuth = (
       (req as any).user = decoded;
     } catch (error) {
       // Si el token es inválido, continuamos sin autenticación
-      console.warn("Token opcional inválido:", error);
+      logger.warn("Token opcional inválido:", error);
     }
   }
 

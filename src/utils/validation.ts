@@ -1,3 +1,7 @@
+/**
+ * Utilidades de validación para entradas de usuario
+ * Proporciona métodos para validar emails, contraseñas, nombres de usuario y otros formatos
+ */
 export class ValidationUtils {
   // Validar formato de email
   static isValidEmail(email: string): boolean {

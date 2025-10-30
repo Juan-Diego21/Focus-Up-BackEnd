@@ -10,6 +10,10 @@ import {
   IMetodoEstudioRepository,
 } from "../types/MetodoEstudio";
 
+/**
+ * Repositorio para la gestión de métodos de estudio
+ * Maneja operaciones CRUD y asociaciones con beneficios
+ */
 export class MetodoEstudioRepository implements IMetodoEstudioRepository {
   private repository: Repository<MetodoEstudioEntity>;
   private beneficioRepository: Repository<BeneficioEntity>;

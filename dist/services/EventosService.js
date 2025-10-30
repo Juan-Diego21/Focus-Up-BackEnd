@@ -19,11 +19,11 @@ exports.EventoService = {
     },
     async crearEvento(data, idMetodo) {
         try {
-            console.log("Creando los eventos con :", data);
             const metodo = await MetodoEstudioRepository_1.metodoEstudioRepository.findById(idMetodo);
             if (!metodo) {
-                return { success: false,
-                    error: 'Metodo de estudio no valido'
+                return {
+                    success: false,
+                    error: 'Método de estudio no válido'
                 };
             }
             const nuevoEvento = EventoRepository_1.EventoRepository.create({
@@ -36,15 +36,15 @@ exports.EventoService = {
             const guardarEvento = await EventoRepository_1.EventoRepository.save(nuevoEvento);
             return {
                 success: true,
-                message: "Evento creado correcramente ",
+                message: "Evento creado correctamente",
                 data: guardarEvento
             };
         }
         catch (error) {
-            console.log('error al crear el evento', error);
+            console.error('Error al crear el evento', error);
             return {
                 success: false,
-                error: 'error interno al crear evento'
+                error: 'Error interno al crear evento'
             };
         }
     },
@@ -52,20 +52,22 @@ exports.EventoService = {
         try {
             const evento = await EventoRepository_1.EventoRepository.findOneBy({ idEvento: id_evento });
             if (!evento) {
-                return { success: false,
-                    error: "Evento no encontrado",
+                return {
+                    success: false,
+                    error: "Evento no encontrado"
                 };
             }
             await EventoRepository_1.EventoRepository.remove(evento);
-            return { success: true,
-                message: "Evento eliminado correctamente",
+            return {
+                success: true,
+                message: "Evento eliminado correctamente"
             };
         }
         catch (error) {
             console.error("Error al eliminar evento:", error);
             return {
                 success: false,
-                error: "Error interno al eliminar evento",
+                error: "Error interno al eliminar evento"
             };
         }
     },
@@ -75,8 +77,7 @@ exports.EventoService = {
             if (!evento) {
                 return {
                     success: false,
-                    error: "Evento no encontrado",
-                    timestamp: new Date()
+                    error: "Evento no encontrado"
                 };
             }
             await EventoRepository_1.EventoRepository.update(evento, {
@@ -89,14 +90,14 @@ exports.EventoService = {
             return {
                 success: true,
                 message: "Evento actualizado correctamente",
-                data: eventoActualizado,
+                data: eventoActualizado
             };
         }
         catch (error) {
             console.error("Error al actualizar evento:", error);
             return {
                 success: false,
-                error: "Error interno al actualizar evento",
+                error: "Error interno al actualizar evento"
             };
         }
     }

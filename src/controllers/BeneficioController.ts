@@ -3,7 +3,15 @@ import { beneficioService } from "../services/BeneficioService";
 import { ApiResponse } from "../types/ApiResponse";
 import logger from "../utils/logger";
 
+/**
+ * Controlador para la gestión de beneficios de estudio
+ * Maneja operaciones CRUD de beneficios asociados a métodos de estudio
+ */
 export class BeneficioController {
+  /**
+   * Crear un nuevo beneficio en el sistema
+   * Valida que la descripción del beneficio esté presente
+   */
   async createBeneficio(req: Request, res: Response) {
     try {
       const beneficioData = req.body;
@@ -38,6 +46,10 @@ export class BeneficioController {
     }
   }
 
+  /**
+   * Obtener un beneficio específico por su ID
+   * Valida que el ID proporcionado sea numérico
+   */
   async getBeneficioById(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id);
@@ -80,6 +92,10 @@ export class BeneficioController {
     }
   }
 
+  /**
+   * Actualizar la información de un beneficio existente
+   * Valida el ID y permite actualizar la descripción del beneficio
+   */
   async updateBeneficio(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id);
@@ -124,6 +140,10 @@ export class BeneficioController {
     }
   }
 
+  /**
+   * Eliminar un beneficio del sistema por su ID
+   * Operación destructiva que requiere validación del ID
+   */
   async deleteBeneficio(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id);
@@ -156,6 +176,10 @@ export class BeneficioController {
     }
   }
 
+  /**
+   * Obtener lista completa de todos los beneficios del sistema
+   * Retorna todos los beneficios disponibles para métodos de estudio
+   */
   async getAllBeneficios(req: Request, res: Response) {
     try {
       const result = await beneficioService.getAllBeneficios();
