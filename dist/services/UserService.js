@@ -346,38 +346,30 @@ class UserService {
     }
     async sendPasswordResetLink(emailOrUsername) {
         try {
-            console.log('🚀 SERVICE - Iniciando sendPasswordResetLink con:', emailOrUsername);
-            console.log('🔍 SERVICE - Buscando por email...');
             let user = await UserRepository_1.userRepository.findByEmail(emailOrUsername);
             if (!user) {
-                console.log('🔍 SERVICE - Buscando por username...');
                 user = await UserRepository_1.userRepository.findByUsername(emailOrUsername);
             }
-            console.log('📊 SERVICE - Resultado final de búsqueda:', user ? 'USUARIO ENCONTRADO' : 'USUARIO NO ENCONTRADO');
             if (!user) {
-                console.log('❌ SERVICE - Retornando mensaje genérico');
                 return {
                     success: true,
                     message: "Si el usuario existe, recibirás un enlace para restablecer tu contraseña."
                 };
             }
-            console.log('✅ SERVICE - Usuario encontrado, generando token...');
             const tokenPayload = {
                 userId: user.id_usuario,
                 email: user.correo,
             };
             const resetToken = jwt_1.JwtUtils.generateAccessToken(tokenPayload);
             const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
-            console.log('📧 SERVICE - Enviando email a:', user.correo);
             await this.sendResetEmail(user.correo, resetLink, user.nombre_usuario);
-            console.log('✅ SERVICE - Proceso completado exitosamente');
             return {
                 success: true,
                 message: "Se ha enviado un enlace de restablecimiento a tu email."
             };
         }
         catch (error) {
-            console.error('💥 SERVICE - Error en sendPasswordResetLink:', error);
+            logger_1.default.error("Error en sendPasswordResetLink:", error);
             return {
                 success: true,
                 message: "Si el usuario existe, recibirás un enlace para restablecer tu contraseña."

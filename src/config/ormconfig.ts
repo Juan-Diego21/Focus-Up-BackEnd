@@ -1,6 +1,10 @@
-// src/config/ormconfig.ts
 import { DataSource } from "typeorm";
 import { env } from "./env";
+
+/**
+ * Configuración de TypeORM para conexión a PostgreSQL
+ * Define todas las entidades, migraciones y opciones de conexión
+ */
 
 // Importar todas las entidades para registro directo
 import { UserEntity } from "../models/User.entity";
@@ -16,7 +20,10 @@ import { AlbumMusicaEntity } from "../models/AlbumMusica.entity";
 import { EventoEntity } from "../models/Evento.entity";
 import { PasswordResetEntity } from "../models/PasswordReset.entity";
 
-// Exportar la instancia para uso global
+/**
+ * Instancia principal de DataSource para TypeORM
+ * Configurada para PostgreSQL con SSL y pool de conexiones
+ */
 export const AppDataSource = new DataSource({
   type: "postgres",
   host: env.PGHOST,
@@ -60,7 +67,10 @@ export const AppDataSource = new DataSource({
   },
 });
 
-// Función para inicializar la conexión
+/**
+ * Inicializa la conexión a la base de datos y realiza validaciones básicas
+ * Verifica la conectividad, esquema y existencia de tablas principales
+ */
 export const initializeDatabase = async (): Promise<void> => {
   try {
     await AppDataSource.initialize();

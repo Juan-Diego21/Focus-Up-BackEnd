@@ -63,7 +63,7 @@ const optionalAuth = (req, res, next) => {
             req.user = decoded;
         }
         catch (error) {
-            console.warn("Token opcional inválido:", error);
+            logger_1.default.warn("Token opcional inválido:", error);
         }
     }
     next();

@@ -4,6 +4,10 @@ import { MusicaEntity } from "../models/Musica.entity";
 import { AlbumMusicaEntity } from "../models/AlbumMusica.entity";
 import { Musica, Album } from "../types/Musica";
 
+/**
+ * Repositorio para la gestión de música y álbumes
+ * Maneja consultas de canciones y álbumes para la funcionalidad de música de fondo
+ */
 export class MusicRepository {
   private musicaRepo: Repository<MusicaEntity>;
   private albumRepo: Repository<AlbumMusicaEntity>;

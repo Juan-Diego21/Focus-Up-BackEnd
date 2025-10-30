@@ -63,5 +63,6 @@ const validateUserUpdate = (req, res, next) => {
 };
 exports.validateUserUpdate = validateUserUpdate;
 const validationEventCreate = (req, res, next) => {
+    next();
 };
 exports.validationEventCreate = validationEventCreate;

@@ -8,6 +8,10 @@ import {
   IBeneficioRepository,
 } from "../types/Beneficio";
 
+/**
+ * Repositorio para la gestión de beneficios de estudio
+ * Implementa operaciones CRUD básicas para beneficios
+ */
 export class BeneficioRepository implements IBeneficioRepository {
   private repository: Repository<BeneficioEntity>;
 

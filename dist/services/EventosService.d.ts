@@ -37,7 +37,6 @@ export declare const EventoService: {
     }): Promise<{
         success: boolean;
         error: string;
-        timestamp: Date;
         message?: undefined;
         data?: undefined;
     } | {
@@ -45,12 +44,5 @@ export declare const EventoService: {
         message: string;
         data: import("../models/Evento.entity").EventoEntity | null;
         error?: undefined;
-        timestamp?: undefined;
-    } | {
-        success: boolean;
-        error: string;
-        timestamp?: undefined;
-        message?: undefined;
-        data?: undefined;
     }>;
 };

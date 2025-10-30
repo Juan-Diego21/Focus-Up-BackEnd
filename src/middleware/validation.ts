@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { ValidationUtils } from "../utils/validation";
 
+/**
+ * Middleware de validación para la creación de usuarios
+ * Valida nombre de usuario, email, contraseña y fecha de nacimiento
+ */
 export const validateUserCreate = (
   req: Request,
   res: Response,
@@ -51,6 +55,10 @@ export const validateUserCreate = (
   next();
 };
 
+/**
+ * Middleware de validación para la actualización de usuarios
+ * Valida email, contraseña y horario favorito si están presentes
+ */
 export const validateUserUpdate = (
   req: Request,
   res: Response,
@@ -84,10 +92,15 @@ export const validateUserUpdate = (
 
   next();
 };
-export const validationEventCreate= (
+/**
+ * Middleware de validación para la creación de eventos
+ * TODO: Implementar validaciones específicas para eventos
+ */
+export const validationEventCreate = (
   req: Request,
   res: Response,
   next: NextFunction
-)=>{
-  
-}
+) => {
+  // TODO: Implementar validaciones para eventos
+  next();
+};

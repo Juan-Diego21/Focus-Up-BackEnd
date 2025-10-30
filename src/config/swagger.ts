@@ -2,7 +2,14 @@ import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { env } from "./env";
 
-// Opciones de configuración para swagger-jsdoc
+/**
+ * Configuración de Swagger/OpenAPI para documentación de la API
+ * Define esquemas, endpoints y opciones de UI para la documentación interactiva
+ */
+
+/**
+ * Opciones de configuración para swagger-jsdoc
+ */
 const swaggerOptions: swaggerJSDoc.Options = {
   definition: {
     openapi: "3.0.0",
@@ -212,10 +219,14 @@ const swaggerOptions: swaggerJSDoc.Options = {
   apis: ["./src/routes/*.ts", "./src/controllers/*.ts"], // archivos donde buscará la documentación
 };
 
-// Generar especificación Swagger
+/**
+ * Generar especificación Swagger a partir de las opciones configuradas
+ */
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
 
-// Configurar UI de Swagger
+/**
+ * Configurar opciones de UI de Swagger para personalización de la documentación
+ */
 const swaggerUiOptions = {
   customCss: ".swagger-ui .topbar { display: none }",
   customSiteTitle: "Focus Up API Documentation",

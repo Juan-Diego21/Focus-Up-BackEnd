@@ -4,7 +4,6 @@ exports.eventosController = void 0;
 const EventosService_1 = require("../services/EventosService");
 exports.eventosController = {
     async listEventos(req, res) {
-        console.log("Entrando a listEventos");
         try {
             const listarEventos = await EventosService_1.EventoService.listEvento();
             if (listarEventos?.success) {
@@ -47,6 +46,7 @@ exports.eventosController = {
         catch (error) {
             return res.status(500).json({
                 success: false,
+                error: error.message || "Error interno al eliminar evento"
             });
         }
     },
