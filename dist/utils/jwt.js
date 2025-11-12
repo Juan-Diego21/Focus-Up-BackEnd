@@ -28,9 +28,21 @@ class TokenBlacklistService {
 exports.TokenBlacklistService = TokenBlacklistService;
 class JwtUtils {
     static generateAccessToken(payload) {
-        return jsonwebtoken_1.default.sign(payload, JWT_SECRET, {
+        const token = jsonwebtoken_1.default.sign(payload, JWT_SECRET, {
             expiresIn: JWT_ACCESS_EXPIRES_IN,
         });
+        try {
+            const decoded = jsonwebtoken_1.default.decode(token);
+            console.log('🔐 JWT Token generated:');
+            console.log('  📅 Issued at:', new Date(decoded.iat * 1000).toISOString());
+            console.log('  ⏰ Expires at:', new Date(decoded.exp * 1000).toISOString());
+            console.log('  ⏳ Expires in:', JWT_ACCESS_EXPIRES_IN);
+            console.log('  👤 User ID:', payload.userId);
+        }
+        catch (error) {
+            console.warn('⚠️ Could not decode generated token for logging');
+        }
+        return token;
     }
     static generateRefreshToken(payload) {
         return jsonwebtoken_1.default.sign(payload, JWT_REFRESH_SECRET, {

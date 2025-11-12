@@ -67,13 +67,27 @@ export interface JwtPayload {
 export class JwtUtils {
   // Generar access token - CON TIPADO EXPLÍCITO
   static generateAccessToken(payload: JwtPayload): string {
-    return jwt.sign(
+    const token = jwt.sign(
       payload as object, // Asegurar que sea tipo object
       JWT_SECRET as jwt.Secret, // Asegurar que sea tipo Secret
       {
         expiresIn: JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"],
       }
     );
+
+    // Debug logging for token expiration
+    try {
+      const decoded = jwt.decode(token) as any;
+      console.log('🔐 JWT Token generated:');
+      console.log('  📅 Issued at:', new Date(decoded.iat * 1000).toISOString());
+      console.log('  ⏰ Expires at:', new Date(decoded.exp * 1000).toISOString());
+      console.log('  ⏳ Expires in:', JWT_ACCESS_EXPIRES_IN);
+      console.log('  👤 User ID:', payload.userId);
+    } catch (error) {
+      console.warn('⚠️ Could not decode generated token for logging');
+    }
+
+    return token;
   }
 
   // Generar refresh token - CON TIPADO EXPLÍCITO

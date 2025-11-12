@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
 import { JwtUtils, JwtPayload, TokenBlacklistService } from "../utils/jwt";
 import { ApiResponse } from "../types/ApiResponse";
 import logger from "../utils/logger";
@@ -43,6 +44,17 @@ export const authenticateToken = (
 
     const decoded = JwtUtils.verifyAccessToken(token);
     logger.info(`Token decoded successfully for userId: ${decoded.userId}, email: ${decoded.email}`);
+
+    // Log token expiration details for debugging
+    try {
+      const decodedToken = jwt.decode(token) as any;
+      const now = Math.floor(Date.now() / 1000);
+      const timeToExpiry = decodedToken.exp - now;
+      logger.info(`Token validation: expires in ${Math.floor(timeToExpiry / 3600)}h ${Math.floor((timeToExpiry % 3600) / 60)}m`);
+    } catch (error) {
+      logger.warn('Could not decode token for expiration logging');
+    }
+
     (req as any).user = decoded; // Adjuntar información del usuario al request
     next();
   } catch (error: any) {

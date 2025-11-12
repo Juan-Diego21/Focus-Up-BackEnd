@@ -2,6 +2,8 @@ import { MetodoRealizadoEntity, MetodoProgreso } from "../models/MetodoRealizado
 import { SesionConcentracionRealizadaEntity, SesionEstado } from "../models/SesionConcentracionRealizada.entity";
 export interface CreateActiveMethodData {
     idMetodo: number;
+    estado?: string;
+    progreso?: number;
     idUsuario: number;
 }
 export interface UpdateMethodProgressData {

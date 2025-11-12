@@ -17,9 +17,11 @@ export class ReportsController {
   async createActiveMethod(req: Request, res: Response) {
     try {
       const userPayload = (req as any).user as JwtPayload;
-      const { idMetodo } = req.body;
+      const { id_metodo, estado, progreso } = req.body;
 
-      if (!idMetodo || typeof idMetodo !== 'number') {
+      // Validate id_metodo
+      const metodoId = Number(id_metodo);
+      if (!id_metodo || isNaN(metodoId)) {
         const response: ApiResponse = {
           success: false,
           message: "ID del método es requerido y debe ser un número",
@@ -29,7 +31,9 @@ export class ReportsController {
       }
 
       const result = await reportsService.createActiveMethod({
-        idMetodo,
+        idMetodo: metodoId,
+        estado: estado || "en_progreso",
+        progreso: progreso || 0,
         idUsuario: userPayload.userId,
       });
 

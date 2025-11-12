@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.optionalAuth = exports.authenticateToken = void 0;
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const jwt_1 = require("../utils/jwt");
 const logger_1 = __importDefault(require("../utils/logger"));
 const authenticateToken = (req, res, next) => {
@@ -32,6 +33,15 @@ const authenticateToken = (req, res, next) => {
         }
         const decoded = jwt_1.JwtUtils.verifyAccessToken(token);
         logger_1.default.info(`Token decoded successfully for userId: ${decoded.userId}, email: ${decoded.email}`);
+        try {
+            const decodedToken = jsonwebtoken_1.default.decode(token);
+            const now = Math.floor(Date.now() / 1000);
+            const timeToExpiry = decodedToken.exp - now;
+            logger_1.default.info(`Token validation: expires in ${Math.floor(timeToExpiry / 3600)}h ${Math.floor((timeToExpiry % 3600) / 60)}m`);
+        }
+        catch (error) {
+            logger_1.default.warn('Could not decode token for expiration logging');
+        }
         req.user = decoded;
         next();
     }

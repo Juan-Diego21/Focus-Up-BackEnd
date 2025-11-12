@@ -54,8 +54,8 @@ class ReportsService {
             const metodoRealizado = this.metodoRealizadoRepository.create({
                 idUsuario: data.idUsuario,
                 idMetodo: data.idMetodo,
-                progreso: MetodoRealizado_entity_1.MetodoProgreso.INICIADO,
-                estado: MetodoRealizado_entity_1.MetodoEstado.EN_PROGRESO,
+                progreso: data.progreso !== undefined ? data.progreso : MetodoRealizado_entity_1.MetodoProgreso.INICIADO,
+                estado: data.estado ? data.estado : MetodoRealizado_entity_1.MetodoEstado.EN_PROGRESO,
                 fechaInicio: new Date(),
             });
             const savedMetodo = await this.metodoRealizadoRepository.save(metodoRealizado);

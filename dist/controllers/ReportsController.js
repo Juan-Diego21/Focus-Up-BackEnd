@@ -10,8 +10,9 @@ class ReportsController {
     async createActiveMethod(req, res) {
         try {
             const userPayload = req.user;
-            const { idMetodo } = req.body;
-            if (!idMetodo || typeof idMetodo !== 'number') {
+            const { id_metodo, estado, progreso } = req.body;
+            const metodoId = Number(id_metodo);
+            if (!id_metodo || isNaN(metodoId)) {
                 const response = {
                     success: false,
                     message: "ID del método es requerido y debe ser un número",
@@ -20,7 +21,9 @@ class ReportsController {
                 return res.status(400).json(response);
             }
             const result = await ReportsService_1.reportsService.createActiveMethod({
-                idMetodo,
+                idMetodo: metodoId,
+                estado: estado || "en_progreso",
+                progreso: progreso || 0,
                 idUsuario: userPayload.userId,
             });
             if (!result.success) {

@@ -8,6 +8,8 @@ import logger from "../utils/logger";
 
 export interface CreateActiveMethodData {
   idMetodo: number;
+  estado?: string;
+  progreso?: number;
   idUsuario: number;
 }
 
@@ -91,8 +93,8 @@ export class ReportsService {
       const metodoRealizado = this.metodoRealizadoRepository.create({
         idUsuario: data.idUsuario,
         idMetodo: data.idMetodo,
-        progreso: MetodoProgreso.INICIADO,
-        estado: MetodoEstado.EN_PROGRESO,
+        progreso: data.progreso !== undefined ? data.progreso : MetodoProgreso.INICIADO,
+        estado: data.estado ? data.estado as MetodoEstado : MetodoEstado.EN_PROGRESO,
         fechaInicio: new Date(),
       });
 
