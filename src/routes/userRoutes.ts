@@ -22,12 +22,6 @@ router.get("/", authenticateToken, userController.getAllUsers.bind(userControlle
  *     responses:
  *       200:
  *         description: Lista de usuarios obtenida exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/User'
  *       401:
  *         description: No autorizado
  */
@@ -53,16 +47,8 @@ router.get("/:id", authenticateToken, userController.getUserById.bind(userContro
  *     responses:
  *       200:
  *         description: Usuario encontrado
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
  *       404:
  *         description: Usuario no encontrado
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: No autorizado
  */
@@ -88,17 +74,13 @@ router.get("/email/:email", authenticateToken, userController.getUserByEmail.bin
  *     responses:
  *       200:
  *         description: Usuario encontrado
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
  *       404:
  *         description: Usuario no encontrado
  *       401:
  *         description: No autorizado
  */
 
-// POST /api/v1/users - Crear nuevo usuario ← ESTA RUTA ES LA QUE FALLA
+// POST /api/v1/users - Crear nuevo usuario
 router.post(
   "/",
   validateUserCreate,
@@ -133,7 +115,6 @@ router.post(
  *               contrasena:
  *                 type: string
  *                 format: password
- *                 description: "Contraseña debe tener al menos 8 caracteres, una mayúscula y un número. Se compara con la versión hasheada en la base de datos."
  *                 example: "SecurePassword123"
  *               fecha_nacimiento:
  *                 type: string
@@ -163,26 +144,8 @@ router.post(
  *     responses:
  *       201:
  *         description: Usuario creado exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
  *       400:
- *         description: Datos de entrada inválidos o usuario/email ya existe
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Validation error"
- *                 error:
- *                   type: string
- *                   example: "El nombre de usuario ya existe"
+ *         description: Datos inválidos o usuario/email ya existe
  */
 
 // PUT /api/v1/users/:id - Actualizar usuario por id
@@ -225,7 +188,6 @@ router.put(
  *               contrasena:
  *                 type: string
  *                 format: password
- *                 description: "Nueva contraseña (opcional). Debe tener al menos 8 caracteres, una mayúscula y un número."
  *                 example: "NewSecurePassword123"
  *               pais:
  *                 type: string
@@ -262,74 +224,49 @@ router.post("/login", userController.login.bind(userController));
  *       required: true
  *       content:
  *         application/json:
- *             schema:
- *               type: object
+ *           schema:
+ *             type: object
  *             required:
  *               - contrasena
  *             properties:
  *               correo:
  *                 type: string
  *                 format: email
- *                 description: "Email del usuario (requerido si no se proporciona nombre_usuario)"
+ *                 description: "Email del usuario"
  *                 example: "john@example.com"
  *               nombre_usuario:
  *                 type: string
- *                 description: "Nombre de usuario (requerido si no se proporciona correo)"
+ *                 description: "Nombre de usuario (alternativo al correo)"
  *                 example: "johndoe"
  *               contrasena:
  *                 type: string
  *                 format: password
  *                 example: "SecurePassword123"
- *             example:
- *               correo: "john@example.com"
- *               contrasena: "SecurePassword123"
  *     responses:
  *       200:
  *         description: Autenticación exitosa
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "Autenticación exitosa"
- *                 token:
- *                   type: string
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
- *                 userId:
- *                   type: integer
- *                   example: 1
- *                 username:
- *                   type: string
- *                   example: "johndoe"
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *                 timestamp:
- *                   type: string
- *                   format: date-time
  *       401:
  *         description: Credenciales inválidas
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Credenciales inválidas"
- *                 error:
- *                   type: string
- *                   example: "El correo o la contraseña no son correctos"
- *                 timestamp:
- *                   type: string
- *                   format: date-time
+ */
+
+ // ✅ Cierre correcto del bloque Swagger de login (antes estaba faltando)
+
+// POST /api/v1/users/logout - Logout de usuario
+router.post("/logout", authenticateToken, userController.logout.bind(userController));
+
+/**
+ * @swagger
+ * /users/logout:
+ *   post:
+ *     summary: Cerrar sesión del usuario
+ *     tags: [Auth]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Sesión cerrada exitosamente
+ *       401:
+ *         description: No autorizado
  */
 
 // DELETE /api/v1/users/:id - eliminar usuario
@@ -353,41 +290,13 @@ router.delete("/:id", authenticateToken, userController.deleteUser.bind(userCont
  *     responses:
  *       200:
  *         description: Usuario eliminado correctamente
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "Usuario eliminado correctamente"
- *                 timestamp:
- *                   type: string
- *                   format: date-time
  *       404:
  *         description: Usuario no encontrado
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Error eliminando usuario"
- *                 timestamp:
- *                   type: string
- *                   format: date-time
  *       401:
  *         description: No autorizado
  */
 
-// POST /api/v1/users/request-password-reset - Solicitar código de verificación para restablecer contraseña
+// POST /api/v1/users/request-password-reset - Solicitar código de verificación
 router.post('/request-password-reset', userController.requestPasswordReset.bind(userController));
 
 /**
@@ -407,62 +316,17 @@ router.post('/request-password-reset', userController.requestPasswordReset.bind(
  *             properties:
  *               emailOrUsername:
  *                 type: string
- *                 description: "Correo electrónico o nombre de usuario del usuario"
  *                 example: "john@example.com"
- *             example:
- *               emailOrUsername: "john@example.com"
  *     responses:
  *       200:
- *         description: Código de verificación enviado al correo electrónico
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "Si el correo o nombre de usuario existe, recibirás un código para restablecer tu contraseña."
- *                 timestamp:
- *                   type: string
- *                   format: date-time
+ *         description: Código enviado al correo
  *       400:
- *         description: Correo electrónico o nombre de usuario requerido
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "El correo electrónico o nombre de usuario es requerido"
- *                 timestamp:
- *                   type: string
- *                   format: date-time
+ *         description: Datos inválidos
  *       500:
- *         description: Error interno del servidor
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Error interno del servidor"
- *                 timestamp:
- *                   type: string
- *                   format: date-time
+ *         description: Error interno
  */
 
-// POST /api/v1/users/reset-password-with-code - Verificar código y restablecer contraseña
+// POST /api/v1/users/reset-password-with-code - Restablecer contraseña
 router.post('/reset-password-with-code', userController.resetPasswordWithCode.bind(userController));
 
 /**
@@ -485,71 +349,21 @@ router.post('/reset-password-with-code', userController.resetPasswordWithCode.bi
  *               email:
  *                 type: string
  *                 format: email
- *                 description: "Correo electrónico del usuario"
  *                 example: "john@example.com"
  *               code:
  *                 type: string
- *                 description: "Código de verificación de 6 dígitos recibido por email"
  *                 example: "123456"
  *               newPassword:
  *                 type: string
  *                 format: password
- *                 description: "Nueva contraseña. Debe tener al menos 8 caracteres, una mayúscula y un número."
  *                 example: "NewSecurePassword123"
- *             example:
- *               email: "john@example.com"
- *               code: "123456"
- *               newPassword: "NewSecurePassword123"
  *     responses:
  *       200:
  *         description: Contraseña restablecida exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "Tu contraseña ha sido restablecida exitosamente."
- *                 timestamp:
- *                   type: string
- *                   format: date-time
  *       400:
- *         description: Código inválido, expirado o contraseña no cumple requisitos
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Código inválido o expirado. Solicita uno nuevo."
- *                 timestamp:
- *                   type: string
- *                   format: date-time
+ *         description: Código inválido o expirado
  *       500:
- *         description: Error interno del servidor
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Error interno del servidor"
- *                 timestamp:
- *                   type: string
- *                   format: date-time
+ *         description: Error interno
  */
-
 
 export default router;

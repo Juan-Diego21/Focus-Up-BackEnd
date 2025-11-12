@@ -281,6 +281,32 @@ class UserController {
             res.status(500).json(response);
         }
     }
+    async logout(req, res) {
+        try {
+            const authHeader = req.headers["authorization"];
+            const token = jwt_1.JwtUtils.extractTokenFromHeader(authHeader);
+            if (token) {
+                jwt_1.TokenBlacklistService.addToBlacklist(token);
+                logger_1.default.info(`Token revocado exitosamente para logout del usuario: ${req.user?.userId}`);
+            }
+            const response = {
+                success: true,
+                message: "Sesión cerrada exitosamente",
+                timestamp: new Date(),
+            };
+            res.status(200).json(response);
+        }
+        catch (error) {
+            logger_1.default.error("Error en UserController.logout:", error);
+            const response = {
+                success: false,
+                message: "Error interno del servidor",
+                error: "Ocurrió un error inesperado",
+                timestamp: new Date(),
+            };
+            res.status(500).json(response);
+        }
+    }
     async getAllUsers(req, res) {
         try {
             const result = await UserService_1.userService.getAllUsers();

@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { JwtUtils, JwtPayload } from "../utils/jwt";
+import { JwtUtils, JwtPayload, TokenBlacklistService } from "../utils/jwt";
 import { ApiResponse } from "../types/ApiResponse";
 import logger from "../utils/logger";
 
 /**
  * Middleware de autenticación JWT
- * Verifica la presencia y validez del token de acceso en las cabeceras de autorización
+ * Verifica la presencia, validez y estado de revocación del token de acceso
  */
 export const authenticateToken = (
   req: Request,
@@ -24,6 +24,18 @@ export const authenticateToken = (
       const response: ApiResponse = {
         success: false,
         message: "Acceso no autorizado. Token requerido.",
+        timestamp: new Date(),
+      };
+      return res.status(401).json(response);
+    }
+
+    // Verificar si el token está en la lista negra (revocado por logout)
+    // Esto asegura que los tokens revocados sean rechazados inmediatamente
+    if (TokenBlacklistService.isBlacklisted(token)) {
+      logger.warn(`Acceso no autorizado - Token revocado: ${req.method} ${req.originalUrl} desde ${req.ip}`);
+      const response: ApiResponse = {
+        success: false,
+        message: "Acceso no autorizado. Sesión expirada o cerrada.",
         timestamp: new Date(),
       };
       return res.status(401).json(response);

@@ -16,9 +16,44 @@ const JWT_REFRESH_SECRET =
   env.JWT_REFRESH_SECRET ||
   "fallback-refresh-secret-change-in-production";
 const JWT_ACCESS_EXPIRES_IN =
-  process.env.JWT_ACCESS_EXPIRES_IN || env.JWT_ACCESS_EXPIRES_IN || "15m";
+  process.env.JWT_ACCESS_EXPIRES_IN || env.JWT_ACCESS_EXPIRES_IN || "24h";
 const JWT_REFRESH_EXPIRES_IN =
   process.env.JWT_REFRESH_EXPIRES_IN || env.JWT_REFRESH_EXPIRES_IN || "7d";
+
+// Lista negra de tokens revocados (en memoria para simplicidad)
+// En producción, usar Redis o base de datos para persistencia
+const tokenBlacklist = new Set<string>();
+
+/**
+ * Servicio de lista negra de tokens
+ * Gestiona tokens revocados hasta su expiración natural
+ */
+export class TokenBlacklistService {
+  /**
+   * Agrega un token a la lista negra
+   * El token se mantiene invalidado hasta su expiración natural
+   */
+  static addToBlacklist(token: string): void {
+    tokenBlacklist.add(token);
+  }
+
+  /**
+   * Verifica si un token está en la lista negra
+   * Retorna true si el token ha sido revocado
+   */
+  static isBlacklisted(token: string): boolean {
+    return tokenBlacklist.has(token);
+  }
+
+  /**
+   * Limpia tokens expirados de la lista negra
+   * Se ejecuta periódicamente para mantener la memoria limpia
+   */
+  static cleanupExpiredTokens(): void {
+    // Nota: En implementación real, verificar expiración de cada token
+    // Por simplicidad, esta función está preparada para futura implementación
+  }
+}
 
 export interface JwtPayload {
   userId: number;

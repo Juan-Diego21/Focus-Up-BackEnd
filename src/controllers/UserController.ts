@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { userService } from "../services/UserService";
 import { ApiResponse } from "../types/ApiResponse";
-import { JwtUtils, JwtPayload } from "../utils/jwt";
+import { JwtUtils, JwtPayload, TokenBlacklistService } from "../utils/jwt";
 import logger from "../utils/logger";
 
 /**
@@ -281,46 +281,84 @@ export class UserController {
   }
 
   /**
-   * Obtener el perfil del usuario actualmente autenticado
-   * Utiliza el token JWT para identificar al usuario
-   */
-  async getProfile(req: Request, res: Response) {
-    try {
-      const userPayload = (req as any).user as JwtPayload;
+    * Obtener el perfil del usuario actualmente autenticado
+    * Utiliza el token JWT para identificar al usuario
+    */
+   async getProfile(req: Request, res: Response) {
+     try {
+       const userPayload = (req as any).user as JwtPayload;
 
-      const result = await userService.getUserById(userPayload.userId);
+       const result = await userService.getUserById(userPayload.userId);
 
-      if (!result.success) {
-        const response: ApiResponse = {
-          success: false,
-          message: "Error al obtener perfil",
-          error: result.error,
-          timestamp: new Date(),
-        };
-        return res.status(404).json(response);
-      }
+       if (!result.success) {
+         const response: ApiResponse = {
+           success: false,
+           message: "Error al obtener perfil",
+           error: result.error,
+           timestamp: new Date(),
+         };
+         return res.status(404).json(response);
+       }
 
-      const response: ApiResponse = {
-        success: true,
-        message: "Perfil obtenido exitosamente",
-        data: result.user,
-        timestamp: new Date(),
-      };
+       const response: ApiResponse = {
+         success: true,
+         message: "Perfil obtenido exitosamente",
+         data: result.user,
+         timestamp: new Date(),
+       };
 
-      res.status(200).json(response);
-    } catch (error) {
-      logger.error("Error en UserController.getProfile:", error);
+       res.status(200).json(response);
+     } catch (error) {
+       logger.error("Error en UserController.getProfile:", error);
 
-      const response: ApiResponse = {
-        success: false,
-        message: "Error interno del servidor",
-        error: "Ocurrió un error inesperado",
-        timestamp: new Date(),
-      };
+       const response: ApiResponse = {
+         success: false,
+         message: "Error interno del servidor",
+         error: "Ocurrió un error inesperado",
+         timestamp: new Date(),
+       };
 
-      res.status(500).json(response);
-    }
-  }
+       res.status(500).json(response);
+     }
+   }
+
+   /**
+    * Cerrar sesión del usuario actual
+    * Revoca inmediatamente el token actual agregándolo a la lista negra
+    * El token permanece inválido hasta su expiración natural (24 horas)
+    */
+   async logout(req: Request, res: Response) {
+     try {
+       const authHeader = req.headers["authorization"];
+       const token = JwtUtils.extractTokenFromHeader(authHeader);
+
+       if (token) {
+         // Agregar el token a la lista negra para invalidarlo inmediatamente
+         // El token se mantiene revocado hasta su expiración natural
+         TokenBlacklistService.addToBlacklist(token);
+         logger.info(`Token revocado exitosamente para logout del usuario: ${(req as any).user?.userId}`);
+       }
+
+       const response: ApiResponse = {
+         success: true,
+         message: "Sesión cerrada exitosamente",
+         timestamp: new Date(),
+       };
+
+       res.status(200).json(response);
+     } catch (error) {
+       logger.error("Error en UserController.logout:", error);
+
+       const response: ApiResponse = {
+         success: false,
+         message: "Error interno del servidor",
+         error: "Ocurrió un error inesperado",
+         timestamp: new Date(),
+       };
+
+       res.status(500).json(response);
+     }
+   }
 
   /**
    * Obtener lista completa de todos los usuarios del sistema

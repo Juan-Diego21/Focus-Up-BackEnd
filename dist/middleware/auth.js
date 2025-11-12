@@ -21,6 +21,15 @@ const authenticateToken = (req, res, next) => {
             };
             return res.status(401).json(response);
         }
+        if (jwt_1.TokenBlacklistService.isBlacklisted(token)) {
+            logger_1.default.warn(`Acceso no autorizado - Token revocado: ${req.method} ${req.originalUrl} desde ${req.ip}`);
+            const response = {
+                success: false,
+                message: "Acceso no autorizado. Sesión expirada o cerrada.",
+                timestamp: new Date(),
+            };
+            return res.status(401).json(response);
+        }
         const decoded = jwt_1.JwtUtils.verifyAccessToken(token);
         logger_1.default.info(`Token decoded successfully for userId: ${decoded.userId}, email: ${decoded.email}`);
         req.user = decoded;
