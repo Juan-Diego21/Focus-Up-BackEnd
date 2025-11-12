@@ -15,6 +15,8 @@ const Musica_entity_1 = require("../models/Musica.entity");
 const AlbumMusica_entity_1 = require("../models/AlbumMusica.entity");
 const Evento_entity_1 = require("../models/Evento.entity");
 const PasswordReset_entity_1 = require("../models/PasswordReset.entity");
+const MetodoRealizado_entity_1 = require("../models/MetodoRealizado.entity");
+const SesionConcentracionRealizada_entity_1 = require("../models/SesionConcentracionRealizada.entity");
 exports.AppDataSource = new typeorm_1.DataSource({
     type: "postgres",
     host: env_1.env.PGHOST,
@@ -39,6 +41,8 @@ exports.AppDataSource = new typeorm_1.DataSource({
         AlbumMusica_entity_1.AlbumMusicaEntity,
         Evento_entity_1.EventoEntity,
         PasswordReset_entity_1.PasswordResetEntity,
+        MetodoRealizado_entity_1.MetodoRealizadoEntity,
+        SesionConcentracionRealizada_entity_1.SesionConcentracionRealizadaEntity,
     ],
     migrations: [__dirname + "/../migrations/*{.ts,.js}"],
     subscribers: [],

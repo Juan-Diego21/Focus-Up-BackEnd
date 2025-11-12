@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const ReportsController_1 = require("../controllers/ReportsController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.post("/active-methods", auth_1.authenticateToken, ReportsController_1.reportsController.createActiveMethod.bind(ReportsController_1.reportsController));
+router.get("/", auth_1.authenticateToken, ReportsController_1.reportsController.getUserReports.bind(ReportsController_1.reportsController));
+router.patch("/methods/:id/progress", auth_1.authenticateToken, ReportsController_1.reportsController.updateMethodProgress.bind(ReportsController_1.reportsController));
+router.patch("/sessions/:id/progress", auth_1.authenticateToken, ReportsController_1.reportsController.updateSessionProgress.bind(ReportsController_1.reportsController));
+exports.default = router;

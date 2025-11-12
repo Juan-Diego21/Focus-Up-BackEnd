@@ -19,6 +19,8 @@ import { MusicaEntity } from "../models/Musica.entity";
 import { AlbumMusicaEntity } from "../models/AlbumMusica.entity";
 import { EventoEntity } from "../models/Evento.entity";
 import { PasswordResetEntity } from "../models/PasswordReset.entity";
+import { MetodoRealizadoEntity } from "../models/MetodoRealizado.entity";
+import { SesionConcentracionRealizadaEntity } from "../models/SesionConcentracionRealizada.entity";
 
 /**
  * Instancia principal de DataSource para TypeORM
@@ -57,6 +59,10 @@ export const AppDataSource = new DataSource({
 
     // Entidades de recuperación de contraseña
     PasswordResetEntity,
+
+    // Entidades de reportes
+    MetodoRealizadoEntity,
+    SesionConcentracionRealizadaEntity,
   ],
   migrations: [__dirname + "/../migrations/*{.ts,.js}"],
   subscribers: [],
