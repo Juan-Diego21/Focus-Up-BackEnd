@@ -56,5 +56,10 @@ export declare class ReportsService {
         sesionRealizada?: SesionConcentracionRealizadaEntity;
         error?: string;
     }>;
+    deleteReport(reportId: number, userId: number): Promise<{
+        success: boolean;
+        message?: string;
+        error?: string;
+    }>;
 }
 export declare const reportsService: ReportsService;

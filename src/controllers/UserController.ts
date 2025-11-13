@@ -247,10 +247,30 @@ export class UserController {
         return res.status(401).json(response);
       }
 
-      // Generar token
+      // Increment token version to invalidate previous tokens
+      const userRepository = (await import("../config/ormconfig")).AppDataSource.getRepository(
+        (await import("../models/User.entity")).UserEntity
+      );
+
+      await userRepository.increment(
+        { idUsuario: result.user!.id_usuario! },
+        "tokenVersion",
+        1
+      );
+
+      // Get updated user with new token version
+      const updatedUser = await userRepository.findOne({
+        where: { idUsuario: result.user!.id_usuario! }
+      });
+
+      const tokenVersion = updatedUser!.tokenVersion;
+      logger.info(`Token version incremented to ${tokenVersion} for user ${result.user!.id_usuario}`);
+
+      // Generar token con token_version
       const tokenPayload = {
         userId: result.user!.id_usuario!,
         email: result.user!.correo,
+        tokenVersion: tokenVersion,
       };
 
       const accessToken = JwtUtils.generateAccessToken(tokenPayload);

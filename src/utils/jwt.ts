@@ -58,6 +58,7 @@ export class TokenBlacklistService {
 export interface JwtPayload {
   userId: number;
   email: string;
+  tokenVersion: number;
 }
 
 /**

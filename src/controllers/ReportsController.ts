@@ -47,10 +47,31 @@ export class ReportsController {
         return res.status(400).json(response);
       }
 
+      // Transform the response to include snake_case field names as expected by frontend
+      const metodoData = result.metodoRealizado;
+      if (!metodoData) {
+        const response: ApiResponse = {
+          success: false,
+          message: "Error interno: no se pudo obtener el método creado",
+          timestamp: new Date(),
+        };
+        return res.status(500).json(response);
+      }
+
       const response: ApiResponse = {
         success: true,
         message: result.message || "Método activo creado exitosamente",
-        data: result.metodoRealizado,
+        data: {
+          id_metodo_realizado: metodoData.idMetodoRealizado,
+          id_usuario: metodoData.idUsuario,
+          id_metodo: metodoData.idMetodo,
+          progreso: metodoData.progreso,
+          estado: metodoData.estado,
+          fecha_inicio: metodoData.fechaInicio,
+          fecha_fin: metodoData.fechaFin,
+          fecha_creacion: metodoData.fechaCreacion,
+          fecha_actualizacion: metodoData.fechaActualizacion,
+        },
         timestamp: new Date(),
       };
 
@@ -70,16 +91,41 @@ export class ReportsController {
   }
 
   /**
-   * Obtiene todos los reportes del usuario actual (métodos y sesiones)
-   * GET /api/v1/reports
+   * Obtiene todos los reportes del usuario especificado o del usuario actual
+   * GET /api/v1/reports?userId=123
    */
   async getUserReports(req: Request, res: Response) {
     try {
       const userPayload = (req as any).user as JwtPayload;
+      const { userId: queryUserId } = req.query;
 
-      const result = await reportsService.getUserReports(userPayload.userId);
+      // Use provided userId or fallback to authenticated user's ID
+      const targetUserId = queryUserId ? parseInt(queryUserId as string) : userPayload.userId;
+
+      if (isNaN(targetUserId)) {
+        const response: ApiResponse = {
+          success: false,
+          message: "ID de usuario inválido",
+          timestamp: new Date(),
+        };
+        return res.status(400).json(response);
+      }
+
+      const result = await reportsService.getUserReports(targetUserId);
 
       if (!result.success) {
+        // Check if it's a "user not found" error
+        if (result.error === "Usuario no encontrado") {
+          const response: ApiResponse = {
+            success: false,
+            message: "Usuario no encontrado",
+            error: result.error,
+            timestamp: new Date(),
+          };
+          return res.status(404).json(response);
+        }
+
+        // Other errors
         const response: ApiResponse = {
           success: false,
           message: "Error al obtener reportes",
@@ -91,8 +137,8 @@ export class ReportsController {
 
       const response: ApiResponse = {
         success: true,
-        message: "Reportes obtenidos exitosamente",
-        data: result.reports,
+        message: result.reports!.combined.length > 0 ? "User reports fetched successfully" : "No reports found for this user",
+        data: result.reports!.combined,
         timestamp: new Date(),
       };
 
@@ -251,6 +297,57 @@ export class ReportsController {
       res.status(200).json(response);
     } catch (error) {
       logger.error("Error en ReportsController.updateSessionProgress:", error);
+
+      const response: ApiResponse = {
+        success: false,
+        message: "Error interno del servidor",
+        error: "Ocurrió un error inesperado",
+        timestamp: new Date(),
+      };
+
+      res.status(500).json(response);
+    }
+  }
+
+  /**
+   * Elimina un reporte por ID
+   * DELETE /api/v1/reports/:id
+   */
+  async deleteReport(req: Request, res: Response) {
+    try {
+      const userPayload = (req as any).user as JwtPayload;
+      const reportId = parseInt(req.params.id);
+
+      if (isNaN(reportId)) {
+        const response: ApiResponse = {
+          success: false,
+          message: "ID del reporte inválido",
+          timestamp: new Date(),
+        };
+        return res.status(400).json(response);
+      }
+
+      const result = await reportsService.deleteReport(reportId, userPayload.userId);
+
+      if (!result.success) {
+        const response: ApiResponse = {
+          success: false,
+          message: result.message || "Error al eliminar reporte",
+          error: result.error,
+          timestamp: new Date(),
+        };
+        return res.status(404).json(response);
+      }
+
+      const response: ApiResponse = {
+        success: true,
+        message: result.message || "Reporte eliminado correctamente",
+        timestamp: new Date(),
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      logger.error("Error en ReportsController.deleteReport:", error);
 
       const response: ApiResponse = {
         success: false,

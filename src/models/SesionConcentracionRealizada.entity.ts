@@ -7,6 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
+import { UserEntity } from "./User.entity";
 import { MusicaEntity } from "./Musica.entity";
 import { MetodoRealizadoEntity } from "./MetodoRealizado.entity";
 
@@ -21,6 +22,9 @@ export enum SesionEstado {
 export class SesionConcentracionRealizadaEntity {
   @PrimaryGeneratedColumn({ name: "id_sesion_realizada" })
   idSesionRealizada!: number;
+
+  @Column({ name: "id_usuario", type: "integer" })
+  idUsuario!: number;
 
   @Column({ name: "id_metodo_realizado", type: "integer", nullable: true })
   idMetodoRealizado!: number;
@@ -46,6 +50,10 @@ export class SesionConcentracionRealizadaEntity {
   fechaActualizacion!: Date;
 
   // Relations
+  @ManyToOne(() => UserEntity)
+  @JoinColumn({ name: "id_usuario", referencedColumnName: "idUsuario" })
+  usuario?: UserEntity;
+
   @ManyToOne(() => MetodoRealizadoEntity)
   @JoinColumn({ name: "id_metodo_realizado", referencedColumnName: "idMetodoRealizado" })
   metodoRealizado?: MetodoRealizadoEntity;

@@ -35,10 +35,29 @@ class ReportsController {
                 };
                 return res.status(400).json(response);
             }
+            const metodoData = result.metodoRealizado;
+            if (!metodoData) {
+                const response = {
+                    success: false,
+                    message: "Error interno: no se pudo obtener el método creado",
+                    timestamp: new Date(),
+                };
+                return res.status(500).json(response);
+            }
             const response = {
                 success: true,
                 message: result.message || "Método activo creado exitosamente",
-                data: result.metodoRealizado,
+                data: {
+                    id_metodo_realizado: metodoData.idMetodoRealizado,
+                    id_usuario: metodoData.idUsuario,
+                    id_metodo: metodoData.idMetodo,
+                    progreso: metodoData.progreso,
+                    estado: metodoData.estado,
+                    fecha_inicio: metodoData.fechaInicio,
+                    fecha_fin: metodoData.fechaFin,
+                    fecha_creacion: metodoData.fechaCreacion,
+                    fecha_actualizacion: metodoData.fechaActualizacion,
+                },
                 timestamp: new Date(),
             };
             res.status(201).json(response);
@@ -199,6 +218,46 @@ class ReportsController {
         }
         catch (error) {
             logger_1.default.error("Error en ReportsController.updateSessionProgress:", error);
+            const response = {
+                success: false,
+                message: "Error interno del servidor",
+                error: "Ocurrió un error inesperado",
+                timestamp: new Date(),
+            };
+            res.status(500).json(response);
+        }
+    }
+    async deleteReport(req, res) {
+        try {
+            const userPayload = req.user;
+            const reportId = parseInt(req.params.id);
+            if (isNaN(reportId)) {
+                const response = {
+                    success: false,
+                    message: "ID del reporte inválido",
+                    timestamp: new Date(),
+                };
+                return res.status(400).json(response);
+            }
+            const result = await ReportsService_1.reportsService.deleteReport(reportId, userPayload.userId);
+            if (!result.success) {
+                const response = {
+                    success: false,
+                    message: result.message || "Error al eliminar reporte",
+                    error: result.error,
+                    timestamp: new Date(),
+                };
+                return res.status(404).json(response);
+            }
+            const response = {
+                success: true,
+                message: result.message || "Reporte eliminado correctamente",
+                timestamp: new Date(),
+            };
+            res.status(200).json(response);
+        }
+        catch (error) {
+            logger_1.default.error("Error en ReportsController.deleteReport:", error);
             const response = {
                 success: false,
                 message: "Error interno del servidor",

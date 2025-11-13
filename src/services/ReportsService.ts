@@ -22,9 +22,19 @@ export interface UpdateSessionProgressData {
   estado?: SesionEstado;
 }
 
+export interface ReportItem {
+  id_reporte: number;
+  id_usuario: number;
+  nombre_metodo: string;
+  progreso?: number;
+  estado: string;
+  fecha_creacion: Date;
+}
+
 export interface ReportData {
   metodos: any[];
   sesiones: any[];
+  combined: ReportItem[];
 }
 
 /**
@@ -125,19 +135,38 @@ export class ReportsService {
     error?: string;
   }> {
     try {
-      // Obtener métodos realizados del usuario
-      const metodosRealizados = await this.metodoRealizadoRepository.find({
-        where: { idUsuario: userId },
-        relations: ["metodo"],
-        order: { fechaCreacion: "DESC" }
+      // Asegurar que userId sea un número
+      const numericUserId = Number(userId);
+      logger.info("Buscando reportes para usuario ID:", numericUserId);
+
+      // Verificar que el usuario existe
+      const user = await this.userRepository.findOne({
+        where: { idUsuario: numericUserId }
       });
 
-      // Obtener sesiones realizadas del usuario (a través de métodos realizados)
+      if (!user) {
+        return {
+          success: false,
+          error: "Usuario no encontrado"
+        };
+      }
+
+      // Obtener métodos realizados del usuario usando query builder
+      const metodosRealizados = await this.metodoRealizadoRepository
+        .createQueryBuilder("mr")
+        .leftJoinAndSelect("mr.metodo", "m")
+        .where("mr.idUsuario = :userId", { userId: numericUserId })
+        .orderBy("mr.fechaCreacion", "DESC")
+        .getMany();
+
+      logger.info(`Encontrados ${metodosRealizados.length} métodos realizados para usuario ${numericUserId}`);
+
+      // Obtener sesiones realizadas del usuario (directas o a través de métodos realizados)
       const sesionesRealizadas = await this.sesionRealizadaRepository
         .createQueryBuilder("sesion")
         .leftJoinAndSelect("sesion.musica", "musica")
         .leftJoin("sesion.metodoRealizado", "metodoRealizado")
-        .where("metodoRealizado.idUsuario = :userId", { userId })
+        .where("sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId", { userId: numericUserId })
         .orderBy("sesion.fechaCreacion", "DESC")
         .getMany();
 
@@ -167,19 +196,40 @@ export class ReportsService {
           artista: sesionRealizada.musica.artistaCancion,
           genero: sesionRealizada.musica.generoCancion,
         } : null,
-        duracion: null, // Duration not available in current schema
+        duracion: null, // Not available in current database schema
         fechaProgramada: sesionRealizada.fechaProgramada,
         estado: sesionRealizada.estado,
-        fechaInicio: null, // Start date not available in current schema
-        fechaFin: null, // End date not available in current schema
+        fechaInicio: null, // Not available in current database schema
+        fechaFin: null, // Not available in current database schema
         fechaCreacion: sesionRealizada.fechaCreacion,
       }));
+
+      // Crear array combinado para el formato simplificado
+      const combined: ReportItem[] = [
+        ...metodos.map(metodo => ({
+          id_reporte: metodo.id,
+          id_usuario: numericUserId,
+          nombre_metodo: metodo.metodo.nombre || 'Método desconocido',
+          progreso: metodo.progreso,
+          estado: metodo.estado,
+          fecha_creacion: metodo.fechaCreacion,
+        })),
+        ...sesiones.map(sesion => ({
+          id_reporte: sesion.id,
+          id_usuario: numericUserId,
+          nombre_metodo: sesion.musica ? `Sesión: ${sesion.musica.nombre}` : 'Sesión de concentración',
+          progreso: undefined, // Sessions don't have progress
+          estado: sesion.estado,
+          fecha_creacion: sesion.fechaCreacion,
+        }))
+      ].sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime());
 
       return {
         success: true,
         reports: {
           metodos,
-          sesiones
+          sesiones,
+          combined
         }
       };
 
@@ -207,13 +257,16 @@ export class ReportsService {
     error?: string;
   }> {
     try {
-      // Buscar el método realizado
-      const metodoRealizado = await this.metodoRealizadoRepository.findOne({
-        where: {
-          idMetodoRealizado: methodId,
-          idUsuario: userId
-        }
-      });
+      // Asegurar que los IDs sean números
+      const numericMethodId = Number(methodId);
+      const numericUserId = Number(userId);
+
+      // Buscar el método realizado usando query builder
+      const metodoRealizado = await this.metodoRealizadoRepository
+        .createQueryBuilder("mr")
+        .where("mr.idMetodoRealizado = :methodId", { methodId: numericMethodId })
+        .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
+        .getOne();
 
       if (!metodoRealizado) {
         return {
@@ -266,12 +319,16 @@ export class ReportsService {
     error?: string;
   }> {
     try {
-      // Buscar la sesión realizada (a través de métodos realizados)
+      // Asegurar que los IDs sean números
+      const numericSessionId = Number(sessionId);
+      const numericUserId = Number(userId);
+
+      // Buscar la sesión realizada (directa o a través de métodos realizados)
       const sesionRealizada = await this.sesionRealizadaRepository
         .createQueryBuilder("sesion")
         .leftJoin("sesion.metodoRealizado", "metodoRealizado")
-        .where("sesion.idSesionRealizada = :sessionId", { sessionId })
-        .andWhere("metodoRealizado.idUsuario = :userId", { userId })
+        .where("sesion.idSesionRealizada = :sessionId", { sessionId: numericSessionId })
+        .andWhere("(sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId)", { userId: numericUserId })
         .getOne();
 
       if (!sesionRealizada) {
@@ -312,13 +369,16 @@ export class ReportsService {
     error?: string;
   }> {
     try {
-      const metodoRealizado = await this.metodoRealizadoRepository.findOne({
-        where: {
-          idMetodoRealizado: methodId,
-          idUsuario: userId
-        },
-        relations: ["metodo"]
-      });
+      // Asegurar que los IDs sean números
+      const numericMethodId = Number(methodId);
+      const numericUserId = Number(userId);
+
+      const metodoRealizado = await this.metodoRealizadoRepository
+        .createQueryBuilder("mr")
+        .leftJoinAndSelect("mr.metodo", "m")
+        .where("mr.idMetodoRealizado = :methodId", { methodId: numericMethodId })
+        .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
+        .getOne();
 
       if (!metodoRealizado) {
         return {
@@ -350,12 +410,16 @@ export class ReportsService {
     error?: string;
   }> {
     try {
+      // Asegurar que los IDs sean números
+      const numericSessionId = Number(sessionId);
+      const numericUserId = Number(userId);
+
       const sesionRealizada = await this.sesionRealizadaRepository
         .createQueryBuilder("sesion")
         .leftJoinAndSelect("sesion.musica", "musica")
         .leftJoin("sesion.metodoRealizado", "metodoRealizado")
-        .where("sesion.idSesionRealizada = :sessionId", { sessionId })
-        .andWhere("metodoRealizado.idUsuario = :userId", { userId })
+        .where("sesion.idSesionRealizada = :sessionId", { sessionId: numericSessionId })
+        .andWhere("(sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId)", { userId: numericUserId })
         .getOne();
 
       if (!sesionRealizada) {
@@ -375,6 +439,58 @@ export class ReportsService {
       return {
         success: false,
         error: "Error al obtener sesión"
+      };
+    }
+  }
+
+  /**
+   * Elimina un reporte (método realizado) por ID y usuario
+   * Solo permite eliminar reportes que pertenecen al usuario autenticado
+   */
+  async deleteReport(reportId: number, userId: number): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+  }> {
+    try {
+      // Asegurar que los IDs sean números
+      const numericReportId = Number(reportId);
+      const numericUserId = Number(userId);
+
+      logger.info("Buscando reporte con ID:", numericReportId, "para usuario:", numericUserId);
+
+      // Verificar que el reporte existe y pertenece al usuario usando query builder
+      const report = await this.metodoRealizadoRepository
+        .createQueryBuilder("mr")
+        .where("mr.idMetodoRealizado = :reportId", { reportId: numericReportId })
+        .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
+        .getOne();
+
+      if (!report) {
+        logger.warn(`Reporte ${numericReportId} no encontrado para usuario ${numericUserId}`);
+        return {
+          success: false,
+          error: "Reporte no encontrado o no autorizado"
+        };
+      }
+
+      logger.info(`Eliminando reporte ${numericReportId} del usuario ${numericUserId}`);
+
+      // Eliminar el reporte
+      await this.metodoRealizadoRepository.remove(report);
+
+      logger.info(`Reporte ${numericReportId} eliminado correctamente`);
+
+      return {
+        success: true,
+        message: "Reporte eliminado correctamente"
+      };
+
+    } catch (error) {
+      logger.error("Error en ReportsService.deleteReport:", error);
+      return {
+        success: false,
+        error: "Error al eliminar reporte"
       };
     }
   }

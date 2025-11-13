@@ -75,11 +75,15 @@ class ReportsService {
     }
     async getUserReports(userId) {
         try {
-            const metodosRealizados = await this.metodoRealizadoRepository.find({
-                where: { idUsuario: userId },
-                relations: ["metodo"],
-                order: { fechaCreacion: "DESC" }
-            });
+            const numericUserId = Number(userId);
+            logger_1.default.info("Buscando reportes para usuario ID:", numericUserId);
+            const metodosRealizados = await this.metodoRealizadoRepository
+                .createQueryBuilder("mr")
+                .leftJoinAndSelect("mr.metodo", "m")
+                .where("mr.idUsuario = :userId", { userId: numericUserId })
+                .orderBy("mr.fechaCreacion", "DESC")
+                .getMany();
+            logger_1.default.info(`Encontrados ${metodosRealizados.length} métodos realizados para usuario ${numericUserId}`);
             const sesionesRealizadas = await this.sesionRealizadaRepository
                 .createQueryBuilder("sesion")
                 .leftJoinAndSelect("sesion.musica", "musica")
@@ -135,12 +139,13 @@ class ReportsService {
     }
     async updateMethodProgress(methodId, userId, data) {
         try {
-            const metodoRealizado = await this.metodoRealizadoRepository.findOne({
-                where: {
-                    idMetodoRealizado: methodId,
-                    idUsuario: userId
-                }
-            });
+            const numericMethodId = Number(methodId);
+            const numericUserId = Number(userId);
+            const metodoRealizado = await this.metodoRealizadoRepository
+                .createQueryBuilder("mr")
+                .where("mr.idMetodoRealizado = :methodId", { methodId: numericMethodId })
+                .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
+                .getOne();
             if (!metodoRealizado) {
                 return {
                     success: false,
@@ -204,13 +209,14 @@ class ReportsService {
     }
     async getMethodById(methodId, userId) {
         try {
-            const metodoRealizado = await this.metodoRealizadoRepository.findOne({
-                where: {
-                    idMetodoRealizado: methodId,
-                    idUsuario: userId
-                },
-                relations: ["metodo"]
-            });
+            const numericMethodId = Number(methodId);
+            const numericUserId = Number(userId);
+            const metodoRealizado = await this.metodoRealizadoRepository
+                .createQueryBuilder("mr")
+                .leftJoinAndSelect("mr.metodo", "m")
+                .where("mr.idMetodoRealizado = :methodId", { methodId: numericMethodId })
+                .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
+                .getOne();
             if (!metodoRealizado) {
                 return {
                     success: false,
@@ -255,6 +261,39 @@ class ReportsService {
             return {
                 success: false,
                 error: "Error al obtener sesión"
+            };
+        }
+    }
+    async deleteReport(reportId, userId) {
+        try {
+            const numericReportId = Number(reportId);
+            const numericUserId = Number(userId);
+            logger_1.default.info("Buscando reporte con ID:", numericReportId, "para usuario:", numericUserId);
+            const report = await this.metodoRealizadoRepository
+                .createQueryBuilder("mr")
+                .where("mr.idMetodoRealizado = :reportId", { reportId: numericReportId })
+                .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
+                .getOne();
+            if (!report) {
+                logger_1.default.warn(`Reporte ${numericReportId} no encontrado para usuario ${numericUserId}`);
+                return {
+                    success: false,
+                    error: "Reporte no encontrado o no autorizado"
+                };
+            }
+            logger_1.default.info(`Eliminando reporte ${numericReportId} del usuario ${numericUserId}`);
+            await this.metodoRealizadoRepository.remove(report);
+            logger_1.default.info(`Reporte ${numericReportId} eliminado correctamente`);
+            return {
+                success: true,
+                message: "Reporte eliminado correctamente"
+            };
+        }
+        catch (error) {
+            logger_1.default.error("Error en ReportsService.deleteReport:", error);
+            return {
+                success: false,
+                error: "Error al eliminar reporte"
             };
         }
     }

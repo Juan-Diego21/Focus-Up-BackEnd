@@ -232,4 +232,29 @@ router.patch("/methods/:id/progress", authenticateToken, reportsController.updat
  */
 router.patch("/sessions/:id/progress", authenticateToken, reportsController.updateSessionProgress.bind(reportsController));
 
+/**
+ * @swagger
+ * /reports/{id}:
+ *   delete:
+ *     summary: Eliminar un reporte por ID
+ *     tags: [Reports]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del reporte a eliminar
+ *     responses:
+ *       200:
+ *         description: Reporte eliminado correctamente
+ *       404:
+ *         description: Reporte no encontrado o no autorizado
+ *       401:
+ *         description: No autorizado
+ */
+router.delete("/:id", authenticateToken, reportsController.deleteReport.bind(reportsController));
+
 export default router;

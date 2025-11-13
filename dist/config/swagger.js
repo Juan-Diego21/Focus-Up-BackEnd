@@ -208,6 +208,10 @@ const swaggerOptions = {
                 description: "Endpoints de gestión de métodos de estudio",
             },
             {
+                name: "Reports",
+                description: "Endpoints de gestión de reportes de métodos y sesiones",
+            },
+            {
                 name: "Health",
                 description: "Endpoints de verificación del sistema",
             },

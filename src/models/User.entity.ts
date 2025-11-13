@@ -48,6 +48,9 @@ export class UserEntity {
   @UpdateDateColumn({ name: "fecha_actualizacion" })
   fechaActualizacion!: Date;
 
+  @Column({ name: "token_version", type: "integer", default: 1 })
+  tokenVersion!: number;
+
   @OneToMany(() => UsuarioInteresesEntity, usuarioInteres => usuarioInteres.usuario)
   usuarioIntereses?: UsuarioInteresesEntity[];
 
