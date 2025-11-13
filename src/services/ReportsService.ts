@@ -177,8 +177,6 @@ export class ReportsService {
           id: metodoRealizado.metodo?.idMetodo,
           nombre: metodoRealizado.metodo?.nombreMetodo,
           descripcion: metodoRealizado.metodo?.descripcion,
-          color: metodoRealizado.metodo?.colorHexa,
-          imagen: metodoRealizado.metodo?.urlImagen,
         },
         progreso: metodoRealizado.progreso,
         estado: metodoRealizado.estado,

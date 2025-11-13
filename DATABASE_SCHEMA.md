@@ -90,9 +90,7 @@ CREATE TABLE sesiones_concentracion_realizadas (
         "metodo": {
           "id": 1,
           "nombre": "Método Pomodoro",
-          "descripcion": "Técnica de estudio por intervalos",
-          "color": "#FF5733",
-          "imagen": "https://example.com/pomodoro.jpg"
+          "descripcion": "Técnica de estudio por intervalos"
         },
         "progreso": 50,
         "estado": "en_progreso",
@@ -136,7 +134,7 @@ CREATE TABLE sesiones_concentracion_realizadas (
 #### Methods with Study Method Details:
 
 ```sql
-SELECT mr.*, bme.nombre_metodo, bme.descripcion, bme.color_hexa, bme.url_imagen
+SELECT mr.*, bme.nombre_metodo, bme.descripcion
 FROM metodos_realizados mr
 JOIN bibliotecametodosestudio bme ON mr.id_metodo = bme.id_metodo
 WHERE mr.id_usuario = ?

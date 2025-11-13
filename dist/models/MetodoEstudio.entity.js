@@ -28,14 +28,6 @@ __decorate([
     __metadata("design:type", String)
 ], MetodoEstudioEntity.prototype, "descripcion", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: "url_imagen", type: "text", nullable: false }),
-    __metadata("design:type", String)
-], MetodoEstudioEntity.prototype, "urlImagen", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: "color_hexa", type: "text", nullable: false }),
-    __metadata("design:type", String)
-], MetodoEstudioEntity.prototype, "colorHexa", void 0);
-__decorate([
     (0, typeorm_1.CreateDateColumn)({ name: "fecha_creacion" }),
     __metadata("design:type", Date)
 ], MetodoEstudioEntity.prototype, "fechaCreacion", void 0);

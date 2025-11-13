@@ -76,10 +76,6 @@ router.post("/active-methods", authenticateToken, reportsController.createActive
  *                                 type: string
  *                               descripcion:
  *                                 type: string
- *                               color:
- *                                 type: string
- *                               imagen:
- *                                 type: string
  *                           progreso:
  *                             type: integer
  *                             enum: [0, 50, 100]
@@ -159,8 +155,6 @@ router.get("/", authenticateToken, reportsController.getUserReports.bind(reports
  *                 enum: [0, 50, 100]
  *                 description: Progreso del método (0=iniciado, 50=mitad, 100=completado)
  *                 example: 50
- *               duracionTotal:
- *                 type: integer
  *                 description: Duración total en segundos
  *                 example: 1800
  *               finalizar:

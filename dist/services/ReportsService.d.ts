@@ -13,9 +13,18 @@ export interface UpdateMethodProgressData {
 export interface UpdateSessionProgressData {
     estado?: SesionEstado;
 }
+export interface ReportItem {
+    id_reporte: number;
+    id_usuario: number;
+    nombre_metodo: string;
+    progreso?: number;
+    estado: string;
+    fecha_creacion: Date;
+}
 export interface ReportData {
     metodos: any[];
     sesiones: any[];
+    combined: ReportItem[];
 }
 export declare class ReportsService {
     private metodoRealizadoRepository;

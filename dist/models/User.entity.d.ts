@@ -12,6 +12,7 @@ export declare class UserEntity {
     idObjetivoEstudio: number;
     fechaCreacion: Date;
     fechaActualizacion: Date;
+    tokenVersion: number;
     usuarioIntereses?: UsuarioInteresesEntity[];
     usuarioDistracciones?: UsuarioDistraccionesEntity[];
 }

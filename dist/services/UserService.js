@@ -359,6 +359,7 @@ class UserService {
             const tokenPayload = {
                 userId: user.id_usuario,
                 email: user.correo,
+                tokenVersion: 0,
             };
             const resetToken = jwt_1.JwtUtils.generateAccessToken(tokenPayload);
             const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;

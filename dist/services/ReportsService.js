@@ -77,6 +77,15 @@ class ReportsService {
         try {
             const numericUserId = Number(userId);
             logger_1.default.info("Buscando reportes para usuario ID:", numericUserId);
+            const user = await this.userRepository.findOne({
+                where: { idUsuario: numericUserId }
+            });
+            if (!user) {
+                return {
+                    success: false,
+                    error: "Usuario no encontrado"
+                };
+            }
             const metodosRealizados = await this.metodoRealizadoRepository
                 .createQueryBuilder("mr")
                 .leftJoinAndSelect("mr.metodo", "m")
@@ -88,7 +97,7 @@ class ReportsService {
                 .createQueryBuilder("sesion")
                 .leftJoinAndSelect("sesion.musica", "musica")
                 .leftJoin("sesion.metodoRealizado", "metodoRealizado")
-                .where("metodoRealizado.idUsuario = :userId", { userId })
+                .where("sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId", { userId: numericUserId })
                 .orderBy("sesion.fechaCreacion", "DESC")
                 .getMany();
             const metodos = metodosRealizados.map(metodoRealizado => ({
@@ -97,8 +106,6 @@ class ReportsService {
                     id: metodoRealizado.metodo?.idMetodo,
                     nombre: metodoRealizado.metodo?.nombreMetodo,
                     descripcion: metodoRealizado.metodo?.descripcion,
-                    color: metodoRealizado.metodo?.colorHexa,
-                    imagen: metodoRealizado.metodo?.urlImagen,
                 },
                 progreso: metodoRealizado.progreso,
                 estado: metodoRealizado.estado,
@@ -121,11 +128,30 @@ class ReportsService {
                 fechaFin: null,
                 fechaCreacion: sesionRealizada.fechaCreacion,
             }));
+            const combined = [
+                ...metodos.map(metodo => ({
+                    id_reporte: metodo.id,
+                    id_usuario: numericUserId,
+                    nombre_metodo: metodo.metodo.nombre || 'Método desconocido',
+                    progreso: metodo.progreso,
+                    estado: metodo.estado,
+                    fecha_creacion: metodo.fechaCreacion,
+                })),
+                ...sesiones.map(sesion => ({
+                    id_reporte: sesion.id,
+                    id_usuario: numericUserId,
+                    nombre_metodo: sesion.musica ? `Sesión: ${sesion.musica.nombre}` : 'Sesión de concentración',
+                    progreso: undefined,
+                    estado: sesion.estado,
+                    fecha_creacion: sesion.fechaCreacion,
+                }))
+            ].sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime());
             return {
                 success: true,
                 reports: {
                     metodos,
-                    sesiones
+                    sesiones,
+                    combined
                 }
             };
         }
@@ -177,11 +203,13 @@ class ReportsService {
     }
     async updateSessionProgress(sessionId, userId, data) {
         try {
+            const numericSessionId = Number(sessionId);
+            const numericUserId = Number(userId);
             const sesionRealizada = await this.sesionRealizadaRepository
                 .createQueryBuilder("sesion")
                 .leftJoin("sesion.metodoRealizado", "metodoRealizado")
-                .where("sesion.idSesionRealizada = :sessionId", { sessionId })
-                .andWhere("metodoRealizado.idUsuario = :userId", { userId })
+                .where("sesion.idSesionRealizada = :sessionId", { sessionId: numericSessionId })
+                .andWhere("(sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId)", { userId: numericUserId })
                 .getOne();
             if (!sesionRealizada) {
                 return {
@@ -238,12 +266,14 @@ class ReportsService {
     }
     async getSessionById(sessionId, userId) {
         try {
+            const numericSessionId = Number(sessionId);
+            const numericUserId = Number(userId);
             const sesionRealizada = await this.sesionRealizadaRepository
                 .createQueryBuilder("sesion")
                 .leftJoinAndSelect("sesion.musica", "musica")
                 .leftJoin("sesion.metodoRealizado", "metodoRealizado")
-                .where("sesion.idSesionRealizada = :sessionId", { sessionId })
-                .andWhere("metodoRealizado.idUsuario = :userId", { userId })
+                .where("sesion.idSesionRealizada = :sessionId", { sessionId: numericSessionId })
+                .andWhere("(sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId)", { userId: numericUserId })
                 .getOne();
             if (!sesionRealizada) {
                 return {

@@ -31,8 +31,6 @@ export class MetodoEstudioRepository implements IMetodoEstudioRepository {
     const metodo = this.repository.create({
       nombreMetodo: metodoInput.nombre_metodo,
       descripcion: metodoInput.descripcion,
-      urlImagen: metodoInput.url_imagen,
-      colorHexa: metodoInput.color_hexa,
     });
     const savedMetodo = await this.repository.save(metodo);
     return this.mapToMetodoEstudioDTO(savedMetodo);
@@ -55,10 +53,6 @@ export class MetodoEstudioRepository implements IMetodoEstudioRepository {
       updateData.nombreMetodo = updates.nombre_metodo;
     if (updates.descripcion !== undefined)
       updateData.descripcion = updates.descripcion;
-    if (updates.url_imagen !== undefined)
-      updateData.urlImagen = updates.url_imagen;
-    if (updates.color_hexa !== undefined)
-      updateData.colorHexa = updates.color_hexa;
 
     const result = await this.repository.update(id, updateData);
     if (result.affected && result.affected > 0) {
@@ -137,8 +131,6 @@ export class MetodoEstudioRepository implements IMetodoEstudioRepository {
       id_metodo: entity.idMetodo,
       nombre_metodo: entity.nombreMetodo,
       descripcion: entity.descripcion,
-      url_imagen: entity.urlImagen,
-      color_hexa: entity.colorHexa,
       fecha_creacion: entity.fechaCreacion,
       fecha_actualizacion: entity.fechaActualizacion,
       beneficios: entity.beneficios

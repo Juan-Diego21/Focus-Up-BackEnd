@@ -65,6 +65,10 @@ __decorate([
     __metadata("design:type", Date)
 ], UserEntity.prototype, "fechaActualizacion", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ name: "token_version", type: "integer", default: 1 }),
+    __metadata("design:type", Number)
+], UserEntity.prototype, "tokenVersion", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => UsuarioIntereses_entity_1.UsuarioInteresesEntity, usuarioInteres => usuarioInteres.usuario),
     __metadata("design:type", Array)
 ], UserEntity.prototype, "usuarioIntereses", void 0);

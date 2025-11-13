@@ -7,7 +7,9 @@ exports.optionalAuth = exports.authenticateToken = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const jwt_1 = require("../utils/jwt");
 const logger_1 = __importDefault(require("../utils/logger"));
-const authenticateToken = (req, res, next) => {
+const ormconfig_1 = require("../config/ormconfig");
+const User_entity_1 = require("../models/User.entity");
+const authenticateToken = async (req, res, next) => {
     try {
         const authHeader = req.headers["authorization"];
         logger_1.default.info(`Auth header received: ${authHeader ? 'present' : 'missing'} for ${req.method} ${req.originalUrl}`);
@@ -32,7 +34,30 @@ const authenticateToken = (req, res, next) => {
             return res.status(401).json(response);
         }
         const decoded = jwt_1.JwtUtils.verifyAccessToken(token);
-        logger_1.default.info(`Token decoded successfully for userId: ${decoded.userId}, email: ${decoded.email}`);
+        logger_1.default.info(`Token decoded successfully for userId: ${decoded.userId}, email: ${decoded.email}, tokenVersion: ${decoded.tokenVersion || 'not present'}`);
+        const userRepository = ormconfig_1.AppDataSource.getRepository(User_entity_1.UserEntity);
+        const user = await userRepository.findOne({
+            where: { idUsuario: decoded.userId }
+        });
+        if (!user) {
+            logger_1.default.warn(`Validación de token fallida - Usuario no encontrado: ${decoded.userId}`);
+            const response = {
+                success: false,
+                message: "Acceso no autorizado. Usuario no encontrado.",
+                timestamp: new Date(),
+            };
+            return res.status(401).json(response);
+        }
+        if (user.tokenVersion !== decoded.tokenVersion) {
+            logger_1.default.warn(`Validación de token fallida - Desajuste de versión para usuario ${decoded.userId}: token=${decoded.tokenVersion}, actual=${user.tokenVersion}`);
+            const response = {
+                success: false,
+                message: "Acceso no autorizado. Sesión expirada.",
+                timestamp: new Date(),
+            };
+            return res.status(401).json(response);
+        }
+        logger_1.default.info(`Validación de token completada para usuario ${decoded.userId}`);
         try {
             const decodedToken = jsonwebtoken_1.default.decode(token);
             const now = Math.floor(Date.now() / 1000);

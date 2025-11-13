@@ -76,8 +76,27 @@ class ReportsController {
     async getUserReports(req, res) {
         try {
             const userPayload = req.user;
-            const result = await ReportsService_1.reportsService.getUserReports(userPayload.userId);
+            const { userId: queryUserId } = req.query;
+            const targetUserId = queryUserId ? parseInt(queryUserId) : userPayload.userId;
+            if (isNaN(targetUserId)) {
+                const response = {
+                    success: false,
+                    message: "ID de usuario inválido",
+                    timestamp: new Date(),
+                };
+                return res.status(400).json(response);
+            }
+            const result = await ReportsService_1.reportsService.getUserReports(targetUserId);
             if (!result.success) {
+                if (result.error === "Usuario no encontrado") {
+                    const response = {
+                        success: false,
+                        message: "Usuario no encontrado",
+                        error: result.error,
+                        timestamp: new Date(),
+                    };
+                    return res.status(404).json(response);
+                }
                 const response = {
                     success: false,
                     message: "Error al obtener reportes",
@@ -88,8 +107,8 @@ class ReportsController {
             }
             const response = {
                 success: true,
-                message: "Reportes obtenidos exitosamente",
-                data: result.reports,
+                message: result.reports.combined.length > 0 ? "User reports fetched successfully" : "No reports found for this user",
+                data: result.reports.combined,
                 timestamp: new Date(),
             };
             res.status(200).json(response);

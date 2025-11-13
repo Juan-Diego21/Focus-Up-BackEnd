@@ -6,6 +6,7 @@ export declare class TokenBlacklistService {
 export interface JwtPayload {
     userId: number;
     email: string;
+    tokenVersion: number;
 }
 export declare class JwtUtils {
     static generateAccessToken(payload: JwtPayload): string;

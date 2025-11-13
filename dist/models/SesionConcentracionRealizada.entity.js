@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SesionConcentracionRealizadaEntity = exports.SesionEstado = void 0;
 const typeorm_1 = require("typeorm");
+const User_entity_1 = require("./User.entity");
 const Musica_entity_1 = require("./Musica.entity");
 const MetodoRealizado_entity_1 = require("./MetodoRealizado.entity");
 var SesionEstado;
@@ -27,6 +28,10 @@ __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)({ name: "id_sesion_realizada" }),
     __metadata("design:type", Number)
 ], SesionConcentracionRealizadaEntity.prototype, "idSesionRealizada", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: "id_usuario", type: "integer" }),
+    __metadata("design:type", Number)
+], SesionConcentracionRealizadaEntity.prototype, "idUsuario", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: "id_metodo_realizado", type: "integer", nullable: true }),
     __metadata("design:type", Number)
@@ -56,6 +61,11 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)({ name: "fecha_actualizacion" }),
     __metadata("design:type", Date)
 ], SesionConcentracionRealizadaEntity.prototype, "fechaActualizacion", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => User_entity_1.UserEntity),
+    (0, typeorm_1.JoinColumn)({ name: "id_usuario", referencedColumnName: "idUsuario" }),
+    __metadata("design:type", User_entity_1.UserEntity)
+], SesionConcentracionRealizadaEntity.prototype, "usuario", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => MetodoRealizado_entity_1.MetodoRealizadoEntity),
     (0, typeorm_1.JoinColumn)({ name: "id_metodo_realizado", referencedColumnName: "idMetodoRealizado" }),

@@ -20,12 +20,6 @@ export class MetodoEstudioEntity {
   @Column({ type: "text", nullable: true })
   descripcion!: string;
 
-  @Column({ name: "url_imagen", type: "text", nullable: false })
-  urlImagen!: string;
-
-  @Column({ name: "color_hexa", type: "text", nullable: false })
-  colorHexa!: string;
-
   @CreateDateColumn({ name: "fecha_creacion" })
   fechaCreacion!: Date;
 
