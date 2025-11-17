@@ -5,7 +5,12 @@ export declare enum SesionEstado {
     PENDIENTE = "pendiente",
     EN_PROCESO = "en_proceso",
     COMPLETADA = "completada",
-    CANCELADA = "cancelada"
+    CANCELADA = "cancelada",
+    IN_PROCESS = "in_process",
+    COMPLETED = "completed",
+    EN_PROCESO_MM = "En_proceso",
+    CASI_TERMINANDO = "Casi_terminando",
+    TERMINADO = "Terminado"
 }
 export declare class SesionConcentracionRealizadaEntity {
     idSesionRealizada: number;

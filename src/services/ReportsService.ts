@@ -6,6 +6,111 @@ import { MetodoEstudioEntity } from "../models/MetodoEstudio.entity";
 import { MusicaEntity } from "../models/Musica.entity";
 import logger from "../utils/logger";
 
+// Centralized configuration for study methods
+interface MethodConfig {
+  name: string;
+  aliases: string[];
+  validProgress: number[];
+  states: {
+    [normalizedState: string]: {
+      canonical: string;
+      dbValue: string;
+    };
+  };
+  progressToStateMapping: {
+    [progress: number]: string; // maps progress to normalized state
+  };
+}
+
+const METHODS_CONFIG: { [methodKey: string]: MethodConfig } = {
+  pomodoro: {
+    name: "pomodoro",
+    aliases: [
+      'pomodoro',
+      'metodo pomodoro',
+      'método pomodoro',
+      'pomodoro technique'
+    ],
+    validProgress: [0, 20, 40, 50, 60, 80, 100],
+    states: {
+      'en_progreso': { canonical: 'in_progress', dbValue: 'en_progreso' },
+      'completado': { canonical: 'completed', dbValue: 'completado' },
+      'in_progress': { canonical: 'in_progress', dbValue: 'en_progreso' },
+      'completed': { canonical: 'completed', dbValue: 'completado' }
+    },
+    progressToStateMapping: {
+      0: 'en_progreso',
+      20: 'en_progreso',
+      40: 'en_progreso',
+      50: 'en_progreso',
+      60: 'en_progreso',
+      80: 'en_progreso',
+      100: 'completado'
+    }
+  },
+  mindmaps: {
+    name: "mindmaps",
+    aliases: [
+      'mapas mentales',
+      'mapa mental',
+      'mind maps',
+      'mind map',
+      'método mapas mentales',
+      'repaso espaciado',
+      'spaced repetition'
+    ],
+    validProgress: [20, 40, 60, 80, 100],
+    states: {
+      'en_proceso': { canonical: 'in_process', dbValue: 'En_proceso' },
+      'casi_terminando': { canonical: 'almost_done', dbValue: 'Casi_terminando' },
+      'terminado': { canonical: 'done', dbValue: 'Terminado' },
+      'in_process': { canonical: 'in_process', dbValue: 'En_proceso' },
+      'almost_done': { canonical: 'almost_done', dbValue: 'Casi_terminando' },
+      'done': { canonical: 'done', dbValue: 'Terminado' }
+    },
+    progressToStateMapping: {
+      20: 'en_proceso',
+      40: 'en_proceso',
+      60: 'casi_terminando',
+      80: 'casi_terminando',
+      100: 'terminado'
+    }
+  },
+  practica_activa: {
+    name: "practica_activa",
+    aliases: [
+      'práctica activa',
+      'practica activa',
+      'práctica_activa',
+      'practica_activa',
+      'método práctica activa',
+      'metodo practica activa'
+    ],
+    validProgress: [0, 20, 40, 50, 60, 80, 100],
+    states: {
+      'en_proceso': { canonical: 'in_process', dbValue: 'En_proceso' },
+      'casi_terminando': { canonical: 'almost_done', dbValue: 'Casi_terminando' },
+      'terminado': { canonical: 'done', dbValue: 'Terminado' },
+      'en_progreso': { canonical: 'in_progress', dbValue: 'en_progreso' },
+      'completado': { canonical: 'completed', dbValue: 'completado' },
+      'in_process': { canonical: 'in_process', dbValue: 'En_proceso' },
+      'almost_done': { canonical: 'almost_done', dbValue: 'Casi_terminando' },
+      'done': { canonical: 'done', dbValue: 'Terminado' },
+      'in_progress': { canonical: 'in_progress', dbValue: 'en_progreso' },
+      'completed': { canonical: 'completed', dbValue: 'completado' }
+    },
+    progressToStateMapping: {
+      0: 'en_progreso',
+      20: 'en_progreso',
+      40: 'en_progreso',
+      50: 'en_progreso',
+      60: 'en_progreso',
+      80: 'en_progreso',
+      100: 'completado'
+    }
+  }
+};
+
 export interface CreateActiveMethodData {
   idMetodo: number;
   estado?: string;
@@ -37,149 +142,117 @@ export interface ReportData {
   combined: ReportItem[];
 }
 
-// Funciones auxiliares para validación específica por método
+// Dynamic validation system using centralized configuration
+
 /**
  * Normaliza el texto: convierte a minúsculas, elimina espacios extra, remueve acentos
  */
-function normalize(text: string): string {
+function normalizeText(text: string): string {
   return text
     .toLowerCase()
     .trim()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // Remover acentos
-    .replace(/\s+/g, ' '); // Normalizar espacios
+    .replace(/\s+/g, ' ') // Normalizar espacios
+    .replace(/\s+/g, '_'); // Convertir espacios a underscores para consistencia
 }
 
 /**
- * Aliases válidos para el método Pomodoro
+ * Detecta el tipo de método basado en el nombre usando la configuración dinámica
  */
-const pomodoroAliases = [
-  'pomodoro',
-  'metodo pomodoro',
-  'método pomodoro',
-  'pomodoro technique'
-];
+function getMethodType(nombreMetodo: string): string {
+  const normalized = normalizeText(nombreMetodo);
 
-/**
- * Aliases válidos para el método Mind Maps
- */
-const mindmapsAliases = [
-  'mapas mentales',
-  'mapa mental',
-  'mind maps',
-  'mind map',
-  'método mapas mentales',
-  'repaso espaciado',
-  'spaced repetition'
-];
+  for (const [methodKey, config] of Object.entries(METHODS_CONFIG)) {
+    const normalizedAliases = config.aliases.map(alias => normalizeText(alias));
+    if (normalizedAliases.includes(normalized)) {
+      return methodKey;
+    }
+  }
 
-/**
- * Detecta el tipo de método basado en el nombre, usando normalización y aliases
- */
-function getMethodType(nombreMetodo: string): 'pomodoro' | 'mindmaps' {
-  const normalized = normalize(nombreMetodo);
-  if (pomodoroAliases.includes(normalized)) return 'pomodoro';
-  if (mindmapsAliases.includes(normalized)) return 'mindmaps';
   logger.warn(`Tipo de método no reconocido: "${nombreMetodo}" (normalizado: "${normalized}")`);
+  logger.warn(`Métodos configurados disponibles: ${Object.keys(METHODS_CONFIG).join(', ')}`);
   throw new Error(`Tipo de método no reconocido: ${nombreMetodo}`);
 }
 
-function getValidProgress(type: 'pomodoro' | 'mindmaps'): number[] {
-  if (type === 'pomodoro') return [0, 20, 40, 50, 60, 80, 100]; // Allow all for compatibility
-  if (type === 'mindmaps') return [20, 40, 60, 80, 100];
-  return [];
+/**
+ * Obtiene la configuración de un método por su tipo
+ */
+function getMethodConfig(methodType: string): MethodConfig {
+  const config = METHODS_CONFIG[methodType];
+  if (!config) {
+    logger.error(`Configuración no encontrada para el método: ${methodType}`);
+    throw new Error(`Configuración no encontrada para el método: ${methodType}`);
+  }
+  return config;
 }
 
 /**
- * Normaliza el estado entrante a valores canónicos en inglés para validación interna
- * Acepta tanto español como inglés y los mapea a valores estándar
+ * Valida si un progreso es válido para un método
  */
-function normalizeStatus(status: string, method: 'pomodoro' | 'mindmaps'): string {
-  const normalized = normalize(status);
-  const mappings: { [key: string]: { [key: string]: string } } = {
-    pomodoro: {
-      'en_progreso': 'in_progress',
-      'completado': 'completed',
-      'in_progress': 'in_progress',
-      'completed': 'completed'
-    },
-    mindmaps: {
-      'en_proceso': 'in_process',
-      'casi_terminando': 'almost_done',
-      'terminado': 'done',
-      'in_process': 'in_process',
-      'almost_done': 'almost_done',
-      'done': 'done'
-    }
-  };
+function getValidProgress(methodType: string): number[] {
+  const config = getMethodConfig(methodType);
+  return config.validProgress;
+}
 
-  const methodMappings = mappings[method];
-  if (!methodMappings) {
-    throw new Error(`Método no soportado: ${method}`);
-  }
+/**
+ * Normaliza el estado entrante a valores canónicos usando la configuración dinámica
+ */
+function normalizeStatus(status: string, methodType: string): string {
+  const normalized = normalizeText(status);
+  const config = getMethodConfig(methodType);
 
-  const canonical = methodMappings[normalized];
-  if (!canonical) {
-    logger.warn(`Estado no reconocido para método ${method}: "${status}" (normalizado: "${normalized}")`);
+  const stateConfig = config.states[normalized];
+  if (!stateConfig) {
+    logger.warn(`Estado no reconocido para método ${methodType}: "${status}" (normalizado: "${normalized}")`);
+    logger.warn(`Estados válidos para ${methodType}: ${Object.keys(config.states).join(', ')}`);
     throw new Error(`Estado no reconocido para este método: ${status}`);
   }
 
-  logger.debug(`Estado normalizado: "${status}" → "${canonical}" para método ${method}`);
-  return canonical;
+  logger.debug(`Estado normalizado: "${status}" → "${stateConfig.canonical}" para método ${methodType}`);
+  return stateConfig.canonical;
 }
 
 /**
- * Mapea el estado canónico en inglés al valor correspondiente en la base de datos
+ * Mapea el estado canónico al valor correspondiente en la base de datos
  */
-function mapStatusToDB(canonical: string, method: 'pomodoro' | 'mindmaps'): string {
-  const dbMappings: { [key: string]: { [key: string]: string } } = {
-    pomodoro: {
-      'in_progress': 'en_progreso',
-      'completed': 'completado'
-    },
-    mindmaps: {
-      'in_process': 'En_proceso',
-      'almost_done': 'Casi_terminando',
-      'done': 'Terminado'
+function mapStatusToDB(canonical: string, methodType: string): string {
+  const config = getMethodConfig(methodType);
+
+  // Find the state config that has this canonical value
+  for (const stateConfig of Object.values(config.states)) {
+    if (stateConfig.canonical === canonical) {
+      return stateConfig.dbValue;
     }
-  };
+  }
 
-  const methodMappings = dbMappings[method];
-  return methodMappings[canonical] || canonical;
+  logger.warn(`No se encontró mapping DB para estado canónico "${canonical}" en método ${methodType}`);
+  return canonical; // fallback
 }
 
 /**
- * Obtiene el estado correspondiente al progreso para un tipo de método
+ * Obtiene el estado correspondiente al progreso para un tipo de método usando configuración
  */
-function getStatusForProgress(type: 'pomodoro' | 'mindmaps', progress: number): string {
-  if (type === 'pomodoro') {
-    if (progress >= 0 && progress < 100) return 'en_progreso';
-    if (progress === 100) return 'completado';
-  } else if (type === 'mindmaps') {
-    if (progress === 20 || progress === 40) return 'En_proceso';
-    if (progress === 60 || progress === 80) return 'Casi_terminando';
-    if (progress === 100) return 'Terminado';
+function getStatusForProgress(methodType: string, progress: number): string {
+  const config = getMethodConfig(methodType);
+  const normalizedState = config.progressToStateMapping[progress];
+
+  if (!normalizedState) {
+    logger.warn(`No se encontró estado para progreso ${progress} en método ${methodType}`);
+    return 'en_progreso'; // fallback
   }
-  return 'en_progreso'; // fallback
+
+  return config.states[normalizedState].dbValue;
 }
 
-function getValidStatusMethods(type: 'pomodoro' | 'mindmaps'): string[] {
-  if (type === 'pomodoro') return ['in_progress', 'completed'];
-  if (type === 'mindmaps') return ['in_process', 'almost_done', 'done'];
-  return [];
+/**
+ * Obtiene los estados válidos para un método
+ */
+function getValidStatusMethods(methodType: string): string[] {
+  const config = getMethodConfig(methodType);
+  return Object.values(config.states).map(state => state.canonical);
 }
 
-function getValidStatusSessions(type: 'pomodoro' | 'mindmaps'): string[] {
-  return getValidStatusMethods(type); // Misma lógica para sesiones
-}
-
-const statusNormalization: { [key: string]: string } = {
-  'in_process': 'en_proceso',
-  'completed': 'completada',
-  'En_proceso': 'en_proceso',
-  'Casi_terminando': 'casi_terminando',
-  'Terminado': 'terminado',
-};
 
 /**
  * Servicio para la gestión de reportes de métodos de estudio y sesiones de concentración

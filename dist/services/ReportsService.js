@@ -11,6 +11,162 @@ const User_entity_1 = require("../models/User.entity");
 const MetodoEstudio_entity_1 = require("../models/MetodoEstudio.entity");
 const Musica_entity_1 = require("../models/Musica.entity");
 const logger_1 = __importDefault(require("../utils/logger"));
+const METHODS_CONFIG = {
+    pomodoro: {
+        name: "pomodoro",
+        aliases: [
+            'pomodoro',
+            'metodo pomodoro',
+            'método pomodoro',
+            'pomodoro technique'
+        ],
+        validProgress: [0, 20, 40, 50, 60, 80, 100],
+        states: {
+            'en_progreso': { canonical: 'in_progress', dbValue: 'en_progreso' },
+            'completado': { canonical: 'completed', dbValue: 'completado' },
+            'in_progress': { canonical: 'in_progress', dbValue: 'en_progreso' },
+            'completed': { canonical: 'completed', dbValue: 'completado' }
+        },
+        progressToStateMapping: {
+            0: 'en_progreso',
+            20: 'en_progreso',
+            40: 'en_progreso',
+            50: 'en_progreso',
+            60: 'en_progreso',
+            80: 'en_progreso',
+            100: 'completado'
+        }
+    },
+    mindmaps: {
+        name: "mindmaps",
+        aliases: [
+            'mapas mentales',
+            'mapa mental',
+            'mind maps',
+            'mind map',
+            'método mapas mentales',
+            'repaso espaciado',
+            'spaced repetition'
+        ],
+        validProgress: [20, 40, 60, 80, 100],
+        states: {
+            'en_proceso': { canonical: 'in_process', dbValue: 'En_proceso' },
+            'casi_terminando': { canonical: 'almost_done', dbValue: 'Casi_terminando' },
+            'terminado': { canonical: 'done', dbValue: 'Terminado' },
+            'in_process': { canonical: 'in_process', dbValue: 'En_proceso' },
+            'almost_done': { canonical: 'almost_done', dbValue: 'Casi_terminando' },
+            'done': { canonical: 'done', dbValue: 'Terminado' }
+        },
+        progressToStateMapping: {
+            20: 'en_proceso',
+            40: 'en_proceso',
+            60: 'casi_terminando',
+            80: 'casi_terminando',
+            100: 'terminado'
+        }
+    },
+    practica_activa: {
+        name: "practica_activa",
+        aliases: [
+            'práctica activa',
+            'practica activa',
+            'práctica_activa',
+            'practica_activa',
+            'método práctica activa',
+            'metodo practica activa'
+        ],
+        validProgress: [0, 20, 40, 50, 60, 80, 100],
+        states: {
+            'en_proceso': { canonical: 'in_process', dbValue: 'En_proceso' },
+            'casi_terminando': { canonical: 'almost_done', dbValue: 'Casi_terminando' },
+            'terminado': { canonical: 'done', dbValue: 'Terminado' },
+            'en_progreso': { canonical: 'in_progress', dbValue: 'en_progreso' },
+            'completado': { canonical: 'completed', dbValue: 'completado' },
+            'in_process': { canonical: 'in_process', dbValue: 'En_proceso' },
+            'almost_done': { canonical: 'almost_done', dbValue: 'Casi_terminando' },
+            'done': { canonical: 'done', dbValue: 'Terminado' },
+            'in_progress': { canonical: 'in_progress', dbValue: 'en_progreso' },
+            'completed': { canonical: 'completed', dbValue: 'completado' }
+        },
+        progressToStateMapping: {
+            0: 'en_progreso',
+            20: 'en_progreso',
+            40: 'en_progreso',
+            50: 'en_progreso',
+            60: 'en_progreso',
+            80: 'en_progreso',
+            100: 'completado'
+        }
+    }
+};
+function normalizeText(text) {
+    return text
+        .toLowerCase()
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .replace(/\s+/g, '_');
+}
+function getMethodType(nombreMetodo) {
+    const normalized = normalizeText(nombreMetodo);
+    for (const [methodKey, config] of Object.entries(METHODS_CONFIG)) {
+        const normalizedAliases = config.aliases.map(alias => normalizeText(alias));
+        if (normalizedAliases.includes(normalized)) {
+            return methodKey;
+        }
+    }
+    logger_1.default.warn(`Tipo de método no reconocido: "${nombreMetodo}" (normalizado: "${normalized}")`);
+    logger_1.default.warn(`Métodos configurados disponibles: ${Object.keys(METHODS_CONFIG).join(', ')}`);
+    throw new Error(`Tipo de método no reconocido: ${nombreMetodo}`);
+}
+function getMethodConfig(methodType) {
+    const config = METHODS_CONFIG[methodType];
+    if (!config) {
+        logger_1.default.error(`Configuración no encontrada para el método: ${methodType}`);
+        throw new Error(`Configuración no encontrada para el método: ${methodType}`);
+    }
+    return config;
+}
+function getValidProgress(methodType) {
+    const config = getMethodConfig(methodType);
+    return config.validProgress;
+}
+function normalizeStatus(status, methodType) {
+    const normalized = normalizeText(status);
+    const config = getMethodConfig(methodType);
+    const stateConfig = config.states[normalized];
+    if (!stateConfig) {
+        logger_1.default.warn(`Estado no reconocido para método ${methodType}: "${status}" (normalizado: "${normalized}")`);
+        logger_1.default.warn(`Estados válidos para ${methodType}: ${Object.keys(config.states).join(', ')}`);
+        throw new Error(`Estado no reconocido para este método: ${status}`);
+    }
+    logger_1.default.debug(`Estado normalizado: "${status}" → "${stateConfig.canonical}" para método ${methodType}`);
+    return stateConfig.canonical;
+}
+function mapStatusToDB(canonical, methodType) {
+    const config = getMethodConfig(methodType);
+    for (const stateConfig of Object.values(config.states)) {
+        if (stateConfig.canonical === canonical) {
+            return stateConfig.dbValue;
+        }
+    }
+    logger_1.default.warn(`No se encontró mapping DB para estado canónico "${canonical}" en método ${methodType}`);
+    return canonical;
+}
+function getStatusForProgress(methodType, progress) {
+    const config = getMethodConfig(methodType);
+    const normalizedState = config.progressToStateMapping[progress];
+    if (!normalizedState) {
+        logger_1.default.warn(`No se encontró estado para progreso ${progress} en método ${methodType}`);
+        return 'en_progreso';
+    }
+    return config.states[normalizedState].dbValue;
+}
+function getValidStatusMethods(methodType) {
+    const config = getMethodConfig(methodType);
+    return Object.values(config.states).map(state => state.canonical);
+}
 class ReportsService {
     constructor() {
         this.metodoRealizadoRepository = ormconfig_1.AppDataSource.getRepository(MetodoRealizado_entity_1.MetodoRealizadoEntity);
@@ -39,23 +195,46 @@ class ReportsService {
                     error: "Método de estudio no encontrado"
                 };
             }
-            const existingActiveMethod = await this.metodoRealizadoRepository.findOne({
-                where: {
-                    idUsuario: data.idUsuario,
-                    estado: MetodoRealizado_entity_1.MetodoEstado.EN_PROGRESO
+            if (data.progreso !== undefined) {
+                try {
+                    const type = getMethodType(metodo.nombreMetodo);
+                    if (!getValidProgress(type).includes(data.progreso)) {
+                        return {
+                            success: false,
+                            message: "Progreso inválido para este método"
+                        };
+                    }
                 }
-            });
-            if (existingActiveMethod) {
+                catch (error) {
+                    return {
+                        success: false,
+                        error: error.message
+                    };
+                }
+            }
+            let estadoNormalizado = MetodoRealizado_entity_1.MetodoEstado.EN_PROGRESO;
+            try {
+                const type = getMethodType(metodo.nombreMetodo);
+                if (data.estado) {
+                    const canonical = normalizeStatus(data.estado, type);
+                    const dbValue = mapStatusToDB(canonical, type);
+                    estadoNormalizado = dbValue;
+                }
+                else if (data.progreso !== undefined) {
+                    estadoNormalizado = getStatusForProgress(type, data.progreso);
+                }
+            }
+            catch (error) {
                 return {
                     success: false,
-                    error: "Ya existe un método activo para este usuario"
+                    error: error.message
                 };
             }
             const metodoRealizado = this.metodoRealizadoRepository.create({
                 idUsuario: data.idUsuario,
                 idMetodo: data.idMetodo,
                 progreso: data.progreso !== undefined ? data.progreso : MetodoRealizado_entity_1.MetodoProgreso.INICIADO,
-                estado: data.estado ? data.estado : MetodoRealizado_entity_1.MetodoEstado.EN_PROGRESO,
+                estado: estadoNormalizado,
                 fechaInicio: new Date(),
             });
             const savedMetodo = await this.metodoRealizadoRepository.save(metodoRealizado);
@@ -169,6 +348,7 @@ class ReportsService {
             const numericUserId = Number(userId);
             const metodoRealizado = await this.metodoRealizadoRepository
                 .createQueryBuilder("mr")
+                .leftJoinAndSelect("mr.metodo", "m")
                 .where("mr.idMetodoRealizado = :methodId", { methodId: numericMethodId })
                 .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
                 .getOne();
@@ -179,7 +359,36 @@ class ReportsService {
                 };
             }
             if (data.progreso !== undefined) {
+                const metodo = metodoRealizado.metodo;
+                if (!metodo) {
+                    return {
+                        success: false,
+                        error: "Método de estudio no encontrado"
+                    };
+                }
+                try {
+                    const type = getMethodType(metodo.nombreMetodo);
+                    if (!getValidProgress(type).includes(data.progreso)) {
+                        return {
+                            success: false,
+                            message: "Progreso inválido para este método"
+                        };
+                    }
+                }
+                catch (error) {
+                    return {
+                        success: false,
+                        error: error.message
+                    };
+                }
                 metodoRealizado.progreso = data.progreso;
+                try {
+                    const type = getMethodType(metodo.nombreMetodo);
+                    metodoRealizado.estado = getStatusForProgress(type, data.progreso);
+                }
+                catch (error) {
+                    logger_1.default.warn("No se pudo actualizar estado basado en progreso:", error);
+                }
             }
             if (data.finalizar || (data.progreso === MetodoRealizado_entity_1.MetodoProgreso.COMPLETADO)) {
                 metodoRealizado.estado = MetodoRealizado_entity_1.MetodoEstado.COMPLETADO;
@@ -190,7 +399,7 @@ class ReportsService {
             return {
                 success: true,
                 metodoRealizado: updatedMetodo,
-                message: "Progreso del método actualizado exitosamente"
+                message: "Progreso actualizado correctamente"
             };
         }
         catch (error) {
@@ -207,7 +416,8 @@ class ReportsService {
             const numericUserId = Number(userId);
             const sesionRealizada = await this.sesionRealizadaRepository
                 .createQueryBuilder("sesion")
-                .leftJoin("sesion.metodoRealizado", "metodoRealizado")
+                .leftJoinAndSelect("sesion.metodoRealizado", "metodoRealizado")
+                .leftJoinAndSelect("metodoRealizado.metodo", "metodo")
                 .where("sesion.idSesionRealizada = :sessionId", { sessionId: numericSessionId })
                 .andWhere("(sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId)", { userId: numericUserId })
                 .getOne();
@@ -218,13 +428,31 @@ class ReportsService {
                 };
             }
             if (data.estado !== undefined) {
-                sesionRealizada.estado = data.estado;
+                const metodoRealizado = sesionRealizada.metodoRealizado;
+                if (!metodoRealizado || !metodoRealizado.metodo) {
+                    return {
+                        success: false,
+                        error: "Método de estudio no encontrado para la sesión"
+                    };
+                }
+                try {
+                    const type = getMethodType(metodoRealizado.metodo.nombreMetodo);
+                    const canonical = normalizeStatus(data.estado, type);
+                    const dbValue = mapStatusToDB(canonical, type);
+                    sesionRealizada.estado = dbValue;
+                }
+                catch (error) {
+                    return {
+                        success: false,
+                        error: error.message
+                    };
+                }
             }
             const updatedSesion = await this.sesionRealizadaRepository.save(sesionRealizada);
             return {
                 success: true,
                 sesionRealizada: updatedSesion,
-                message: "Progreso de la sesión actualizado exitosamente"
+                message: "Sesión retomada correctamente"
             };
         }
         catch (error) {

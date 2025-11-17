@@ -145,14 +145,6 @@ class ReportsController {
                 };
                 return res.status(400).json(response);
             }
-            if (progreso !== undefined && ![0, 50, 100].includes(progreso)) {
-                const response = {
-                    success: false,
-                    message: "El progreso debe ser 0, 50 o 100",
-                    timestamp: new Date(),
-                };
-                return res.status(400).json(response);
-            }
             const result = await ReportsService_1.reportsService.updateMethodProgress(methodId, userPayload.userId, {
                 progreso,
                 finalizar,
@@ -202,15 +194,6 @@ class ReportsController {
                 const response = {
                     success: false,
                     message: "Debe proporcionar al menos un campo para actualizar (estado)",
-                    timestamp: new Date(),
-                };
-                return res.status(400).json(response);
-            }
-            const validEstados = ["pendiente", "en_proceso", "completada", "cancelada"];
-            if (estado !== undefined && !validEstados.includes(estado)) {
-                const response = {
-                    success: false,
-                    message: `El estado debe ser uno de: ${validEstados.join(", ")}`,
                     timestamp: new Date(),
                 };
                 return res.status(400).json(response);
