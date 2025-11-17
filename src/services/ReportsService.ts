@@ -85,7 +85,7 @@ function getMethodType(nombreMetodo: string): 'pomodoro' | 'mindmaps' {
 }
 
 function getValidProgress(type: 'pomodoro' | 'mindmaps'): number[] {
-  if (type === 'pomodoro') return [0, 20, 50, 100]; // Allow 20 for compatibility
+  if (type === 'pomodoro') return [0, 20, 40, 50, 60, 80, 100]; // Allow all for compatibility
   if (type === 'mindmaps') return [20, 40, 60, 80, 100];
   return [];
 }
@@ -153,7 +153,7 @@ function mapStatusToDB(canonical: string, method: 'pomodoro' | 'mindmaps'): stri
  */
 function getStatusForProgress(type: 'pomodoro' | 'mindmaps', progress: number): string {
   if (type === 'pomodoro') {
-    if (progress === 0 || progress === 20 || progress === 50) return 'en_progreso';
+    if (progress >= 0 && progress < 100) return 'en_progreso';
     if (progress === 100) return 'completado';
   } else if (type === 'mindmaps') {
     if (progress === 20 || progress === 40) return 'En_proceso';
