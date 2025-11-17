@@ -186,16 +186,6 @@ export class ReportsController {
         return res.status(400).json(response);
       }
 
-      // Validar progreso si está presente
-      if (progreso !== undefined && ![0, 50, 100].includes(progreso)) {
-        const response: ApiResponse = {
-          success: false,
-          message: "El progreso debe ser 0, 50 o 100",
-          timestamp: new Date(),
-        };
-        return res.status(400).json(response);
-      }
-
       const result = await reportsService.updateMethodProgress(methodId, userPayload.userId, {
         progreso,
         finalizar,
@@ -257,17 +247,6 @@ export class ReportsController {
         const response: ApiResponse = {
           success: false,
           message: "Debe proporcionar al menos un campo para actualizar (estado)",
-          timestamp: new Date(),
-        };
-        return res.status(400).json(response);
-      }
-
-      // Validar estado si está presente
-      const validEstados = ["pendiente", "en_proceso", "completada", "cancelada"];
-      if (estado !== undefined && !validEstados.includes(estado)) {
-        const response: ApiResponse = {
-          success: false,
-          message: `El estado debe ser uno de: ${validEstados.join(", ")}`,
           timestamp: new Date(),
         };
         return res.status(400).json(response);

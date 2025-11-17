@@ -16,6 +16,11 @@ export enum SesionEstado {
   EN_PROCESO = "en_proceso",
   COMPLETADA = "completada",
   CANCELADA = "cancelada",
+  IN_PROCESS = "in_process",
+  COMPLETED = "completed",
+  EN_PROCESO_MM = "En_proceso",
+  CASI_TERMINANDO = "Casi_terminando",
+  TERMINADO = "Terminado",
 }
 
 @Entity("sesiones_concentracion_realizadas")
