@@ -63,7 +63,7 @@ class ReportsController {
             res.status(201).json(response);
         }
         catch (error) {
-            logger_1.default.error("Error en ReportsController.createActiveMethod:", error);
+            logger_1.default.error("Error en ReportsController.createActiveMethod:", JSON.stringify(error));
             const response = {
                 success: false,
                 message: "Error interno del servidor",
@@ -114,7 +114,7 @@ class ReportsController {
             res.status(200).json(response);
         }
         catch (error) {
-            logger_1.default.error("Error en ReportsController.getUserReports:", error);
+            logger_1.default.error("Error en ReportsController.getUserReports:", JSON.stringify(error));
             const response = {
                 success: false,
                 message: "Error interno del servidor",
@@ -167,7 +167,7 @@ class ReportsController {
             res.status(200).json(response);
         }
         catch (error) {
-            logger_1.default.error("Error en ReportsController.updateMethodProgress:", error);
+            logger_1.default.error("Error en ReportsController.updateMethodProgress:", JSON.stringify(error));
             const response = {
                 success: false,
                 message: "Error interno del servidor",
@@ -219,7 +219,7 @@ class ReportsController {
             res.status(200).json(response);
         }
         catch (error) {
-            logger_1.default.error("Error en ReportsController.updateSessionProgress:", error);
+            logger_1.default.error("Error en ReportsController.updateSessionProgress:", JSON.stringify(error));
             const response = {
                 success: false,
                 message: "Error interno del servidor",
@@ -259,7 +259,7 @@ class ReportsController {
             res.status(200).json(response);
         }
         catch (error) {
-            logger_1.default.error("Error en ReportsController.deleteReport:", error);
+            logger_1.default.error("Error en ReportsController.deleteReport:", JSON.stringify(error));
             const response = {
                 success: false,
                 message: "Error interno del servidor",

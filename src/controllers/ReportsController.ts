@@ -77,7 +77,7 @@ export class ReportsController {
 
       res.status(201).json(response);
     } catch (error) {
-      logger.error("Error en ReportsController.createActiveMethod:", error);
+      logger.error("Error en ReportsController.createActiveMethod:", JSON.stringify(error));
 
       const response: ApiResponse = {
         success: false,
@@ -144,7 +144,7 @@ export class ReportsController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error("Error en ReportsController.getUserReports:", error);
+      logger.error("Error en ReportsController.getUserReports:", JSON.stringify(error));
 
       const response: ApiResponse = {
         success: false,
@@ -210,7 +210,7 @@ export class ReportsController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error("Error en ReportsController.updateMethodProgress:", error);
+      logger.error("Error en ReportsController.updateMethodProgress:", JSON.stringify(error));
 
       const response: ApiResponse = {
         success: false,
@@ -275,7 +275,7 @@ export class ReportsController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error("Error en ReportsController.updateSessionProgress:", error);
+      logger.error("Error en ReportsController.updateSessionProgress:", JSON.stringify(error));
 
       const response: ApiResponse = {
         success: false,
@@ -326,7 +326,7 @@ export class ReportsController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error("Error en ReportsController.deleteReport:", error);
+      logger.error("Error en ReportsController.deleteReport:", JSON.stringify(error));
 
       const response: ApiResponse = {
         success: false,

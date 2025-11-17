@@ -6,110 +6,20 @@ import { MetodoEstudioEntity } from "../models/MetodoEstudio.entity";
 import { MusicaEntity } from "../models/Musica.entity";
 import logger from "../utils/logger";
 
-// Centralized configuration for study methods
-interface MethodConfig {
-  name: string;
-  aliases: string[];
-  validProgress: number[];
-  states: {
-    [normalizedState: string]: {
-      canonical: string;
-      dbValue: string;
-    };
-  };
-  progressToStateMapping: {
-    [progress: number]: string; // maps progress to normalized state
-  };
-}
+// Load method configurations from external file
+const { studyMethodRegistry, methodAliases } = require("../config/methods.config");
 
-const METHODS_CONFIG: { [methodKey: string]: MethodConfig } = {
-  pomodoro: {
-    name: "pomodoro",
-    aliases: [
-      'pomodoro',
-      'metodo pomodoro',
-      'método pomodoro',
-      'pomodoro technique'
-    ],
-    validProgress: [0, 20, 40, 50, 60, 80, 100],
-    states: {
-      'en_progreso': { canonical: 'in_progress', dbValue: 'en_progreso' },
-      'completado': { canonical: 'completed', dbValue: 'completado' },
-      'in_progress': { canonical: 'in_progress', dbValue: 'en_progreso' },
-      'completed': { canonical: 'completed', dbValue: 'completado' }
-    },
-    progressToStateMapping: {
-      0: 'en_progreso',
-      20: 'en_progreso',
-      40: 'en_progreso',
-      50: 'en_progreso',
-      60: 'en_progreso',
-      80: 'en_progreso',
-      100: 'completado'
-    }
-  },
-  mindmaps: {
-    name: "mindmaps",
-    aliases: [
-      'mapas mentales',
-      'mapa mental',
-      'mind maps',
-      'mind map',
-      'método mapas mentales',
-      'repaso espaciado',
-      'spaced repetition'
-    ],
-    validProgress: [20, 40, 60, 80, 100],
-    states: {
-      'en_proceso': { canonical: 'in_process', dbValue: 'En_proceso' },
-      'casi_terminando': { canonical: 'almost_done', dbValue: 'Casi_terminando' },
-      'terminado': { canonical: 'done', dbValue: 'Terminado' },
-      'in_process': { canonical: 'in_process', dbValue: 'En_proceso' },
-      'almost_done': { canonical: 'almost_done', dbValue: 'Casi_terminando' },
-      'done': { canonical: 'done', dbValue: 'Terminado' }
-    },
-    progressToStateMapping: {
-      20: 'en_proceso',
-      40: 'en_proceso',
-      60: 'casi_terminando',
-      80: 'casi_terminando',
-      100: 'terminado'
-    }
-  },
-  practica_activa: {
-    name: "practica_activa",
-    aliases: [
-      'práctica activa',
-      'practica activa',
-      'práctica_activa',
-      'practica_activa',
-      'método práctica activa',
-      'metodo practica activa'
-    ],
-    validProgress: [0, 20, 40, 50, 60, 80, 100],
-    states: {
-      'en_proceso': { canonical: 'in_process', dbValue: 'En_proceso' },
-      'casi_terminando': { canonical: 'almost_done', dbValue: 'Casi_terminando' },
-      'terminado': { canonical: 'done', dbValue: 'Terminado' },
-      'en_progreso': { canonical: 'in_progress', dbValue: 'en_progreso' },
-      'completado': { canonical: 'completed', dbValue: 'completado' },
-      'in_process': { canonical: 'in_process', dbValue: 'En_proceso' },
-      'almost_done': { canonical: 'almost_done', dbValue: 'Casi_terminando' },
-      'done': { canonical: 'done', dbValue: 'Terminado' },
-      'in_progress': { canonical: 'in_progress', dbValue: 'en_progreso' },
-      'completed': { canonical: 'completed', dbValue: 'completado' }
-    },
-    progressToStateMapping: {
-      0: 'en_progreso',
-      20: 'en_progreso',
-      40: 'en_progreso',
-      50: 'en_progreso',
-      60: 'en_progreso',
-      80: 'en_progreso',
-      100: 'completado'
-    }
-  }
-};
+// Extended interface for methods with additional properties (like Feynman)
+interface StudyMethodConfig {
+  validCreationProgress: number[];
+  validUpdateProgress: number[];
+  validResumeProgress: number[];
+  statusMap: { [progress: number]: string };
+  processes?: string[];  // Feynman-specific
+  states?: string[];     // Feynman-specific
+  totalSteps?: number;   // Feynman-specific
+  routePrefix?: string;  // Feynman-specific
+}
 
 export interface CreateActiveMethodData {
   idMetodo: number;
@@ -146,111 +56,198 @@ export interface ReportData {
 
 /**
  * Normaliza el texto: convierte a minúsculas, elimina espacios extra, remueve acentos
+ * Maneja variaciones comunes de estados (español/inglés, con/sin acentos, etc.)
  */
 function normalizeText(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+
   return text
     .toLowerCase()
     .trim()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // Remover acentos
-    .replace(/\s+/g, ' ') // Normalizar espacios
-    .replace(/\s+/g, '_'); // Convertir espacios a underscores para consistencia
+    .replace(/\s+/g, ' ') // Normalizar espacios múltiples
+    .replace(/\s+/g, '_') // Convertir espacios a underscores
+    .replace(/_+/g, '_') // Normalizar underscores múltiples
+    .replace(/^_+|_+$/g, ''); // Remover underscores al inicio/fin
 }
 
 /**
- * Detecta el tipo de método basado en el nombre usando la configuración dinámica
+ * Detecta el tipo de método basado en el nombre usando el registro unificado
  */
 function getMethodType(nombreMetodo: string): string {
   const normalized = normalizeText(nombreMetodo);
 
-  for (const [methodKey, config] of Object.entries(METHODS_CONFIG)) {
-    const normalizedAliases = config.aliases.map(alias => normalizeText(alias));
-    if (normalizedAliases.includes(normalized)) {
-      return methodKey;
-    }
+  // Check if the normalized name directly matches a method slug
+  if (studyMethodRegistry[normalized]) {
+    return normalized;
   }
 
-  logger.warn(`Tipo de método no reconocido: "${nombreMetodo}" (normalizado: "${normalized}")`);
-  logger.warn(`Métodos configurados disponibles: ${Object.keys(METHODS_CONFIG).join(', ')}`);
+  // Check aliases
+  const methodSlug = methodAliases[normalized];
+  if (methodSlug && studyMethodRegistry[methodSlug]) {
+    return methodSlug;
+  }
+
+  logger.warn(`Tipo de método no reconocido: "${nombreMetodo}" (normalizado: "${normalized}"). Métodos disponibles: ${Object.keys(studyMethodRegistry).join(', ')}`);
   throw new Error(`Tipo de método no reconocido: ${nombreMetodo}`);
 }
 
 /**
- * Obtiene la configuración de un método por su tipo
+ * Obtiene la configuración de un método por su tipo del registro unificado
  */
-function getMethodConfig(methodType: string): MethodConfig {
-  const config = METHODS_CONFIG[methodType];
+function getMethodConfig(methodType: string): StudyMethodConfig {
+  const config = studyMethodRegistry[methodType];
   if (!config) {
-    logger.error(`Configuración no encontrada para el método: ${methodType}`);
+    logger.error(`Configuración no encontrada para el método: ${methodType}. Métodos disponibles: ${Object.keys(studyMethodRegistry).join(', ')}`);
     throw new Error(`Configuración no encontrada para el método: ${methodType}`);
   }
   return config;
 }
 
 /**
- * Valida si un progreso es válido para un método
+ * Unified progress validators using registry
  */
-function getValidProgress(methodType: string): number[] {
+function isValidProgressForCreation(methodType: string, progress: number): boolean {
   const config = getMethodConfig(methodType);
-  return config.validProgress;
+  return config.validCreationProgress.includes(progress);
+}
+
+function isValidProgressForUpdate(methodType: string, progress: number): boolean {
+  const config = getMethodConfig(methodType);
+  return config.validUpdateProgress.includes(progress);
+}
+
+function isValidProgressForResume(methodType: string, progress: number): boolean {
+  const config = getMethodConfig(methodType);
+  return config.validResumeProgress.includes(progress);
 }
 
 /**
- * Normaliza el estado entrante a valores canónicos usando la configuración dinámica
- */
-function normalizeStatus(status: string, methodType: string): string {
-  const normalized = normalizeText(status);
-  const config = getMethodConfig(methodType);
-
-  const stateConfig = config.states[normalized];
-  if (!stateConfig) {
-    logger.warn(`Estado no reconocido para método ${methodType}: "${status}" (normalizado: "${normalized}")`);
-    logger.warn(`Estados válidos para ${methodType}: ${Object.keys(config.states).join(', ')}`);
-    throw new Error(`Estado no reconocido para este método: ${status}`);
-  }
-
-  logger.debug(`Estado normalizado: "${status}" → "${stateConfig.canonical}" para método ${methodType}`);
-  return stateConfig.canonical;
-}
-
-/**
- * Mapea el estado canónico al valor correspondiente en la base de datos
- */
-function mapStatusToDB(canonical: string, methodType: string): string {
-  const config = getMethodConfig(methodType);
-
-  // Find the state config that has this canonical value
-  for (const stateConfig of Object.values(config.states)) {
-    if (stateConfig.canonical === canonical) {
-      return stateConfig.dbValue;
-    }
-  }
-
-  logger.warn(`No se encontró mapping DB para estado canónico "${canonical}" en método ${methodType}`);
-  return canonical; // fallback
-}
-
-/**
- * Obtiene el estado correspondiente al progreso para un tipo de método usando configuración
+ * Obtiene el estado correspondiente al progreso usando el registro
  */
 function getStatusForProgress(methodType: string, progress: number): string {
   const config = getMethodConfig(methodType);
-  const normalizedState = config.progressToStateMapping[progress];
+  const status = config.statusMap[progress];
 
-  if (!normalizedState) {
-    logger.warn(`No se encontró estado para progreso ${progress} en método ${methodType}`);
+  if (!status) {
+    logger.warn(`Estado no encontrado para progreso ${progress} en método ${methodType}. Mapeos disponibles: ${Object.keys(config.statusMap).join(', ')}`);
     return 'en_progreso'; // fallback
   }
 
-  return config.states[normalizedState].dbValue;
+  return status;
 }
 
 /**
- * Obtiene los estados válidos para un método
+ * Normaliza el estado entrante - en el nuevo sistema, los estados se determinan por progreso
+ * Esta función valida que el estado sea consistente con el progreso esperado
+ * Acepta variaciones en español/inglés, con/sin acentos, espacios vs underscores
+ */
+function validateStatusForProgress(status: string, methodType: string, progress: number): boolean {
+  const expectedStatus = getStatusForProgress(methodType, progress);
+  const normalizedInput = normalizeText(status);
+  const normalizedExpected = normalizeText(expectedStatus);
+
+  logger.debug(`Status validation: input="${status}" -> normalized="${normalizedInput}", expected="${expectedStatus}" -> normalized="${normalizedExpected}"`);
+
+  // For backward compatibility, accept multiple variations
+  const acceptableStatuses = [
+    normalizedExpected,                                    // en_proceso
+    normalizedExpected.replace(/_/g, ' '),               // en proceso
+    normalizedExpected.replace(/_/g, ''),                // enproceso
+    normalizedExpected.toUpperCase(),                    // EN_PROCESO
+    normalizedExpected.replace(/_/g, ' ').toUpperCase(), // EN PROCESO
+    expectedStatus,                                       // original case
+    expectedStatus.replace(/_/g, ' '),                   // with spaces
+    expectedStatus.toLowerCase(),                        // lowercase
+    expectedStatus.toUpperCase(),                        // uppercase
+  ];
+
+  // Remove duplicates
+  const uniqueStatuses = [...new Set(acceptableStatuses)];
+
+  const isValid = uniqueStatuses.includes(normalizedInput);
+  logger.debug(`Status validation result: ${isValid ? 'VALID' : 'INVALID'}, accepted variations: [${uniqueStatuses.join(', ')}]`);
+
+  return isValid;
+}
+
+/**
+ * Obtiene los estados válidos para un método (todos los valores posibles del statusMap)
  */
 function getValidStatusMethods(methodType: string): string[] {
   const config = getMethodConfig(methodType);
-  return Object.values(config.states).map(state => state.canonical);
+  return [...new Set(Object.values(config.statusMap))]; // Remove duplicates
+}
+
+/**
+ * Calcula el progreso basado en pasos completados para métodos como Feynman
+ */
+function calculateProgressFromSteps(methodType: string, completedSteps: number): number {
+  const config = getMethodConfig(methodType);
+  if (!config.totalSteps) {
+    throw new Error(`Método ${methodType} no tiene configuración de pasos`);
+  }
+
+  if (completedSteps < 0 || completedSteps > config.totalSteps) {
+    throw new Error(`Número de pasos inválido: ${completedSteps}. Debe estar entre 0 y ${config.totalSteps}`);
+  }
+
+  return Math.round((completedSteps / config.totalSteps) * 100);
+}
+
+/**
+ * Calcula el paso actual basado en el progreso para métodos como Feynman
+ */
+function calculateCurrentStepFromProgress(methodType: string, progress: number): number {
+  const config = getMethodConfig(methodType);
+  if (!config.totalSteps) {
+    return 0; // Not a step-based method
+  }
+
+  return Math.round((progress / 100) * config.totalSteps);
+}
+
+/**
+ * Obtiene la ruta de redirección para reanudar un método específico
+ */
+function getResumeRoute(methodType: string, progress: number): string {
+  const config = getMethodConfig(methodType);
+
+  if (config.routePrefix) {
+    // For Feynman-style methods
+    const currentStep = calculateCurrentStepFromProgress(methodType, progress);
+    return `${config.routePrefix}?step=${currentStep}&progress=${progress}`;
+  }
+
+  // Default fallback for other methods
+  return `/metodos/${methodType}/ejecucion?progress=${progress}`;
+}
+
+/**
+ * Obtiene información de reanudación para un método específico
+ */
+function getResumeInfo(methodType: string, progress: number): {
+  route: string;
+  currentStep?: number;
+  progress: number;
+  methodType: string;
+} {
+  const config = getMethodConfig(methodType);
+  const route = getResumeRoute(methodType, progress);
+
+  const result: any = {
+    route,
+    progress,
+    methodType
+  };
+
+  // Add step info for step-based methods
+  if (config.totalSteps) {
+    result.currentStep = calculateCurrentStepFromProgress(methodType, progress);
+  }
+
+  return result;
 }
 
 
@@ -265,6 +262,18 @@ export class ReportsService {
   private userRepository = AppDataSource.getRepository(UserEntity);
   private metodoRepository = AppDataSource.getRepository(MetodoEstudioEntity);
   private musicaRepository = AppDataSource.getRepository(MusicaEntity);
+
+  /**
+   * Obtiene información para reanudar un método específico
+   */
+  getResumeInfo(methodType: string, progress: number): {
+    route: string;
+    currentStep?: number;
+    progress: number;
+    methodType: string;
+  } {
+    return getResumeInfo(methodType, progress);
+  }
 
   /**
     * Crea un nuevo método activo para un usuario
@@ -302,14 +311,15 @@ export class ReportsService {
         };
       }
 
-      // Validate progress based on method type
+      // Validate progress based on method type for creation
       if (data.progreso !== undefined) {
         try {
           const type = getMethodType(metodo.nombreMetodo);
-          if (!getValidProgress(type).includes(data.progreso)) {
+          if (!isValidProgressForCreation(type, data.progreso)) {
+            logger.warn(`Progreso inválido para creación: ${data.progreso}. Valores válidos para ${type}: ${getMethodConfig(type).validCreationProgress.join(', ')}`);
             return {
               success: false,
-              message: "Progreso inválido para este método"
+              message: "Progreso inválido para creación de este método"
             };
           }
         } catch (error) {
@@ -326,17 +336,23 @@ export class ReportsService {
       // identificada por id_metodo_realizado, permitiendo múltiples sesiones activas simultáneamente.
       // La lógica de continuación debe usar el ID específico de cada sesión, no depender de un estado global "activo".
 
-      // Determinar estado basado en progreso y tipo de método
+      // Determinar estado basado en progreso usando el registro unificado
       let estadoNormalizado: MetodoEstado = MetodoEstado.EN_PROGRESO;
       try {
         const type = getMethodType(metodo.nombreMetodo);
         if (data.estado) {
-          // Si se proporciona estado explícitamente, normalizarlo
-          const canonical = normalizeStatus(data.estado, type);
-          const dbValue = mapStatusToDB(canonical, type);
-          estadoNormalizado = dbValue as MetodoEstado;
+          // Validar que el estado proporcionado sea consistente con el progreso esperado
+          const expectedProgress = data.progreso !== undefined ? data.progreso : 0;
+          if (!validateStatusForProgress(data.estado, type, expectedProgress)) {
+            logger.warn(`Estado inconsistente: "${data.estado}" para progreso ${expectedProgress} en método ${type}. Estado esperado: "${getStatusForProgress(type, expectedProgress)}"`);
+            return {
+              success: false,
+              message: "Estado no consistente con el progreso para este método"
+            };
+          }
+          estadoNormalizado = getStatusForProgress(type, expectedProgress) as MetodoEstado;
         } else if (data.progreso !== undefined) {
-          // Si no se proporciona estado pero sí progreso, determinar estado automáticamente
+          // Determinar estado automáticamente basado en progreso
           estadoNormalizado = getStatusForProgress(type, data.progreso) as MetodoEstado;
         }
       } catch (error) {
@@ -506,6 +522,9 @@ export class ReportsService {
       const numericMethodId = Number(methodId);
       const numericUserId = Number(userId);
 
+      // Diagnostic logging - log incoming request details
+      logger.info(`PATCH /api/v1/reports/methods/${numericMethodId}/progress - User: ${numericUserId}, Body: ${JSON.stringify(data)}`);
+
       // Buscar el método realizado usando query builder
       const metodoRealizado = await this.metodoRealizadoRepository
         .createQueryBuilder("mr")
@@ -515,13 +534,17 @@ export class ReportsService {
         .getOne();
 
       if (!metodoRealizado) {
+        logger.warn(`Método realizado no encontrado: id=${numericMethodId}, user=${numericUserId}`);
         return {
           success: false,
           error: "Método realizado no encontrado"
         };
       }
 
-      // Validate progress based on method type
+      // Diagnostic logging - log DB query results
+      logger.info(`DB Query Result: methodId=${metodoRealizado.idMetodoRealizado}, currentProgress=${metodoRealizado.progreso}, methodName="${metodoRealizado.metodo?.nombreMetodo}", dbMethodId=${metodoRealizado.idMetodo}`);
+
+      // Validate progress based on method type for updates
       if (data.progreso !== undefined) {
         const metodo = metodoRealizado.metodo;
         if (!metodo) {
@@ -532,13 +555,20 @@ export class ReportsService {
         }
         try {
           const type = getMethodType(metodo.nombreMetodo);
-          if (!getValidProgress(type).includes(data.progreso)) {
+          logger.info(`Method type detected: "${metodo.nombreMetodo}" -> "${type}"`);
+
+          const validProgressValues = getMethodConfig(type).validUpdateProgress;
+          logger.info(`Validation check: progress=${data.progreso}, validValues=[${validProgressValues.join(', ')}]`);
+
+          if (!isValidProgressForUpdate(type, data.progreso)) {
+            logger.warn(`Progreso inválido para actualización: received=${data.progreso}, allowed=[${validProgressValues.join(', ')}], method=${type}, methodId=${numericMethodId}`);
             return {
               success: false,
-              message: "Progreso inválido para este método"
+              message: `Progreso inválido para actualización: received=${data.progreso}, allowed=[${validProgressValues.join(', ')}], method=${type}`
             };
           }
         } catch (error) {
+          logger.error(`Error during method type detection/validation: ${(error as Error).message}`);
           return {
             success: false,
             error: (error as Error).message
@@ -546,13 +576,13 @@ export class ReportsService {
         }
         metodoRealizado.progreso = data.progreso;
 
-        // Actualizar estado basado en el progreso y tipo de método
+        // Actualizar estado basado en el progreso usando el registro
         try {
           const type = getMethodType(metodo.nombreMetodo);
           metodoRealizado.estado = getStatusForProgress(type, data.progreso) as MetodoEstado;
         } catch (error) {
           // Si no se puede determinar el tipo, mantener estado actual
-          logger.warn("No se pudo actualizar estado basado en progreso:", error);
+          logger.warn(`Error al actualizar estado para método ${numericMethodId}: ${(error as Error).message}`);
         }
       }
 
@@ -615,7 +645,7 @@ export class ReportsService {
         };
       }
 
-      // Validate and update status based on method type
+      // Validate and update status based on method type using registry
       if (data.estado !== undefined) {
         const metodoRealizado = sesionRealizada.metodoRealizado;
         if (!metodoRealizado || !metodoRealizado.metodo) {
@@ -626,9 +656,20 @@ export class ReportsService {
         }
         try {
           const type = getMethodType(metodoRealizado.metodo.nombreMetodo);
-          const canonical = normalizeStatus(data.estado, type);
-          const dbValue = mapStatusToDB(canonical, type);
-          sesionRealizada.estado = dbValue as SesionEstado;
+          // For sessions, we validate that the status is acceptable for the method
+          const validStatuses = getValidStatusMethods(type);
+          const normalizedStatus = normalizeText(data.estado);
+
+          if (!validStatuses.some(status => normalizeText(status) === normalizedStatus)) {
+            logger.warn(`Estado inválido para sesión ${numericSessionId}: "${data.estado}". Estados válidos para ${type}: ${validStatuses.join(', ')}`);
+            return {
+              success: false,
+              message: "Estado inválido para este tipo de método"
+            };
+          }
+
+          // Map to database format - for sessions, we use the same status values
+          sesionRealizada.estado = data.estado as SesionEstado;
         } catch (error) {
           return {
             success: false,
