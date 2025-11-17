@@ -526,6 +526,7 @@ export class UserService {
     const tokenPayload = {
       userId: user.id_usuario!,
       email: user.correo,
+      tokenVersion: 0, // Password reset tokens don't use version validation
     };
 
     const resetToken = JwtUtils.generateAccessToken(tokenPayload);

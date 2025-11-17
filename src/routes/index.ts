@@ -3,6 +3,7 @@ import userRoutes from "./userRoutes";
 import musicaRoutes from "./musicaRoutes";
 import beneficioRoutes from "./beneficioRoutes";
 import metodoEstudioRoutes from "./metodoEstudioRoutes";
+import reportsRoutes from "./reportsRoutes";
 import { env } from "../config/env";
 import eventosRutas from "../routes/eventosRutas"
 
@@ -60,6 +61,9 @@ router.use("/eventos", eventosRutas)
 
 // Rutas de musica
 router.use("/musica", musicaRoutes);
+
+// Rutas de reportes
+router.use("/reports", reportsRoutes);
 
 
 // Ruta por defecto para manejar endpoints no encontrados

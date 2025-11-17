@@ -10,10 +10,12 @@
     "test:db": "ts-node src/scripts/test-connection.ts",
     "test:integration": "ts-node src/scripts/test-integration.ts",
     "test:orm": "ts-node src/scripts/test-integration.ts",
-    "test:routes": "ts-node src/scripts/debug-routes.ts"
+    "test:routes": "ts-node src/scripts/debug-routes.ts",
+    "test:reports": "ts-node src/scripts/test-reports.ts"
   },
   "dependencies": {
     "@react-email/components": "^0.5.6",
+    "axios": "^1.6.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",

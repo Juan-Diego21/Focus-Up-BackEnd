@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.JwtUtils = void 0;
+exports.JwtUtils = exports.TokenBlacklistService = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const env_1 = require("../config/env");
 const JWT_SECRET = process.env.JWT_SECRET ||
@@ -12,13 +12,37 @@ const JWT_SECRET = process.env.JWT_SECRET ||
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET ||
     env_1.env.JWT_REFRESH_SECRET ||
     "fallback-refresh-secret-change-in-production";
-const JWT_ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN || env_1.env.JWT_ACCESS_EXPIRES_IN || "15m";
+const JWT_ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN || env_1.env.JWT_ACCESS_EXPIRES_IN || "24h";
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || env_1.env.JWT_REFRESH_EXPIRES_IN || "7d";
+const tokenBlacklist = new Set();
+class TokenBlacklistService {
+    static addToBlacklist(token) {
+        tokenBlacklist.add(token);
+    }
+    static isBlacklisted(token) {
+        return tokenBlacklist.has(token);
+    }
+    static cleanupExpiredTokens() {
+    }
+}
+exports.TokenBlacklistService = TokenBlacklistService;
 class JwtUtils {
     static generateAccessToken(payload) {
-        return jsonwebtoken_1.default.sign(payload, JWT_SECRET, {
+        const token = jsonwebtoken_1.default.sign(payload, JWT_SECRET, {
             expiresIn: JWT_ACCESS_EXPIRES_IN,
         });
+        try {
+            const decoded = jsonwebtoken_1.default.decode(token);
+            console.log('🔐 JWT Token generated:');
+            console.log('  📅 Issued at:', new Date(decoded.iat * 1000).toISOString());
+            console.log('  ⏰ Expires at:', new Date(decoded.exp * 1000).toISOString());
+            console.log('  ⏳ Expires in:', JWT_ACCESS_EXPIRES_IN);
+            console.log('  👤 User ID:', payload.userId);
+        }
+        catch (error) {
+            console.warn('⚠️ Could not decode generated token for logging');
+        }
+        return token;
     }
     static generateRefreshToken(payload) {
         return jsonwebtoken_1.default.sign(payload, JWT_REFRESH_SECRET, {

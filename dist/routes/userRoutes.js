@@ -11,6 +11,7 @@ router.get("/email/:email", auth_1.authenticateToken, UserController_1.userContr
 router.post("/", validation_1.validateUserCreate, UserController_1.userController.createUser.bind(UserController_1.userController));
 router.put("/:id", auth_1.authenticateToken, validation_1.validateUserUpdate, UserController_1.userController.updateUser.bind(UserController_1.userController));
 router.post("/login", UserController_1.userController.login.bind(UserController_1.userController));
+router.post("/logout", auth_1.authenticateToken, UserController_1.userController.logout.bind(UserController_1.userController));
 router.delete("/:id", auth_1.authenticateToken, UserController_1.userController.deleteUser.bind(UserController_1.userController));
 router.post('/request-password-reset', UserController_1.userController.requestPasswordReset.bind(UserController_1.userController));
 router.post('/reset-password-with-code', UserController_1.userController.resetPasswordWithCode.bind(UserController_1.userController));

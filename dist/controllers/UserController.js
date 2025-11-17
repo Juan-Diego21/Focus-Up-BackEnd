@@ -222,9 +222,17 @@ class UserController {
                 };
                 return res.status(401).json(response);
             }
+            const userRepository = (await Promise.resolve().then(() => __importStar(require("../config/ormconfig")))).AppDataSource.getRepository((await Promise.resolve().then(() => __importStar(require("../models/User.entity")))).UserEntity);
+            await userRepository.increment({ idUsuario: result.user.id_usuario }, "tokenVersion", 1);
+            const updatedUser = await userRepository.findOne({
+                where: { idUsuario: result.user.id_usuario }
+            });
+            const tokenVersion = updatedUser.tokenVersion;
+            logger_1.default.info(`Token version incremented to ${tokenVersion} for user ${result.user.id_usuario}`);
             const tokenPayload = {
                 userId: result.user.id_usuario,
                 email: result.user.correo,
+                tokenVersion: tokenVersion,
             };
             const accessToken = jwt_1.JwtUtils.generateAccessToken(tokenPayload);
             const response = {
@@ -272,6 +280,32 @@ class UserController {
         }
         catch (error) {
             logger_1.default.error("Error en UserController.getProfile:", error);
+            const response = {
+                success: false,
+                message: "Error interno del servidor",
+                error: "Ocurrió un error inesperado",
+                timestamp: new Date(),
+            };
+            res.status(500).json(response);
+        }
+    }
+    async logout(req, res) {
+        try {
+            const authHeader = req.headers["authorization"];
+            const token = jwt_1.JwtUtils.extractTokenFromHeader(authHeader);
+            if (token) {
+                jwt_1.TokenBlacklistService.addToBlacklist(token);
+                logger_1.default.info(`Token revocado exitosamente para logout del usuario: ${req.user?.userId}`);
+            }
+            const response = {
+                success: true,
+                message: "Sesión cerrada exitosamente",
+                timestamp: new Date(),
+            };
+            res.status(200).json(response);
+        }
+        catch (error) {
+            logger_1.default.error("Error en UserController.logout:", error);
             const response = {
                 success: false,
                 message: "Error interno del servidor",

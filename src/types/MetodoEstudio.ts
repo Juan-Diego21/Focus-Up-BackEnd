@@ -2,8 +2,6 @@ export interface MetodoEstudio {
   id_metodo?: number;
   nombre_metodo: string;
   descripcion?: string;
-  url_imagen: string;
-  color_hexa: string;
   fecha_creacion: Date;
   fecha_actualizacion: Date;
 }
@@ -11,15 +9,11 @@ export interface MetodoEstudio {
 export interface MetodoEstudioCreateInput {
   nombre_metodo: string;
   descripcion?: string;
-  url_imagen: string;
-  color_hexa: string;
 }
 
 export interface MetodoEstudioUpdateInput {
   nombre_metodo?: string;
   descripcion?: string;
-  url_imagen: string;
-  color_hexa: string;
 }
 
 export interface IMetodoEstudioRepository {
