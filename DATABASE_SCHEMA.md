@@ -122,11 +122,11 @@ CREATE TABLE sesiones_concentracion_realizadas (
 
 ### Business Rules
 
-1. **Single Active Method**: Only one method can be in `en_progreso` state per user at a time.
-2. **Progress States**: Methods support 0% (started), 50% (halfway), 100% (completed).
+1. **Multiple Active Methods**: Users can have multiple methods in `en_progreso` state simultaneously. Each method session is independent and identified by its unique `id_metodo_realizado`.
+2. **Progress States**: Methods support 0% (started), 50% (halfway), 100% (completed) for Pomodoro; 20%, 40%, 60%, 80%, 100% for Mind Maps.
 3. **Automatic Completion**: Methods automatically complete when progress reaches 100%.
 4. **Session States**: Sessions transition from `pendiente` → `en_proceso` → `completada`.
-5. **Resume Capability**: Incomplete methods and sessions can be resumed.
+5. **Resume Capability**: Incomplete methods and sessions can be resumed using their specific session IDs.
 6. **Data Integrity**: All foreign key relationships must be maintained.
 
 ### JOIN Queries Used

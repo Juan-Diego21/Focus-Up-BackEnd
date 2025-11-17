@@ -68,7 +68,9 @@ const mindmapsAliases = [
   'mapa mental',
   'mind maps',
   'mind map',
-  'método mapas mentales'
+  'método mapas mentales',
+  'repaso espaciado',
+  'spaced repetition'
 ];
 
 /**
@@ -146,6 +148,21 @@ function mapStatusToDB(canonical: string, method: 'pomodoro' | 'mindmaps'): stri
   return methodMappings[canonical] || canonical;
 }
 
+/**
+ * Obtiene el estado correspondiente al progreso para un tipo de método
+ */
+function getStatusForProgress(type: 'pomodoro' | 'mindmaps', progress: number): string {
+  if (type === 'pomodoro') {
+    if (progress === 0 || progress === 50) return 'en_progreso';
+    if (progress === 100) return 'completado';
+  } else if (type === 'mindmaps') {
+    if (progress === 20 || progress === 40) return 'En_proceso';
+    if (progress === 60 || progress === 80) return 'Casi_terminando';
+    if (progress === 100) return 'Terminado';
+  }
+  return 'en_progreso'; // fallback
+}
+
 function getValidStatusMethods(type: 'pomodoro' | 'mindmaps'): string[] {
   if (type === 'pomodoro') return ['in_progress', 'completed'];
   if (type === 'mindmaps') return ['in_process', 'almost_done', 'done'];
@@ -177,9 +194,10 @@ export class ReportsService {
   private musicaRepository = AppDataSource.getRepository(MusicaEntity);
 
   /**
-   * Crea un nuevo método activo para un usuario
-   * Inicializa el método con progreso 0 y estado en progreso
-   */
+    * Crea un nuevo método activo para un usuario
+    * Permite múltiples métodos activos simultáneamente - cada uno con su propia sesión independiente
+    * Inicializa el método con progreso 0 y estado en progreso
+    */
   async createActiveMethod(data: CreateActiveMethodData): Promise<{
     success: boolean;
     metodoRealizado?: MetodoRealizadoEntity;
@@ -229,35 +247,30 @@ export class ReportsService {
         }
       }
 
-      // Verificar si ya existe un método activo para este usuario
-      const existingActiveMethod = await this.metodoRealizadoRepository.findOne({
-        where: {
-          idUsuario: data.idUsuario,
-          estado: MetodoEstado.EN_PROGRESO
-        }
-      });
+      // Nota: Se permite crear múltiples métodos activos por usuario.
+      // Anteriormente se restringía a uno solo, pero esto causaba errores al recargar la página
+      // o iniciar nuevos métodos. Ahora cada método tiene su propia sesión independiente
+      // identificada por id_metodo_realizado, permitiendo múltiples sesiones activas simultáneamente.
+      // La lógica de continuación debe usar el ID específico de cada sesión, no depender de un estado global "activo".
 
-      if (existingActiveMethod) {
-        return {
-          success: false,
-          error: "Ya existe un método activo para este usuario"
-        };
-      }
-
-      // Normalizar estado si se proporciona
+      // Determinar estado basado en progreso y tipo de método
       let estadoNormalizado: MetodoEstado = MetodoEstado.EN_PROGRESO;
-      if (data.estado) {
-        try {
-          const type = getMethodType(metodo.nombreMetodo);
+      try {
+        const type = getMethodType(metodo.nombreMetodo);
+        if (data.estado) {
+          // Si se proporciona estado explícitamente, normalizarlo
           const canonical = normalizeStatus(data.estado, type);
           const dbValue = mapStatusToDB(canonical, type);
           estadoNormalizado = dbValue as MetodoEstado;
-        } catch (error) {
-          return {
-            success: false,
-            error: (error as Error).message
-          };
+        } else if (data.progreso !== undefined) {
+          // Si no se proporciona estado pero sí progreso, determinar estado automáticamente
+          estadoNormalizado = getStatusForProgress(type, data.progreso) as MetodoEstado;
         }
+      } catch (error) {
+        return {
+          success: false,
+          error: (error as Error).message
+        };
       }
 
       // Crear el método realizado
@@ -459,6 +472,15 @@ export class ReportsService {
           };
         }
         metodoRealizado.progreso = data.progreso;
+
+        // Actualizar estado basado en el progreso y tipo de método
+        try {
+          const type = getMethodType(metodo.nombreMetodo);
+          metodoRealizado.estado = getStatusForProgress(type, data.progreso) as MetodoEstado;
+        } catch (error) {
+          // Si no se puede determinar el tipo, mantener estado actual
+          logger.warn("No se pudo actualizar estado basado en progreso:", error);
+        }
       }
 
       // Si se solicita finalizar o el progreso llega al 100%, marcar como completado
