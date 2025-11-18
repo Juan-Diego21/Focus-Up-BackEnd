@@ -11,7 +11,8 @@
     "test:integration": "ts-node src/scripts/test-integration.ts",
     "test:orm": "ts-node src/scripts/test-integration.ts",
     "test:routes": "ts-node src/scripts/debug-routes.ts",
-    "test:reports": "ts-node src/scripts/test-reports.ts"
+    "test:reports": "ts-node src/scripts/test-reports.ts",
+    "test:feynman": "node test-feynman-regression.js"
   },
   "dependencies": {
     "@react-email/components": "^0.5.6",

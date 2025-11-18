@@ -69,17 +69,15 @@ const studyMethodRegistry = {
     },
   },
   feynman: {
-    validCreationProgress: [0, 20, 25, 50, 75, 100],
-    validUpdateProgress: [0, 20, 25, 40, 50, 75, 100],
-    validResumeProgress: [0, 20, 25, 40, 50, 75, 100],
+    validCreationProgress: [0, 20],
+    validUpdateProgress: [20, 40, 60, 80, 100],
+    validResumeProgress: [20, 40, 60, 80, 100],
     statusMap: {
-      0: "no_iniciado",
       20: "en_proceso",
-      25: "en_proceso",
-      40: "en_proceso",
-      50: "en_proceso",
-      75: "en_proceso",
-      100: "completado",
+      40: "avanzando",
+      60: "casi_terminando",
+      80: "casi_terminando",
+      100: "finalizado",
     },
     // Feynman-specific configuration
     processes: [

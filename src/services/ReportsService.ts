@@ -55,6 +55,32 @@ export interface ReportData {
 // Dynamic validation system using centralized configuration
 
 /**
+ * Normaliza el progreso: convierte strings a números, elimina espacios, valida que sea entero
+ */
+function normalizeProgress(progress: any): number {
+  if (typeof progress === 'number') {
+    return progress;
+  }
+
+  if (typeof progress === 'string') {
+    const trimmed = progress.trim();
+    const parsed = Number(trimmed);
+
+    if (isNaN(parsed)) {
+      throw new Error(`Progreso inválido: no se puede convertir "${progress}" a número`);
+    }
+
+    if (!Number.isInteger(parsed)) {
+      throw new Error(`Progreso inválido: debe ser un número entero, recibido ${parsed}`);
+    }
+
+    return parsed;
+  }
+
+  throw new Error(`Progreso inválido: tipo de dato no soportado ${typeof progress}`);
+}
+
+/**
  * Normaliza el texto: convierte a minúsculas, elimina espacios extra, remueve acentos
  * Maneja variaciones comunes de estados (español/inglés, con/sin acentos, etc.)
  */
@@ -102,6 +128,15 @@ function getMethodConfig(methodType: string): StudyMethodConfig {
     logger.error(`Configuración no encontrada para el método: ${methodType}. Métodos disponibles: ${Object.keys(studyMethodRegistry).join(', ')}`);
     throw new Error(`Configuración no encontrada para el método: ${methodType}`);
   }
+
+  // Debug log to validate registry configuration
+  logger.debug(`Registry config for ${methodType}: ${JSON.stringify({
+    validCreationProgress: config.validCreationProgress,
+    validUpdateProgress: config.validUpdateProgress,
+    validResumeProgress: config.validResumeProgress,
+    statusMap: config.statusMap
+  })}`);
+
   return config;
 }
 
@@ -110,17 +145,50 @@ function getMethodConfig(methodType: string): StudyMethodConfig {
  */
 function isValidProgressForCreation(methodType: string, progress: number): boolean {
   const config = getMethodConfig(methodType);
-  return config.validCreationProgress.includes(progress);
+
+  // Normalize progress before validation
+  let normalizedProgress: number;
+  try {
+    normalizedProgress = normalizeProgress(progress);
+  } catch (error) {
+    logger.warn(`Error normalizing progress for ${methodType} creation: ${(error as Error).message}`);
+    return false;
+  }
+
+  return config.validCreationProgress.includes(normalizedProgress);
 }
 
 function isValidProgressForUpdate(methodType: string, progress: number): boolean {
   const config = getMethodConfig(methodType);
-  return config.validUpdateProgress.includes(progress);
+
+  // Normalize progress before validation
+  let normalizedProgress: number;
+  try {
+    normalizedProgress = normalizeProgress(progress);
+  } catch (error) {
+    logger.warn(`Error normalizing progress for ${methodType}: ${(error as Error).message}`);
+    return false;
+  }
+
+  // Debug log to validate progress validation
+  logger.debug(`Progress validation for ${methodType}: received=${progress}, normalized=${normalizedProgress}, allowed=${JSON.stringify(config.validUpdateProgress)}, isValid=${config.validUpdateProgress.includes(normalizedProgress)}`);
+
+  return config.validUpdateProgress.includes(normalizedProgress);
 }
 
 function isValidProgressForResume(methodType: string, progress: number): boolean {
   const config = getMethodConfig(methodType);
-  return config.validResumeProgress.includes(progress);
+
+  // Normalize progress before validation
+  let normalizedProgress: number;
+  try {
+    normalizedProgress = normalizeProgress(progress);
+  } catch (error) {
+    logger.warn(`Error normalizing progress for ${methodType} resume: ${(error as Error).message}`);
+    return false;
+  }
+
+  return config.validResumeProgress.includes(normalizedProgress);
 }
 
 /**
@@ -316,7 +384,13 @@ export class ReportsService {
         try {
           const type = getMethodType(metodo.nombreMetodo);
           if (!isValidProgressForCreation(type, data.progreso)) {
-            logger.warn(`Progreso inválido para creación: ${data.progreso}. Valores válidos para ${type}: ${getMethodConfig(type).validCreationProgress.join(', ')}`);
+            const validProgressValues = getMethodConfig(type).validCreationProgress;
+            logger.warn(JSON.stringify({
+              event: "invalid_progress_creation",
+              method: type,
+              receivedProgress: data.progreso,
+              allowed: validProgressValues
+            }));
             return {
               success: false,
               message: "Progreso inválido para creación de este método"
@@ -363,10 +437,22 @@ export class ReportsService {
       }
 
       // Crear el método realizado
+      let progresoNormalizado = MetodoProgreso.INICIADO;
+      if (data.progreso !== undefined) {
+        try {
+          progresoNormalizado = normalizeProgress(data.progreso);
+        } catch (error) {
+          return {
+            success: false,
+            error: `Error al normalizar progreso: ${(error as Error).message}`
+          };
+        }
+      }
+
       const metodoRealizado = this.metodoRealizadoRepository.create({
         idUsuario: data.idUsuario,
         idMetodo: data.idMetodo,
-        progreso: data.progreso !== undefined ? data.progreso : MetodoProgreso.INICIADO,
+        progreso: progresoNormalizado,
         estado: estadoNormalizado,
         fechaInicio: new Date(),
       });
@@ -557,14 +643,18 @@ export class ReportsService {
           const type = getMethodType(metodo.nombreMetodo);
           logger.info(`Method type detected: "${metodo.nombreMetodo}" -> "${type}"`);
 
-          const validProgressValues = getMethodConfig(type).validUpdateProgress;
-          logger.info(`Validation check: progress=${data.progreso}, validValues=[${validProgressValues.join(', ')}]`);
-
           if (!isValidProgressForUpdate(type, data.progreso)) {
-            logger.warn(`Progreso inválido para actualización: received=${data.progreso}, allowed=[${validProgressValues.join(', ')}], method=${type}, methodId=${numericMethodId}`);
+            const validProgressValues = getMethodConfig(type).validUpdateProgress;
+            logger.warn(JSON.stringify({
+              event: "invalid_progress_update",
+              method: type,
+              receivedProgress: data.progreso,
+              allowed: validProgressValues,
+              methodId: numericMethodId
+            }));
             return {
               success: false,
-              message: `Progreso inválido para actualización: received=${data.progreso}, allowed=[${validProgressValues.join(', ')}], method=${type}`
+              message: `Progreso inválido para actualización: received=${data.progreso}, allowed=${validProgressValues.join(', ')}, method=${type}`
             };
           }
         } catch (error) {
@@ -574,7 +664,16 @@ export class ReportsService {
             error: (error as Error).message
           };
         }
-        metodoRealizado.progreso = data.progreso;
+
+        // Normalize progress before saving
+        try {
+          metodoRealizado.progreso = normalizeProgress(data.progreso);
+        } catch (error) {
+          return {
+            success: false,
+            error: `Error al normalizar progreso: ${(error as Error).message}`
+          };
+        }
 
         // Actualizar estado basado en el progreso usando el registro
         try {
