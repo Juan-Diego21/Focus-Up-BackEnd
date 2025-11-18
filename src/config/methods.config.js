@@ -56,8 +56,8 @@ const studyMethodRegistry = {
     },
   },
   cornell: {
-    validCreationProgress: [0],
-    validUpdateProgress: [0, 20, 40, 60, 80, 100],
+    validCreationProgress: [20],
+    validUpdateProgress: [20, 40, 60, 80, 100],
     validResumeProgress: [20, 40, 60, 80, 100],
     statusMap: {
       0: "En_proceso",
@@ -126,6 +126,7 @@ const methodAliases = {
   "notas cornell": "cornell",
   "método cornell": "cornell",
   "metodo cornell": "cornell",
+  "Método Cornell": "cornell",
   cornell_notes: "cornell",
 
   // Feynman

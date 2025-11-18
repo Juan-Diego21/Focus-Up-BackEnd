@@ -109,8 +109,13 @@ function getMethodType(nombreMetodo: string): string {
     return normalized;
   }
 
-  // Check aliases
-  const methodSlug = methodAliases[normalized];
+  // Check aliases - try both original and normalized versions
+  let methodSlug = methodAliases[nombreMetodo]; // Check original case first
+  if (methodSlug && studyMethodRegistry[methodSlug]) {
+    return methodSlug;
+  }
+
+  methodSlug = methodAliases[normalized]; // Then check normalized
   if (methodSlug && studyMethodRegistry[methodSlug]) {
     return methodSlug;
   }
