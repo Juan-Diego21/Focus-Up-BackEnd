@@ -20,6 +20,11 @@ var SesionEstado;
     SesionEstado["EN_PROCESO"] = "en_proceso";
     SesionEstado["COMPLETADA"] = "completada";
     SesionEstado["CANCELADA"] = "cancelada";
+    SesionEstado["IN_PROCESS"] = "in_process";
+    SesionEstado["COMPLETED"] = "completed";
+    SesionEstado["EN_PROCESO_MM"] = "En_proceso";
+    SesionEstado["CASI_TERMINANDO"] = "Casi_terminando";
+    SesionEstado["TERMINADO"] = "Terminado";
 })(SesionEstado || (exports.SesionEstado = SesionEstado = {}));
 let SesionConcentracionRealizadaEntity = class SesionConcentracionRealizadaEntity {
 };

@@ -11,6 +11,124 @@ const User_entity_1 = require("../models/User.entity");
 const MetodoEstudio_entity_1 = require("../models/MetodoEstudio.entity");
 const Musica_entity_1 = require("../models/Musica.entity");
 const logger_1 = __importDefault(require("../utils/logger"));
+const { studyMethodRegistry, methodAliases } = require("../config/methods.config");
+function normalizeText(text) {
+    if (!text || typeof text !== 'string')
+        return '';
+    return text
+        .toLowerCase()
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .replace(/\s+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '');
+}
+function getMethodType(nombreMetodo) {
+    const normalized = normalizeText(nombreMetodo);
+    if (studyMethodRegistry[normalized]) {
+        return normalized;
+    }
+    const methodSlug = methodAliases[normalized];
+    if (methodSlug && studyMethodRegistry[methodSlug]) {
+        return methodSlug;
+    }
+    logger_1.default.warn(`Tipo de método no reconocido: "${nombreMetodo}" (normalizado: "${normalized}"). Métodos disponibles: ${Object.keys(studyMethodRegistry).join(', ')}`);
+    throw new Error(`Tipo de método no reconocido: ${nombreMetodo}`);
+}
+function getMethodConfig(methodType) {
+    const config = studyMethodRegistry[methodType];
+    if (!config) {
+        logger_1.default.error(`Configuración no encontrada para el método: ${methodType}. Métodos disponibles: ${Object.keys(studyMethodRegistry).join(', ')}`);
+        throw new Error(`Configuración no encontrada para el método: ${methodType}`);
+    }
+    return config;
+}
+function isValidProgressForCreation(methodType, progress) {
+    const config = getMethodConfig(methodType);
+    return config.validCreationProgress.includes(progress);
+}
+function isValidProgressForUpdate(methodType, progress) {
+    const config = getMethodConfig(methodType);
+    return config.validUpdateProgress.includes(progress);
+}
+function isValidProgressForResume(methodType, progress) {
+    const config = getMethodConfig(methodType);
+    return config.validResumeProgress.includes(progress);
+}
+function getStatusForProgress(methodType, progress) {
+    const config = getMethodConfig(methodType);
+    const status = config.statusMap[progress];
+    if (!status) {
+        logger_1.default.warn(`Estado no encontrado para progreso ${progress} en método ${methodType}. Mapeos disponibles: ${Object.keys(config.statusMap).join(', ')}`);
+        return 'en_progreso';
+    }
+    return status;
+}
+function validateStatusForProgress(status, methodType, progress) {
+    const expectedStatus = getStatusForProgress(methodType, progress);
+    const normalizedInput = normalizeText(status);
+    const normalizedExpected = normalizeText(expectedStatus);
+    logger_1.default.debug(`Status validation: input="${status}" -> normalized="${normalizedInput}", expected="${expectedStatus}" -> normalized="${normalizedExpected}"`);
+    const acceptableStatuses = [
+        normalizedExpected,
+        normalizedExpected.replace(/_/g, ' '),
+        normalizedExpected.replace(/_/g, ''),
+        normalizedExpected.toUpperCase(),
+        normalizedExpected.replace(/_/g, ' ').toUpperCase(),
+        expectedStatus,
+        expectedStatus.replace(/_/g, ' '),
+        expectedStatus.toLowerCase(),
+        expectedStatus.toUpperCase(),
+    ];
+    const uniqueStatuses = [...new Set(acceptableStatuses)];
+    const isValid = uniqueStatuses.includes(normalizedInput);
+    logger_1.default.debug(`Status validation result: ${isValid ? 'VALID' : 'INVALID'}, accepted variations: [${uniqueStatuses.join(', ')}]`);
+    return isValid;
+}
+function getValidStatusMethods(methodType) {
+    const config = getMethodConfig(methodType);
+    return [...new Set(Object.values(config.statusMap))];
+}
+function calculateProgressFromSteps(methodType, completedSteps) {
+    const config = getMethodConfig(methodType);
+    if (!config.totalSteps) {
+        throw new Error(`Método ${methodType} no tiene configuración de pasos`);
+    }
+    if (completedSteps < 0 || completedSteps > config.totalSteps) {
+        throw new Error(`Número de pasos inválido: ${completedSteps}. Debe estar entre 0 y ${config.totalSteps}`);
+    }
+    return Math.round((completedSteps / config.totalSteps) * 100);
+}
+function calculateCurrentStepFromProgress(methodType, progress) {
+    const config = getMethodConfig(methodType);
+    if (!config.totalSteps) {
+        return 0;
+    }
+    return Math.round((progress / 100) * config.totalSteps);
+}
+function getResumeRoute(methodType, progress) {
+    const config = getMethodConfig(methodType);
+    if (config.routePrefix) {
+        const currentStep = calculateCurrentStepFromProgress(methodType, progress);
+        return `${config.routePrefix}?step=${currentStep}&progress=${progress}`;
+    }
+    return `/metodos/${methodType}/ejecucion?progress=${progress}`;
+}
+function getResumeInfo(methodType, progress) {
+    const config = getMethodConfig(methodType);
+    const route = getResumeRoute(methodType, progress);
+    const result = {
+        route,
+        progress,
+        methodType
+    };
+    if (config.totalSteps) {
+        result.currentStep = calculateCurrentStepFromProgress(methodType, progress);
+    }
+    return result;
+}
 class ReportsService {
     constructor() {
         this.metodoRealizadoRepository = ormconfig_1.AppDataSource.getRepository(MetodoRealizado_entity_1.MetodoRealizadoEntity);
@@ -18,6 +136,9 @@ class ReportsService {
         this.userRepository = ormconfig_1.AppDataSource.getRepository(User_entity_1.UserEntity);
         this.metodoRepository = ormconfig_1.AppDataSource.getRepository(MetodoEstudio_entity_1.MetodoEstudioEntity);
         this.musicaRepository = ormconfig_1.AppDataSource.getRepository(Musica_entity_1.MusicaEntity);
+    }
+    getResumeInfo(methodType, progress) {
+        return getResumeInfo(methodType, progress);
     }
     async createActiveMethod(data) {
         try {
@@ -39,23 +160,53 @@ class ReportsService {
                     error: "Método de estudio no encontrado"
                 };
             }
-            const existingActiveMethod = await this.metodoRealizadoRepository.findOne({
-                where: {
-                    idUsuario: data.idUsuario,
-                    estado: MetodoRealizado_entity_1.MetodoEstado.EN_PROGRESO
+            if (data.progreso !== undefined) {
+                try {
+                    const type = getMethodType(metodo.nombreMetodo);
+                    if (!isValidProgressForCreation(type, data.progreso)) {
+                        logger_1.default.warn(`Progreso inválido para creación: ${data.progreso}. Valores válidos para ${type}: ${getMethodConfig(type).validCreationProgress.join(', ')}`);
+                        return {
+                            success: false,
+                            message: "Progreso inválido para creación de este método"
+                        };
+                    }
                 }
-            });
-            if (existingActiveMethod) {
+                catch (error) {
+                    return {
+                        success: false,
+                        error: error.message
+                    };
+                }
+            }
+            let estadoNormalizado = MetodoRealizado_entity_1.MetodoEstado.EN_PROGRESO;
+            try {
+                const type = getMethodType(metodo.nombreMetodo);
+                if (data.estado) {
+                    const expectedProgress = data.progreso !== undefined ? data.progreso : 0;
+                    if (!validateStatusForProgress(data.estado, type, expectedProgress)) {
+                        logger_1.default.warn(`Estado inconsistente: "${data.estado}" para progreso ${expectedProgress} en método ${type}. Estado esperado: "${getStatusForProgress(type, expectedProgress)}"`);
+                        return {
+                            success: false,
+                            message: "Estado no consistente con el progreso para este método"
+                        };
+                    }
+                    estadoNormalizado = getStatusForProgress(type, expectedProgress);
+                }
+                else if (data.progreso !== undefined) {
+                    estadoNormalizado = getStatusForProgress(type, data.progreso);
+                }
+            }
+            catch (error) {
                 return {
                     success: false,
-                    error: "Ya existe un método activo para este usuario"
+                    error: error.message
                 };
             }
             const metodoRealizado = this.metodoRealizadoRepository.create({
                 idUsuario: data.idUsuario,
                 idMetodo: data.idMetodo,
                 progreso: data.progreso !== undefined ? data.progreso : MetodoRealizado_entity_1.MetodoProgreso.INICIADO,
-                estado: data.estado ? data.estado : MetodoRealizado_entity_1.MetodoEstado.EN_PROGRESO,
+                estado: estadoNormalizado,
                 fechaInicio: new Date(),
             });
             const savedMetodo = await this.metodoRealizadoRepository.save(metodoRealizado);
@@ -167,19 +318,57 @@ class ReportsService {
         try {
             const numericMethodId = Number(methodId);
             const numericUserId = Number(userId);
+            logger_1.default.info(`PATCH /api/v1/reports/methods/${numericMethodId}/progress - User: ${numericUserId}, Body: ${JSON.stringify(data)}`);
             const metodoRealizado = await this.metodoRealizadoRepository
                 .createQueryBuilder("mr")
+                .leftJoinAndSelect("mr.metodo", "m")
                 .where("mr.idMetodoRealizado = :methodId", { methodId: numericMethodId })
                 .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
                 .getOne();
             if (!metodoRealizado) {
+                logger_1.default.warn(`Método realizado no encontrado: id=${numericMethodId}, user=${numericUserId}`);
                 return {
                     success: false,
                     error: "Método realizado no encontrado"
                 };
             }
+            logger_1.default.info(`DB Query Result: methodId=${metodoRealizado.idMetodoRealizado}, currentProgress=${metodoRealizado.progreso}, methodName="${metodoRealizado.metodo?.nombreMetodo}", dbMethodId=${metodoRealizado.idMetodo}`);
             if (data.progreso !== undefined) {
+                const metodo = metodoRealizado.metodo;
+                if (!metodo) {
+                    return {
+                        success: false,
+                        error: "Método de estudio no encontrado"
+                    };
+                }
+                try {
+                    const type = getMethodType(metodo.nombreMetodo);
+                    logger_1.default.info(`Method type detected: "${metodo.nombreMetodo}" -> "${type}"`);
+                    const validProgressValues = getMethodConfig(type).validUpdateProgress;
+                    logger_1.default.info(`Validation check: progress=${data.progreso}, validValues=[${validProgressValues.join(', ')}]`);
+                    if (!isValidProgressForUpdate(type, data.progreso)) {
+                        logger_1.default.warn(`Progreso inválido para actualización: received=${data.progreso}, allowed=[${validProgressValues.join(', ')}], method=${type}, methodId=${numericMethodId}`);
+                        return {
+                            success: false,
+                            message: `Progreso inválido para actualización: received=${data.progreso}, allowed=[${validProgressValues.join(', ')}], method=${type}`
+                        };
+                    }
+                }
+                catch (error) {
+                    logger_1.default.error(`Error during method type detection/validation: ${error.message}`);
+                    return {
+                        success: false,
+                        error: error.message
+                    };
+                }
                 metodoRealizado.progreso = data.progreso;
+                try {
+                    const type = getMethodType(metodo.nombreMetodo);
+                    metodoRealizado.estado = getStatusForProgress(type, data.progreso);
+                }
+                catch (error) {
+                    logger_1.default.warn(`Error al actualizar estado para método ${numericMethodId}: ${error.message}`);
+                }
             }
             if (data.finalizar || (data.progreso === MetodoRealizado_entity_1.MetodoProgreso.COMPLETADO)) {
                 metodoRealizado.estado = MetodoRealizado_entity_1.MetodoEstado.COMPLETADO;
@@ -190,7 +379,7 @@ class ReportsService {
             return {
                 success: true,
                 metodoRealizado: updatedMetodo,
-                message: "Progreso del método actualizado exitosamente"
+                message: "Progreso actualizado correctamente"
             };
         }
         catch (error) {
@@ -207,7 +396,8 @@ class ReportsService {
             const numericUserId = Number(userId);
             const sesionRealizada = await this.sesionRealizadaRepository
                 .createQueryBuilder("sesion")
-                .leftJoin("sesion.metodoRealizado", "metodoRealizado")
+                .leftJoinAndSelect("sesion.metodoRealizado", "metodoRealizado")
+                .leftJoinAndSelect("metodoRealizado.metodo", "metodo")
                 .where("sesion.idSesionRealizada = :sessionId", { sessionId: numericSessionId })
                 .andWhere("(sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId)", { userId: numericUserId })
                 .getOne();
@@ -218,13 +408,38 @@ class ReportsService {
                 };
             }
             if (data.estado !== undefined) {
-                sesionRealizada.estado = data.estado;
+                const metodoRealizado = sesionRealizada.metodoRealizado;
+                if (!metodoRealizado || !metodoRealizado.metodo) {
+                    return {
+                        success: false,
+                        error: "Método de estudio no encontrado para la sesión"
+                    };
+                }
+                try {
+                    const type = getMethodType(metodoRealizado.metodo.nombreMetodo);
+                    const validStatuses = getValidStatusMethods(type);
+                    const normalizedStatus = normalizeText(data.estado);
+                    if (!validStatuses.some(status => normalizeText(status) === normalizedStatus)) {
+                        logger_1.default.warn(`Estado inválido para sesión ${numericSessionId}: "${data.estado}". Estados válidos para ${type}: ${validStatuses.join(', ')}`);
+                        return {
+                            success: false,
+                            message: "Estado inválido para este tipo de método"
+                        };
+                    }
+                    sesionRealizada.estado = data.estado;
+                }
+                catch (error) {
+                    return {
+                        success: false,
+                        error: error.message
+                    };
+                }
             }
             const updatedSesion = await this.sesionRealizadaRepository.save(sesionRealizada);
             return {
                 success: true,
                 sesionRealizada: updatedSesion,
-                message: "Progreso de la sesión actualizado exitosamente"
+                message: "Sesión retomada correctamente"
             };
         }
         catch (error) {

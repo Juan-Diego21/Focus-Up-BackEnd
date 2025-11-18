@@ -32,6 +32,12 @@ export declare class ReportsService {
     private userRepository;
     private metodoRepository;
     private musicaRepository;
+    getResumeInfo(methodType: string, progress: number): {
+        route: string;
+        currentStep?: number;
+        progress: number;
+        methodType: string;
+    };
     createActiveMethod(data: CreateActiveMethodData): Promise<{
         success: boolean;
         metodoRealizado?: MetodoRealizadoEntity;

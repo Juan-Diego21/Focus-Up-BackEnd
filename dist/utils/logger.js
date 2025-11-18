@@ -16,7 +16,13 @@ const logger = winston_1.default.createLogger({
 });
 if (process.env.NODE_ENV !== 'production') {
     logger.add(new winston_1.default.transports.Console({
-        format: winston_1.default.format.combine(winston_1.default.format.colorize(), winston_1.default.format.simple())
+        format: winston_1.default.format.combine(winston_1.default.format.colorize(), winston_1.default.format.printf(({ level, message, timestamp, service, ...meta }) => {
+            let metaStr = '';
+            if (Object.keys(meta).length > 0) {
+                metaStr = ` ${JSON.stringify(meta)}`;
+            }
+            return `${level}: ${message}${metaStr}`;
+        }))
     }));
 }
 exports.default = logger;

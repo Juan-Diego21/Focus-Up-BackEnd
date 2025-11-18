@@ -29,7 +29,13 @@ if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
     format: winston.format.combine(
       winston.format.colorize(),
-      winston.format.simple()
+      winston.format.printf(({ level, message, timestamp, service, ...meta }) => {
+        let metaStr = '';
+        if (Object.keys(meta).length > 0) {
+          metaStr = ` ${JSON.stringify(meta)}`;
+        }
+        return `${level}: ${message}${metaStr}`;
+      })
     )
   }));
 }
