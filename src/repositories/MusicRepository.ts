@@ -28,7 +28,6 @@ export class MusicRepository {
       fecha_creacion: entity.fechaCreacion,
       fecha_actualizacion: entity.fechaActualizacion,
       url_musica: entity.urlMusica,
-      url_imagen: entity.urlImagen,
     };
   }
 
@@ -38,7 +37,8 @@ export class MusicRepository {
       nombre_album: entity.nombreAlbum,
       fecha_creacion: entity.fechaCreacion,
       fecha_actualizacion: entity.fechaActualizacion,
-      url_imagen: entity.urlImagen,
+      descripcion: entity.descripcion ?? null,
+      genero: entity.genero ?? null,
     };
   }
 
