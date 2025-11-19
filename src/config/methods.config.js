@@ -4,7 +4,7 @@
 
 const studyMethodRegistry = {
   pomodoro: {
-    validCreationProgress: [0],
+    validCreationProgress: [0, 20],
     validUpdateProgress: [0, 20, 40, 50, 60, 80, 100],
     validResumeProgress: [0, 20, 40, 50, 60, 80],
     statusMap: {
@@ -99,6 +99,7 @@ const methodAliases = {
   pomodoro: "pomodoro",
   "metodo pomodoro": "pomodoro",
   "método pomodoro": "pomodoro",
+  "Método Pomodoro": "pomodoro",
   "pomodoro technique": "pomodoro",
 
   // Mapas Mentales
