@@ -4,7 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from "typeorm";
+import { AlbumMusicaEntity } from "./AlbumMusica.entity";
 
 @Entity("musica")
 export class MusicaEntity {
@@ -35,6 +38,8 @@ export class MusicaEntity {
   @Column({ name: "url_musica", type: "text", nullable: false })
   urlMusica!: string;
 
-  @Column({ name: "url_imagen", type: "text", nullable: false })
-  urlImagen!: string;
+  // Relationship with Album
+  @ManyToOne(() => AlbumMusicaEntity, album => album.musicas, { nullable: true })
+  @JoinColumn({ name: "id_album" })
+  album?: AlbumMusicaEntity;
 }

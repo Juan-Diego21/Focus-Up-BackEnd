@@ -4,7 +4,9 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from "typeorm";
+import { MusicaEntity } from "./Musica.entity";
 
 @Entity("albummusica")
 export class AlbumMusicaEntity {
@@ -20,6 +22,13 @@ export class AlbumMusicaEntity {
   @UpdateDateColumn({ name: "fecha_actualizacion" })
   fechaActualizacion!: Date;
 
-  @Column({ name: "url_imagen", type: "text", nullable: false })
-  urlImagen!: string;
+  @Column({ name: "descripcion", type: "text", nullable: true })
+  descripcion!: string;
+
+  @Column({ name: "genero", length: 50, nullable: true })
+  genero!: string;
+
+  // Relationship with Music
+  @OneToMany(() => MusicaEntity, musica => musica.album)
+  musicas?: MusicaEntity[];
 }
