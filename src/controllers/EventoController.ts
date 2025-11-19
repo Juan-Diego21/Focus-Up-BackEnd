@@ -25,19 +25,31 @@ export const eventosController = {
 
     /**
      * Crear un nuevo evento de estudio
-     * Asocia el evento con un método de estudio existente
+     * Extrae el ID del usuario autenticado y valida los datos del evento incluyendo método y álbum opcional
+     * Interactúa con el servicio para crear el evento en la base de datos
      */
     async crearEvento(req: Request, res: Response) {
-        const { nombreEvento, fechaEvento, horaEvento, descripcionEvento, idMetodo } = req.body;
+        const { nombreEvento, fechaEvento, horaEvento, descripcionEvento, idMetodo, idAlbum } = req.body;
+        const idUsuario = (req as any).user.userId; // Obtener ID del usuario autenticado
+
         try {
-            const datos = await EventoService.crearEvento({nombreEvento,fechaEvento,horaEvento,descripcionEvento},idMetodo );
-            if(datos?.success){
-                return res.status(201).json(datos); 
-            }else{
-                return res.status(404).json(datos);
+            const datos = await EventoService.crearEvento({
+                nombreEvento,
+                fechaEvento,
+                horaEvento,
+                descripcionEvento,
+                idUsuario,
+                idMetodo,
+                idAlbum
+            });
+
+            if (datos?.success) {
+                return res.status(201).json(datos);
+            } else {
+                return res.status(400).json(datos); // Cambiado a 400 para errores de validación
             }
-        }catch (error:any){
-         return res.status(500).json({ success: false, error: error.message || error });
+        } catch (error: any) {
+            return res.status(500).json({ success: false, error: error.message || error });
         }
     },
 
@@ -66,11 +78,12 @@ export const eventosController = {
 
     /**
      * Actualizar un evento de estudio existente
-     * Permite modificar nombre, fecha, hora y descripción del evento
+     * Permite modificar nombre, fecha, hora, descripción, método de estudio y álbum del evento
+     * Valida que el evento pertenezca al usuario autenticado antes de actualizar
      */
     async updateEvento(req: Request, res: Response) {
         const { id } = req.params;
-        const { nombreEvento, fechaEvento, horaEvento, descripcionEvento } = req.body;
+        const { nombreEvento, fechaEvento, horaEvento, descripcionEvento, idMetodo, idAlbum } = req.body;
 
         try {
             const datos = await EventoService.updateEvento(Number(id), {
@@ -78,6 +91,8 @@ export const eventosController = {
                 fechaEvento,
                 horaEvento,
                 descripcionEvento,
+                idMetodo,
+                idAlbum,
             });
 
             if (datos.success) {

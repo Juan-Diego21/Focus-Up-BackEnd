@@ -56,4 +56,7 @@ export class UserEntity {
 
   @OneToMany(() => UsuarioDistraccionesEntity, usuarioDistraccion => usuarioDistraccion.usuario)
   usuarioDistracciones?: UsuarioDistraccionesEntity[];
+
+  // Relación con eventos (uno a muchos)
+  eventos?: any[]; // Para la relación inversa con EventoEntity
 }
