@@ -7,35 +7,59 @@ import { EventoService } from "../services/EventosService";
  */
 export const eventosController = {
     /**
-     * Listar todos los eventos de estudio registrados
-     * Retorna eventos con información completa incluyendo método asociado
+     * Listar los eventos de estudio del usuario autenticado
+     * Implementa filtrado por usuario para asegurar que cada usuario solo vea sus propios eventos
+     * Extrae el ID del usuario del token JWT y lo pasa al servicio
      */
     async listEventos(req: Request, res: Response) {
         try {
-            const listarEventos = await EventoService.listEvento();
-            if(listarEventos?.success){
-                return res.status(200).json(listarEventos); 
-            }else{
-                return res.status(404).json(listarEventos);
+            // Extraer ID del usuario autenticado desde el token JWT
+            const userId = (req as any).user?.userId;
+
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Usuario no autenticado'
+                });
             }
-        }catch (error:any){
-            return res.status(500).json({ success: false, error: error.message || error });
+
+            const eventosUsuario = await EventoService.getEventosByUsuario(userId);
+
+            if (eventosUsuario?.success) {
+                return res.status(200).json(eventosUsuario);
+            } else {
+                return res.status(400).json(eventosUsuario);
+            }
+        } catch (error: any) {
+            return res.status(500).json({
+                success: false,
+                error: error.message || 'Error interno del servidor'
+            });
         }
     },
 
     /**
      * Crear un nuevo evento de estudio
      * Extrae el ID del usuario autenticado y valida los datos del evento incluyendo método y álbum opcional
-     * Interactúa con el servicio para crear el evento en la base de datos
+     * Parsea las fechas correctamente antes de enviar al servicio
      */
     async crearEvento(req: Request, res: Response) {
         const { nombreEvento, fechaEvento, horaEvento, descripcionEvento, idMetodo, idAlbum } = req.body;
         const idUsuario = (req as any).user.userId; // Obtener ID del usuario autenticado
 
         try {
+            // Parsear fechaEvento de string a Date
+            const parsedFechaEvento = new Date(fechaEvento);
+            if (isNaN(parsedFechaEvento.getTime())) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Formato de fecha inválido'
+                });
+            }
+
             const datos = await EventoService.crearEvento({
                 nombreEvento,
-                fechaEvento,
+                fechaEvento: parsedFechaEvento,
                 horaEvento,
                 descripcionEvento,
                 idUsuario,
@@ -49,19 +73,29 @@ export const eventosController = {
                 return res.status(400).json(datos); // Cambiado a 400 para errores de validación
             }
         } catch (error: any) {
+            console.error('Error en crearEvento controller:', error);
             return res.status(500).json({ success: false, error: error.message || error });
         }
     },
 
     /**
      * Eliminar un evento de estudio por su ID
-     * Operación destructiva que requiere validación del ID
+     * Verifica que el evento pertenezca al usuario autenticado antes de eliminarlo
+     * Operación destructiva que requiere validación de propiedad
      */
     async deleteEvento(req: Request, res: Response) {
         const { id } = req.params;
+        const userId = (req as any).user?.userId;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'Usuario no autenticado'
+            });
+        }
 
         try {
-            const resultado = await EventoService.deleteEvento(Number(id));
+            const resultado = await EventoService.deleteEvento(Number(id), userId);
 
             if (resultado.success) {
                 return res.status(200).json(resultado);
@@ -84,11 +118,31 @@ export const eventosController = {
     async updateEvento(req: Request, res: Response) {
         const { id } = req.params;
         const { nombreEvento, fechaEvento, horaEvento, descripcionEvento, idMetodo, idAlbum } = req.body;
+        const userId = (req as any).user?.userId;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'Usuario no autenticado'
+            });
+        }
 
         try {
-            const datos = await EventoService.updateEvento(Number(id), {
+            // Parsear fechaEvento si se proporciona
+            let parsedFechaEvento = undefined;
+            if (fechaEvento) {
+                parsedFechaEvento = new Date(fechaEvento);
+                if (isNaN(parsedFechaEvento.getTime())) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Formato de fecha inválido'
+                    });
+                }
+            }
+
+            const datos = await EventoService.updateEvento(Number(id), userId, {
                 nombreEvento,
-                fechaEvento,
+                fechaEvento: parsedFechaEvento,
                 horaEvento,
                 descripcionEvento,
                 idMetodo,

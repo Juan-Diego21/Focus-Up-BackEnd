@@ -1,10 +1,11 @@
-import { EventoRepository } from '../repositories/EventoRepository';
+import { EventoRepository, findEventosByUsuario } from '../repositories/EventoRepository';
 import { IEventoCreate, IEventoUpdate } from '../types/IEventoCreate';
 import { metodoEstudioRepository } from '../repositories/MetodoEstudioRepository';
 import { AppDataSource } from '../config/ormconfig';
 import { UserEntity } from '../models/User.entity';
 import { AlbumMusicaEntity } from '../models/AlbumMusica.entity';
 import { MetodoEstudioEntity } from '../models/MetodoEstudio.entity';
+import { EventoEntity } from '../models/Evento.entity';
 
 // Repositorios adicionales para validaciones
 const userRepository = AppDataSource.getRepository(UserEntity);
@@ -16,16 +17,26 @@ const albumRepository = AppDataSource.getRepository(AlbumMusicaEntity);
  */
 export const EventoService = {
     /**
-     * Lista todos los eventos de estudio registrados
-     * Retorna eventos con información completa incluyendo IDs de método y álbum
+     * Lista los eventos de estudio pertenecientes al usuario autenticado
+     * Implementa filtrado seguro por usuario para proteger la privacidad de los datos
+     * Solo retorna eventos creados por el usuario que realiza la solicitud
      */
-    async listEvento() {
+    async getEventosByUsuario(userId: number) {
         try {
-            const eventos = await EventoRepository.find({
-                relations: ['metodoEstudio', 'album', 'usuario']
-            });
+            // Validar que el ID de usuario existe y es válido
+            if (!userId || userId <= 0) {
+                return {
+                    success: false,
+                    error: 'ID de usuario inválido'
+                };
+            }
 
-            // Mapear para incluir IDs de método y álbum en el nivel superior
+            // Obtener eventos filtrados por usuario desde el repositorio
+            // La consulta SQL se ejecuta con parámetro seguro: WHERE id_usuario = $1
+            const eventos = await findEventosByUsuario(userId);
+
+            // Mapear respuesta para incluir IDs de método y álbum en el nivel superior
+            // Esto asegura consistencia en el formato de respuesta
             const eventosMapeados = eventos.map(evento => ({
                 idEvento: evento.idEvento,
                 nombreEvento: evento.nombreEvento,
@@ -44,8 +55,11 @@ export const EventoService = {
                 data: eventosMapeados
             };
         } catch (error) {
-            console.error('Error al traer los eventos', error);
-            return { success: false, error: 'Error al traer eventos' };
+            console.error('Error al obtener eventos del usuario:', error);
+            return {
+                success: false,
+                error: 'Error interno al obtener eventos'
+            };
         }
     },
     /**
@@ -64,10 +78,13 @@ export const EventoService = {
                 };
             }
 
-            // Validar que el método de estudio existe si se proporciona
+            // Cargar entidades relacionadas si se proporcionan
+            let metodoEntity: MetodoEstudioEntity | null = null;
             if (data.idMetodo) {
-                const metodoExists = await metodoEstudioRepository.findById(data.idMetodo);
-                if (!metodoExists) {
+                metodoEntity = await AppDataSource.getRepository(MetodoEstudioEntity).findOne({
+                    where: { idMetodo: data.idMetodo }
+                });
+                if (!metodoEntity) {
                     return {
                         success: false,
                         error: 'Método de estudio no válido'
@@ -75,10 +92,12 @@ export const EventoService = {
                 }
             }
 
-            // Validar que el álbum existe si se proporciona
+            let albumEntity: AlbumMusicaEntity | null = null;
             if (data.idAlbum) {
-                const albumExists = await albumRepository.findOne({ where: { idAlbum: data.idAlbum } });
-                if (!albumExists) {
+                albumEntity = await AppDataSource.getRepository(AlbumMusicaEntity).findOne({
+                    where: { idAlbum: data.idAlbum }
+                });
+                if (!albumEntity) {
                     return {
                         success: false,
                         error: 'Álbum de música no válido'
@@ -86,31 +105,41 @@ export const EventoService = {
                 }
             }
 
-            // Crear el evento con las relaciones
+            // Crear el evento con las entidades relacionadas
             const nuevoEvento = EventoRepository.create({
                 nombreEvento: data.nombreEvento,
                 fechaEvento: data.fechaEvento,
                 horaEvento: data.horaEvento,
                 descripcionEvento: data.descripcionEvento,
                 usuario: usuario,
-                metodoEstudio: data.idMetodo ? { idMetodo: data.idMetodo } as any : undefined,
-                album: data.idAlbum ? { idAlbum: data.idAlbum } as any : undefined
-            });
+                metodoEstudio: metodoEntity,
+                album: albumEntity
+            } as Partial<EventoEntity>);
 
             const guardarEvento = await EventoRepository.save(nuevoEvento);
 
+            // Recargar el evento con relaciones para asegurar datos completos
+            const eventoCompleto = await EventoRepository.findOne({
+                where: { idEvento: (guardarEvento as any).idEvento },
+                relations: ['usuario', 'metodoEstudio', 'album']
+            });
+
+            if (!eventoCompleto) {
+                throw new Error('Error al recuperar el evento creado');
+            }
+
             // Mapear respuesta para incluir IDs
             const eventoMapeado = {
-                idEvento: guardarEvento.idEvento,
-                nombreEvento: guardarEvento.nombreEvento,
-                fechaEvento: guardarEvento.fechaEvento,
-                horaEvento: guardarEvento.horaEvento,
-                descripcionEvento: guardarEvento.descripcionEvento,
-                idUsuario: guardarEvento.usuario?.idUsuario,
-                idMetodo: guardarEvento.metodoEstudio?.idMetodo,
-                idAlbum: guardarEvento.album?.idAlbum,
-                fechaCreacion: guardarEvento.fechaCreacion,
-                fechaActualizacion: guardarEvento.fechaActualizacion
+                idEvento: eventoCompleto.idEvento,
+                nombreEvento: eventoCompleto.nombreEvento,
+                fechaEvento: eventoCompleto.fechaEvento,
+                horaEvento: eventoCompleto.horaEvento,
+                descripcionEvento: eventoCompleto.descripcionEvento,
+                idUsuario: eventoCompleto.usuario?.idUsuario,
+                idMetodo: eventoCompleto.metodoEstudio?.idMetodo,
+                idAlbum: eventoCompleto.album?.idAlbum,
+                fechaCreacion: eventoCompleto.fechaCreacion,
+                fechaActualizacion: eventoCompleto.fechaActualizacion
             };
 
             return {
@@ -128,16 +157,28 @@ export const EventoService = {
     },
     /**
      * Elimina un evento de estudio por su ID
-     * Operación destructiva que requiere validación previa
+     * Verifica que el evento pertenezca al usuario antes de eliminarlo
+     * Operación destructiva que requiere validación de propiedad y existencia
      */
-    async deleteEvento(id_evento: number) {
+    async deleteEvento(id_evento: number, userId: number) {
         try {
-            const evento = await EventoRepository.findOneBy({ idEvento: id_evento });
+            const evento = await EventoRepository.findOne({
+                where: { idEvento: id_evento },
+                relations: ['usuario']
+            });
 
             if (!evento) {
                 return {
                     success: false,
                     error: "Evento no encontrado"
+                };
+            }
+
+            // Verificar que el evento pertenece al usuario autenticado
+            if (evento.usuario?.idUsuario !== userId) {
+                return {
+                    success: false,
+                    error: "No tienes permisos para eliminar este evento"
                 };
             }
 
@@ -158,9 +199,9 @@ export const EventoService = {
     /**
      * Actualiza un evento de estudio existente
      * Permite modificar nombre, fecha, hora, descripción, método de estudio y álbum del evento
-     * Valida las relaciones antes de actualizar si se proporcionan
+     * Valida que el evento pertenezca al usuario y las relaciones antes de actualizar
      */
-    async updateEvento(id: number, data: IEventoUpdate) {
+    async updateEvento(id: number, userId: number, data: IEventoUpdate) {
         try {
             const evento = await EventoRepository.findOne({
                 where: { idEvento: id },
@@ -171,6 +212,14 @@ export const EventoService = {
                 return {
                     success: false,
                     error: "Evento no encontrado"
+                };
+            }
+
+            // Verificar que el evento pertenece al usuario autenticado
+            if (evento.usuario?.idUsuario !== userId) {
+                return {
+                    success: false,
+                    error: "No tienes permisos para modificar este evento"
                 };
             }
 
@@ -217,8 +266,15 @@ export const EventoService = {
                 relations: ['usuario', 'metodoEstudio', 'album']
             });
 
+            if (!eventoActualizado) {
+                return {
+                    success: false,
+                    error: "Error al recuperar el evento actualizado"
+                };
+            }
+
             // Mapear respuesta para incluir IDs
-            const eventoMapeado = eventoActualizado ? {
+            const eventoMapeado = {
                 idEvento: eventoActualizado.idEvento,
                 nombreEvento: eventoActualizado.nombreEvento,
                 fechaEvento: eventoActualizado.fechaEvento,
@@ -229,7 +285,7 @@ export const EventoService = {
                 idAlbum: eventoActualizado.album?.idAlbum,
                 fechaCreacion: eventoActualizado.fechaCreacion,
                 fechaActualizacion: eventoActualizado.fechaActualizacion
-            } : null;
+            };
 
             return {
                 success: true,
