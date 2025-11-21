@@ -21,6 +21,68 @@ const validarStatus = (status: any): boolean => {
 };
 
 /**
+ * Función para parsear fechas de manera segura para campos tipo DATE
+ * Evita problemas de zona horaria convirtiendo strings de fecha a objetos Date puros
+ * @param dateInput - String de fecha en formato YYYY-MM-DD o Date
+ * @returns Date object que representa exactamente la fecha especificada
+ */
+const parseDateSafely = (dateInput: string | Date): Date => {
+  if (dateInput instanceof Date) {
+    return dateInput;
+  }
+
+  // Si es un string, parsear manualmente para evitar problemas de zona horaria
+  if (typeof dateInput === 'string') {
+    // Verificar formato YYYY-MM-DD
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (dateRegex.test(dateInput)) {
+      // Parsear manualmente: YYYY-MM-DD
+      const [year, month, day] = dateInput.split('-').map(Number);
+      // Crear fecha en UTC para evitar conversiones de zona horaria
+      // Mes en JavaScript es 0-indexed, así que restamos 1
+      return new Date(Date.UTC(year, month - 1, day));
+    }
+  }
+
+  // Fallback: usar constructor normal (puede tener problemas de zona horaria)
+  return new Date(dateInput);
+};
+
+/**
+ * Función para convertir cualquier valor de fecha a Date object
+ * Maneja tanto strings de PostgreSQL DATE como objetos Date existentes
+ * @param dateValue - Valor de fecha que puede ser string o Date
+ * @returns Date object
+ */
+const ensureDateObject = (dateValue: string | Date): Date => {
+  if (dateValue instanceof Date) {
+    return dateValue;
+  }
+  // Si es string, convertir a Date
+  return new Date(dateValue);
+};
+
+/**
+ * Función para formatear fecha como string YYYY-MM-DD
+ * Maneja tanto objetos Date como strings de fecha
+ * @param dateValue - Valor de fecha
+ * @returns String en formato YYYY-MM-DD
+ */
+const formatDateAsString = (dateValue: string | Date): string => {
+  if (typeof dateValue === 'string') {
+    // Si ya es string en formato YYYY-MM-DD, retornarlo tal cual
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (dateRegex.test(dateValue)) {
+      return dateValue;
+    }
+    // Si es otro formato de string, parsearlo
+    return new Date(dateValue).toISOString().split('T')[0];
+  }
+  // Si es Date object, formatearlo
+  return dateValue.toISOString().split('T')[0];
+};
+
+/**
  * Servicio para la gestión de eventos de estudio
  * Maneja operaciones CRUD de eventos asociados a métodos de estudio
  */
@@ -49,7 +111,7 @@ export const EventoService = {
             const eventosMapeados = eventos.map(evento => ({
                 idEvento: evento.idEvento,
                 nombreEvento: evento.nombreEvento,
-                fechaEvento: evento.fechaEvento,
+                fechaEvento: formatDateAsString(evento.fechaEvento), // Retornar solo fecha YYYY-MM-DD
                 horaEvento: evento.horaEvento,
                 descripcionEvento: evento.descripcionEvento,
                 estado: evento.estado,
@@ -87,13 +149,20 @@ export const EventoService = {
                 };
             }
 
-            const fechaEventoDate = new Date(data.fechaEvento);
+            // Parsear fecha de manera segura para evitar problemas de zona horaria
+            const fechaEventoDate = parseDateSafely(data.fechaEvento);
             if (isNaN(fechaEventoDate.getTime())) {
                 return {
                     success: false,
                     error: 'Formato de fecha inválido. Use YYYY-MM-DD'
                 };
             }
+
+            // Debug: Log the parsed date
+            console.log('🔍 Fecha original recibida:', data.fechaEvento);
+            console.log('🔍 Fecha parseada (UTC):', fechaEventoDate.toISOString());
+            console.log('🔍 Fecha parseada (local):', fechaEventoDate.toString());
+            console.log('🔍 Fecha parseada (solo fecha):', fechaEventoDate.toISOString().split('T')[0]);
 
             // Validar formato de hora
             if (!data.horaEvento || !/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(data.horaEvento)) {
@@ -150,7 +219,7 @@ export const EventoService = {
             // Crear el evento con las entidades relacionadas
             const nuevoEvento = EventoRepository.create({
                 nombreEvento: data.nombreEvento,
-                fechaEvento: data.fechaEvento,
+                fechaEvento: fechaEventoDate, // Usar la fecha parseada de manera segura
                 horaEvento: data.horaEvento,
                 descripcionEvento: data.descripcionEvento,
                 estado: data.estado || null, // Por defecto null
@@ -171,59 +240,68 @@ export const EventoService = {
                 throw new Error('Error al recuperar el evento creado');
             }
 
+            // Debug: Log the retrieved date
+            console.log('🔍 Fecha recuperada de BD:', eventoCompleto.fechaEvento);
+            const fechaEventoRecuperada = ensureDateObject(eventoCompleto.fechaEvento);
+            console.log('🔍 Fecha recuperada (ISO):', fechaEventoRecuperada.toISOString());
+            console.log('🔍 Fecha recuperada (local):', fechaEventoRecuperada.toString());
+
             // Sistema de recordatorios automáticos para eventos
             // Regla de negocio: Si el evento es para un día futuro, enviar recordatorio 10 minutos antes
             // Si el evento es para hoy, enviar recordatorio a la hora exacta del evento
             try {
-                // Obtener fecha actual sin hora para comparación
-                const hoy = new Date();
-                hoy.setHours(0, 0, 0, 0);
+                // Combinar fecha y hora del evento de manera segura
+                const eventDateTime = new Date(`${eventoCompleto.fechaEvento}T${eventoCompleto.horaEvento}`);
 
-                // Obtener fecha del evento sin hora
-                const fechaEvento = new Date(eventoCompleto.fechaEvento);
-                fechaEvento.setHours(0, 0, 0, 0);
-
-                // Combinar fecha y hora del evento para obtener DateTime completo
-                const [horas, minutos] = eventoCompleto.horaEvento.split(':').map(Number);
-                const fechaHoraEvento = new Date(eventoCompleto.fechaEvento);
-                fechaHoraEvento.setHours(horas, minutos, 0, 0);
-
-                // Calcular tiempo del recordatorio según reglas de negocio
-                let tiempoRecordatorio: Date;
-
-                if (fechaEvento > hoy) {
-                    // Evento futuro: recordatorio 10 minutos antes
-                    tiempoRecordatorio = new Date(fechaHoraEvento.getTime() - 10 * 60 * 1000); // 10 minutos en milisegundos
+                if (isNaN(eventDateTime.getTime())) {
+                    console.error(`Fecha/hora inválida para evento ${eventoCompleto.idEvento}: ${eventoCompleto.fechaEvento}T${eventoCompleto.horaEvento}`);
                 } else {
-                    // Evento hoy: recordatorio a la hora exacta
-                    tiempoRecordatorio = new Date(fechaHoraEvento);
-                }
+                    // Obtener fecha actual y fecha del evento (solo fecha, sin hora)
+                    const ahora = new Date();
+                    const hoy = new Date(ahora);
+                    hoy.setHours(0, 0, 0, 0);
 
-                // Verificar que el tiempo del recordatorio esté en el futuro
-                const ahora = new Date();
-                if (tiempoRecordatorio <= ahora) {
-                    console.warn(`Tiempo de recordatorio calculado ${tiempoRecordatorio} no está en el futuro para evento ${eventoCompleto.idEvento}`);
-                    // No programar notificación si ya pasó el tiempo
-                } else {
-                    // Programar notificación automática
-                    await NotificacionesProgramadasService.createScheduledNotification({
-                        idUsuario: data.idUsuario,
-                        tipo: "evento",
-                        titulo: `Recordatorio: ${eventoCompleto.nombreEvento}`,
-                        mensaje: `Tienes un evento próximo: ${eventoCompleto.nombreEvento}${eventoCompleto.descripcionEvento ? ' - ' + eventoCompleto.descripcionEvento : ''}`,
-                        fechaProgramada: tiempoRecordatorio
-                    });
+                    const fechaEvento = new Date(eventoCompleto.fechaEvento + 'T00:00:00');
+
+                    // Calcular tiempo del recordatorio según reglas de negocio
+                    let tiempoRecordatorio: Date;
+
+                    if (fechaEvento.getTime() > hoy.getTime()) {
+                        // Evento futuro: recordatorio 10 minutos antes
+                        tiempoRecordatorio = new Date(eventDateTime.getTime() - 10 * 60 * 1000); // 10 minutos en ms
+                        console.log(`📅 Evento futuro ${eventoCompleto.idEvento} - recordatorio 10 min antes: ${tiempoRecordatorio}`);
+                    } else {
+                        // Evento hoy: recordatorio a la hora exacta
+                        tiempoRecordatorio = new Date(eventDateTime);
+                        console.log(`📅 Evento hoy ${eventoCompleto.idEvento} - recordatorio a la hora exacta: ${tiempoRecordatorio}`);
+                    }
+
+                    // Verificar que el tiempo del recordatorio esté en el futuro
+                    if (tiempoRecordatorio <= ahora) {
+                        console.warn(`⚠️ Tiempo de recordatorio ${tiempoRecordatorio} ya pasó para evento ${eventoCompleto.idEvento} - no se programa notificación`);
+                    } else {
+                        // Programar notificación automática
+                        console.log(`✅ Programando notificación para evento ${eventoCompleto.idEvento} a las ${tiempoRecordatorio}`);
+                        await NotificacionesProgramadasService.createScheduledNotification({
+                            idUsuario: data.idUsuario,
+                            tipo: "evento",
+                            titulo: `Recordatorio: ${eventoCompleto.nombreEvento}`,
+                            mensaje: `Tienes un evento próximo: ${eventoCompleto.nombreEvento}${eventoCompleto.descripcionEvento ? ' - ' + eventoCompleto.descripcionEvento : ''}`,
+                            fechaProgramada: tiempoRecordatorio
+                        });
+                        console.log(`✅ Notificación programada exitosamente para evento ${eventoCompleto.idEvento}`);
+                    }
                 }
             } catch (error) {
                 // Loggear error pero no fallar la creación del evento
-                console.error('Error al programar recordatorio automático para evento:', error);
+                console.error('❌ Error al programar recordatorio automático para evento:', error);
             }
 
             // Mapear respuesta para incluir IDs
             const eventoMapeado = {
                 idEvento: eventoCompleto.idEvento,
                 nombreEvento: eventoCompleto.nombreEvento,
-                fechaEvento: eventoCompleto.fechaEvento,
+                fechaEvento: formatDateAsString(eventoCompleto.fechaEvento), // Retornar solo fecha YYYY-MM-DD
                 horaEvento: eventoCompleto.horaEvento,
                 descripcionEvento: eventoCompleto.descripcionEvento,
                 estado: eventoCompleto.estado,
@@ -319,7 +397,7 @@ export const EventoService = {
             const updateData: any = {};
 
             if (data.nombreEvento !== undefined) updateData.nombreEvento = data.nombreEvento;
-            if (data.fechaEvento !== undefined) updateData.fechaEvento = data.fechaEvento;
+            if (data.fechaEvento !== undefined) updateData.fechaEvento = parseDateSafely(data.fechaEvento);
             if (data.horaEvento !== undefined) updateData.horaEvento = data.horaEvento;
             if (data.descripcionEvento !== undefined) updateData.descripcionEvento = data.descripcionEvento;
             if (data.estado !== undefined) {
@@ -378,7 +456,7 @@ export const EventoService = {
             const eventoMapeado = {
                 idEvento: eventoActualizado.idEvento,
                 nombreEvento: eventoActualizado.nombreEvento,
-                fechaEvento: eventoActualizado.fechaEvento,
+                fechaEvento: formatDateAsString(eventoActualizado.fechaEvento), // Retornar solo fecha YYYY-MM-DD
                 horaEvento: eventoActualizado.horaEvento,
                 descripcionEvento: eventoActualizado.descripcionEvento,
                 estado: eventoActualizado.estado,

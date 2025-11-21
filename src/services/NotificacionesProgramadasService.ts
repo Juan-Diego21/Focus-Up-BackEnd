@@ -101,10 +101,10 @@ export const NotificacionesProgramadasService = {
   },
 
   /**
-   * Obtiene todas las notificaciones pendientes de envío
-   * Retorna notificaciones que deben ser enviadas ahora o en el pasado
-   * Incluye información del usuario para el envío de emails
-   */
+    * Obtiene todas las notificaciones pendientes de envío
+    * Retorna notificaciones que deben ser enviadas ahora o en el pasado
+    * Incluye información del usuario para el envío de emails
+    */
   async getPendingNotifications() {
     try {
       logger.info('Consultando notificaciones pendientes de envío');
@@ -122,6 +122,106 @@ export const NotificacionesProgramadasService = {
       return {
         success: false,
         error: 'Error interno al obtener notificaciones pendientes'
+      };
+    }
+  },
+
+  /**
+    * Obtiene eventos próximos con sus tiempos de notificación calculados
+    * Retorna eventos cuya NotificationTime >= ahora y estado es null o 'pendiente'
+    * Calcula correctamente los tiempos de notificación según reglas de negocio
+    */
+  async getUpcomingEventsWithNotifications(userId: number) {
+    try {
+      logger.info(`Consultando eventos próximos para usuario ${userId}`);
+
+      // Obtener eventos del usuario que no están completados
+      const eventos = await AppDataSource.getRepository('EventoEntity')
+        .createQueryBuilder("evento")
+        .leftJoinAndSelect("evento.metodoEstudio", "metodo")
+        .leftJoinAndSelect("evento.album", "album")
+        .where("evento.id_usuario = :userId", { userId })
+        .andWhere("(evento.estado IS NULL OR evento.estado = :pendiente)", { pendiente: 'pendiente' })
+        .orderBy("evento.fecha_evento", "ASC")
+        .addOrderBy("evento.hora_evento", "ASC")
+        .getMany();
+
+      logger.info(`Encontrados ${eventos.length} eventos pendientes/completados para usuario ${userId}`);
+
+      const now = new Date();
+      const today = new Date(now);
+      today.setHours(0, 0, 0, 0);
+
+      const eventosConNotificaciones = [];
+
+      for (const evento of eventos) {
+        try {
+          // Combinar fecha y hora del evento de manera segura
+          const eventDateTime = new Date(`${evento.fechaEvento}T${evento.horaEvento}`);
+
+          if (isNaN(eventDateTime.getTime())) {
+            logger.warn(`Fecha/hora inválida para evento ${evento.idEvento}: ${evento.fechaEvento}T${evento.horaEvento}`);
+            continue;
+          }
+
+          // Obtener fecha del evento (solo fecha, sin hora)
+          const eventDate = new Date(evento.fechaEvento + 'T00:00:00');
+
+          // Calcular tiempo de notificación según reglas de negocio
+          let notificationTime: Date;
+
+          if (eventDate.getTime() === today.getTime()) {
+            // Evento hoy: notificación a la hora exacta del evento
+            notificationTime = new Date(eventDateTime);
+            logger.debug(`Evento ${evento.idEvento} es hoy - notificación a las ${evento.horaEvento}`);
+          } else {
+            // Evento futuro: notificación 10 minutos antes
+            notificationTime = new Date(eventDateTime.getTime() - 10 * 60 * 1000); // 10 minutos en ms
+            logger.debug(`Evento ${evento.idEvento} es futuro - notificación 10 min antes: ${notificationTime}`);
+          }
+
+          // Solo incluir si el tiempo de notificación está en el futuro o es ahora
+          if (notificationTime >= now) {
+            eventosConNotificaciones.push({
+              idEvento: evento.idEvento,
+              nombreEvento: evento.nombreEvento,
+              fechaEvento: evento.fechaEvento,
+              horaEvento: evento.horaEvento,
+              descripcionEvento: evento.descripcionEvento,
+              estado: evento.estado,
+              metodoEstudio: evento.metodoEstudio ? {
+                idMetodo: evento.metodoEstudio.idMetodo,
+                nombreMetodo: evento.metodoEstudio.nombreMetodo
+              } : null,
+              album: evento.album ? {
+                idAlbum: evento.album.idAlbum,
+                nombreAlbum: evento.album.nombreAlbum
+              } : null,
+              fechaCreacion: evento.fechaCreacion,
+              fechaActualizacion: evento.fechaActualizacion,
+              notificationTime: notificationTime.toISOString(),
+              notificationRule: eventDate.getTime() === today.getTime() ? 'same_day' : 'future_10min_before'
+            });
+          } else {
+            logger.debug(`Evento ${evento.idEvento} - tiempo de notificación ${notificationTime} ya pasó`);
+          }
+
+        } catch (error) {
+          logger.error(`Error procesando evento ${evento.idEvento}:`, error);
+        }
+      }
+
+      logger.info(`Retornando ${eventosConNotificaciones.length} eventos con notificaciones futuras`);
+
+      return {
+        success: true,
+        data: eventosConNotificaciones
+      };
+    } catch (error) {
+      logger.error(`Error al obtener eventos próximos para usuario ${userId}:`, error);
+      return {
+        success: false,
+        error: 'Error interno al obtener eventos próximos'
       };
     }
   },

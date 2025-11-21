@@ -54,12 +54,13 @@ const notificacionesProgramadasController = {
   },
 
   /**
-   * Obtiene todas las notificaciones programadas
-   * Retorna lista completa de notificaciones con información detallada
-   */
+    * Obtiene todas las notificaciones programadas
+    * Retorna lista completa de notificaciones con información detallada
+    */
   async getScheduledNotifications(req: any, res: any) {
     try {
-      const result = await NotificacionesProgramadasService.getPendingNotifications();
+      const userId = req.user.userId;
+      const result = await NotificacionesProgramadasService.getUpcomingEventsWithNotifications(userId);
 
       if (!result.success) {
         return res.status(500).json(result);

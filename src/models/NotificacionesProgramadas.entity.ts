@@ -50,7 +50,7 @@ export class NotificacionesProgramadasEntity {
   @Column({ name: "fecha_envio", type: "timestamp", nullable: true })
   fechaEnvio?: Date;
 
-  // Timestamp automático de creación
-  @CreateDateColumn({ name: "fecha_creacion" })
-  fechaCreacion!: Date;
+  // Timestamp automático de creación (comentado porque la tabla no tiene esta columna)
+  // @CreateDateColumn({ name: "fecha_creacion" })
+  // fechaCreacion!: Date;
 }

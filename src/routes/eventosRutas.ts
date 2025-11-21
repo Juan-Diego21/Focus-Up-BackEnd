@@ -128,7 +128,8 @@ router.get('/', authenticateToken, eventosController.listEventos.bind(eventosCon
  *                       fechaEvento:
  *                         type: string
  *                         format: date
- *                         description: Fecha del evento
+ *                         example: "2025-11-21"
+ *                         description: Fecha del evento en formato YYYY-MM-DD
  *                       horaEvento:
  *                         type: string
  *                         description: Hora del evento
