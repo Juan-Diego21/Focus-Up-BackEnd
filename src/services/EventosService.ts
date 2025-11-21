@@ -21,65 +21,13 @@ const validarStatus = (status: any): boolean => {
 };
 
 /**
- * Función para parsear fechas de manera segura para campos tipo DATE
- * Evita problemas de zona horaria convirtiendo strings de fecha a objetos Date puros
- * @param dateInput - String de fecha en formato YYYY-MM-DD o Date
- * @returns Date object que representa exactamente la fecha especificada
+ * Función para validar formato de fecha YYYY-MM-DD
+ * @param dateString - String de fecha a validar
+ * @returns boolean indicando si el formato es válido
  */
-const parseDateSafely = (dateInput: string | Date): Date => {
-  if (dateInput instanceof Date) {
-    return dateInput;
-  }
-
-  // Si es un string, parsear manualmente para evitar problemas de zona horaria
-  if (typeof dateInput === 'string') {
-    // Verificar formato YYYY-MM-DD
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (dateRegex.test(dateInput)) {
-      // Parsear manualmente: YYYY-MM-DD
-      const [year, month, day] = dateInput.split('-').map(Number);
-      // Crear fecha en UTC para evitar conversiones de zona horaria
-      // Mes en JavaScript es 0-indexed, así que restamos 1
-      return new Date(Date.UTC(year, month - 1, day));
-    }
-  }
-
-  // Fallback: usar constructor normal (puede tener problemas de zona horaria)
-  return new Date(dateInput);
-};
-
-/**
- * Función para convertir cualquier valor de fecha a Date object
- * Maneja tanto strings de PostgreSQL DATE como objetos Date existentes
- * @param dateValue - Valor de fecha que puede ser string o Date
- * @returns Date object
- */
-const ensureDateObject = (dateValue: string | Date): Date => {
-  if (dateValue instanceof Date) {
-    return dateValue;
-  }
-  // Si es string, convertir a Date
-  return new Date(dateValue);
-};
-
-/**
- * Función para formatear fecha como string YYYY-MM-DD
- * Maneja tanto objetos Date como strings de fecha
- * @param dateValue - Valor de fecha
- * @returns String en formato YYYY-MM-DD
- */
-const formatDateAsString = (dateValue: string | Date): string => {
-  if (typeof dateValue === 'string') {
-    // Si ya es string en formato YYYY-MM-DD, retornarlo tal cual
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (dateRegex.test(dateValue)) {
-      return dateValue;
-    }
-    // Si es otro formato de string, parsearlo
-    return new Date(dateValue).toISOString().split('T')[0];
-  }
-  // Si es Date object, formatearlo
-  return dateValue.toISOString().split('T')[0];
+const validarFormatoFecha = (dateString: string): boolean => {
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  return dateRegex.test(dateString);
 };
 
 /**
@@ -111,7 +59,7 @@ export const EventoService = {
             const eventosMapeados = eventos.map(evento => ({
                 idEvento: evento.idEvento,
                 nombreEvento: evento.nombreEvento,
-                fechaEvento: formatDateAsString(evento.fechaEvento), // Retornar solo fecha YYYY-MM-DD
+                fechaEvento: evento.fechaEvento, // Ya es string YYYY-MM-DD
                 horaEvento: evento.horaEvento,
                 descripcionEvento: evento.descripcionEvento,
                 estado: evento.estado,
@@ -149,20 +97,16 @@ export const EventoService = {
                 };
             }
 
-            // Parsear fecha de manera segura para evitar problemas de zona horaria
-            const fechaEventoDate = parseDateSafely(data.fechaEvento);
-            if (isNaN(fechaEventoDate.getTime())) {
+            // Validar formato de fecha YYYY-MM-DD
+            if (!validarFormatoFecha(data.fechaEvento)) {
                 return {
                     success: false,
                     error: 'Formato de fecha inválido. Use YYYY-MM-DD'
                 };
             }
 
-            // Debug: Log the parsed date
+            // Debug: Log the received date
             console.log('🔍 Fecha original recibida:', data.fechaEvento);
-            console.log('🔍 Fecha parseada (UTC):', fechaEventoDate.toISOString());
-            console.log('🔍 Fecha parseada (local):', fechaEventoDate.toString());
-            console.log('🔍 Fecha parseada (solo fecha):', fechaEventoDate.toISOString().split('T')[0]);
 
             // Validar formato de hora
             if (!data.horaEvento || !/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(data.horaEvento)) {
@@ -219,7 +163,7 @@ export const EventoService = {
             // Crear el evento con las entidades relacionadas
             const nuevoEvento = EventoRepository.create({
                 nombreEvento: data.nombreEvento,
-                fechaEvento: fechaEventoDate, // Usar la fecha parseada de manera segura
+                fechaEvento: data.fechaEvento, // Usar la fecha como string
                 horaEvento: data.horaEvento,
                 descripcionEvento: data.descripcionEvento,
                 estado: data.estado || null, // Por defecto null
@@ -242,9 +186,6 @@ export const EventoService = {
 
             // Debug: Log the retrieved date
             console.log('🔍 Fecha recuperada de BD:', eventoCompleto.fechaEvento);
-            const fechaEventoRecuperada = ensureDateObject(eventoCompleto.fechaEvento);
-            console.log('🔍 Fecha recuperada (ISO):', fechaEventoRecuperada.toISOString());
-            console.log('🔍 Fecha recuperada (local):', fechaEventoRecuperada.toString());
 
             // Sistema de recordatorios automáticos para eventos
             // Regla de negocio: Si el evento es para un día futuro, enviar recordatorio 10 minutos antes
@@ -301,7 +242,7 @@ export const EventoService = {
             const eventoMapeado = {
                 idEvento: eventoCompleto.idEvento,
                 nombreEvento: eventoCompleto.nombreEvento,
-                fechaEvento: formatDateAsString(eventoCompleto.fechaEvento), // Retornar solo fecha YYYY-MM-DD
+                fechaEvento: eventoCompleto.fechaEvento, // Ya es string YYYY-MM-DD
                 horaEvento: eventoCompleto.horaEvento,
                 descripcionEvento: eventoCompleto.descripcionEvento,
                 estado: eventoCompleto.estado,
@@ -397,7 +338,16 @@ export const EventoService = {
             const updateData: any = {};
 
             if (data.nombreEvento !== undefined) updateData.nombreEvento = data.nombreEvento;
-            if (data.fechaEvento !== undefined) updateData.fechaEvento = parseDateSafely(data.fechaEvento);
+            if (data.fechaEvento !== undefined) {
+                // Validar formato de fecha antes de actualizar
+                if (!validarFormatoFecha(data.fechaEvento)) {
+                    return {
+                        success: false,
+                        error: 'Formato de fecha inválido. Use YYYY-MM-DD'
+                    };
+                }
+                updateData.fechaEvento = data.fechaEvento; // Usar como string
+            }
             if (data.horaEvento !== undefined) updateData.horaEvento = data.horaEvento;
             if (data.descripcionEvento !== undefined) updateData.descripcionEvento = data.descripcionEvento;
             if (data.estado !== undefined) {
@@ -456,7 +406,7 @@ export const EventoService = {
             const eventoMapeado = {
                 idEvento: eventoActualizado.idEvento,
                 nombreEvento: eventoActualizado.nombreEvento,
-                fechaEvento: formatDateAsString(eventoActualizado.fechaEvento), // Retornar solo fecha YYYY-MM-DD
+                fechaEvento: eventoActualizado.fechaEvento, // Ya es string YYYY-MM-DD
                 horaEvento: eventoActualizado.horaEvento,
                 descripcionEvento: eventoActualizado.descripcionEvento,
                 estado: eventoActualizado.estado,

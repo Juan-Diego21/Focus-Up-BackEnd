@@ -23,8 +23,16 @@ export class EventoEntity {
   @Column({ name: "nombre_evento", length: 100, nullable: false })
   nombreEvento!: string;
 
-  @Column({ name: "fecha_evento", type: "date", nullable: false })
-  fechaEvento!: Date;
+  @Column({
+    name: "fecha_evento",
+    type: "date",
+    nullable: false,
+    transformer: {
+      to: (value: string) => value, // Store as string
+      from: (value: string) => value // Retrieve as string
+    }
+  })
+  fechaEvento!: string;
 
   @Column({ name: "hora_evento", type: "time", nullable: false })
   horaEvento!: string;

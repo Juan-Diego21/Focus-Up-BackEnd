@@ -48,18 +48,18 @@ export const eventosController = {
         const idUsuario = (req as any).user.userId; // Obtener ID del usuario autenticado
 
         try {
-            // Parsear fechaEvento de string a Date
-            const parsedFechaEvento = new Date(fechaEvento);
-            if (isNaN(parsedFechaEvento.getTime())) {
+            // Validar formato de fecha YYYY-MM-DD
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!fechaEvento || !dateRegex.test(fechaEvento)) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Formato de fecha inválido'
+                    error: 'Formato de fecha inválido. Use YYYY-MM-DD'
                 });
             }
 
             const datos = await EventoService.crearEvento({
                 nombreEvento,
-                fechaEvento: parsedFechaEvento,
+                fechaEvento, // Pasar como string
                 horaEvento,
                 descripcionEvento,
                 idUsuario,
@@ -128,21 +128,20 @@ export const eventosController = {
         }
 
         try {
-            // Parsear fechaEvento si se proporciona
-            let parsedFechaEvento = undefined;
+            // Validar fechaEvento si se proporciona
             if (fechaEvento) {
-                parsedFechaEvento = new Date(fechaEvento);
-                if (isNaN(parsedFechaEvento.getTime())) {
+                const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+                if (!dateRegex.test(fechaEvento)) {
                     return res.status(400).json({
                         success: false,
-                        error: 'Formato de fecha inválido'
+                        error: 'Formato de fecha inválido. Use YYYY-MM-DD'
                     });
                 }
             }
 
             const datos = await EventoService.updateEvento(Number(id), userId, {
                 nombreEvento,
-                fechaEvento: parsedFechaEvento,
+                fechaEvento, // Pasar como string
                 horaEvento,
                 descripcionEvento,
                 idMetodo,

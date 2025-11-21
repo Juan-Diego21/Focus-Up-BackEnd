@@ -4,7 +4,7 @@
  */
 export interface IEventoCreate {
   nombreEvento: string; // Nombre del evento, obligatorio
-  fechaEvento: Date; // Fecha del evento, obligatorio
+  fechaEvento: string; // Fecha del evento en formato YYYY-MM-DD, obligatorio
   horaEvento: string; // Hora del evento, obligatorio
   descripcionEvento?: string; // Descripción opcional del evento
   idUsuario: number; // ID del usuario que crea el evento, obligatorio
@@ -19,7 +19,7 @@ export interface IEventoCreate {
  */
 export interface IEventoUpdate {
   nombreEvento?: string; // Nombre del evento
-  fechaEvento?: Date; // Fecha del evento
+  fechaEvento?: string; // Fecha del evento en formato YYYY-MM-DD
   horaEvento?: string; // Hora del evento
   descripcionEvento?: string; // Descripción del evento
   idMetodo?: number; // ID del método de estudio
