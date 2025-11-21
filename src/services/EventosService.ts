@@ -6,10 +6,19 @@ import { UserEntity } from '../models/User.entity';
 import { AlbumMusicaEntity } from '../models/AlbumMusica.entity';
 import { MetodoEstudioEntity } from '../models/MetodoEstudio.entity';
 import { EventoEntity } from '../models/Evento.entity';
+import { NotificacionesProgramadasService } from './NotificacionesProgramadasService';
 
 // Repositorios adicionales para validaciones
 const userRepository = AppDataSource.getRepository(UserEntity);
 const albumRepository = AppDataSource.getRepository(AlbumMusicaEntity);
+
+/**
+ * Función para validar el estado del evento
+ * Solo permite null, 'pending' o 'completed'
+ */
+const validarStatus = (status: any): boolean => {
+  return status === null || status === 'pendiente' || status === 'completado';
+};
 
 /**
  * Servicio para la gestión de eventos de estudio
@@ -43,6 +52,7 @@ export const EventoService = {
                 fechaEvento: evento.fechaEvento,
                 horaEvento: evento.horaEvento,
                 descripcionEvento: evento.descripcionEvento,
+                estado: evento.estado,
                 idUsuario: evento.usuario?.idUsuario,
                 idMetodo: evento.metodoEstudio?.idMetodo,
                 idAlbum: evento.album?.idAlbum,
@@ -69,6 +79,38 @@ export const EventoService = {
      */
     async crearEvento(data: IEventoCreate) {
         try {
+            // Validar formato de fecha
+            if (!data.fechaEvento) {
+                return {
+                    success: false,
+                    error: 'Fecha del evento es requerida'
+                };
+            }
+
+            const fechaEventoDate = new Date(data.fechaEvento);
+            if (isNaN(fechaEventoDate.getTime())) {
+                return {
+                    success: false,
+                    error: 'Formato de fecha inválido. Use YYYY-MM-DD'
+                };
+            }
+
+            // Validar formato de hora
+            if (!data.horaEvento || !/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(data.horaEvento)) {
+                return {
+                    success: false,
+                    error: 'Formato de hora inválido. Use HH:MM o HH:MM:SS'
+                };
+            }
+
+            // Validar el estado si se proporciona
+            if (data.estado !== undefined && !validarStatus(data.estado)) {
+                return {
+                    success: false,
+                    error: 'Estado inválido. Debe ser null, "pendiente" o "completado"'
+                };
+            }
+
             // Validar que el usuario existe
             const usuario = await userRepository.findOne({ where: { idUsuario: data.idUsuario } });
             if (!usuario) {
@@ -111,6 +153,7 @@ export const EventoService = {
                 fechaEvento: data.fechaEvento,
                 horaEvento: data.horaEvento,
                 descripcionEvento: data.descripcionEvento,
+                estado: data.estado || null, // Por defecto null
                 usuario: usuario,
                 metodoEstudio: metodoEntity,
                 album: albumEntity
@@ -128,6 +171,54 @@ export const EventoService = {
                 throw new Error('Error al recuperar el evento creado');
             }
 
+            // Sistema de recordatorios automáticos para eventos
+            // Regla de negocio: Si el evento es para un día futuro, enviar recordatorio 10 minutos antes
+            // Si el evento es para hoy, enviar recordatorio a la hora exacta del evento
+            try {
+                // Obtener fecha actual sin hora para comparación
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+
+                // Obtener fecha del evento sin hora
+                const fechaEvento = new Date(eventoCompleto.fechaEvento);
+                fechaEvento.setHours(0, 0, 0, 0);
+
+                // Combinar fecha y hora del evento para obtener DateTime completo
+                const [horas, minutos] = eventoCompleto.horaEvento.split(':').map(Number);
+                const fechaHoraEvento = new Date(eventoCompleto.fechaEvento);
+                fechaHoraEvento.setHours(horas, minutos, 0, 0);
+
+                // Calcular tiempo del recordatorio según reglas de negocio
+                let tiempoRecordatorio: Date;
+
+                if (fechaEvento > hoy) {
+                    // Evento futuro: recordatorio 10 minutos antes
+                    tiempoRecordatorio = new Date(fechaHoraEvento.getTime() - 10 * 60 * 1000); // 10 minutos en milisegundos
+                } else {
+                    // Evento hoy: recordatorio a la hora exacta
+                    tiempoRecordatorio = new Date(fechaHoraEvento);
+                }
+
+                // Verificar que el tiempo del recordatorio esté en el futuro
+                const ahora = new Date();
+                if (tiempoRecordatorio <= ahora) {
+                    console.warn(`Tiempo de recordatorio calculado ${tiempoRecordatorio} no está en el futuro para evento ${eventoCompleto.idEvento}`);
+                    // No programar notificación si ya pasó el tiempo
+                } else {
+                    // Programar notificación automática
+                    await NotificacionesProgramadasService.createScheduledNotification({
+                        idUsuario: data.idUsuario,
+                        tipo: "evento",
+                        titulo: `Recordatorio: ${eventoCompleto.nombreEvento}`,
+                        mensaje: `Tienes un evento próximo: ${eventoCompleto.nombreEvento}${eventoCompleto.descripcionEvento ? ' - ' + eventoCompleto.descripcionEvento : ''}`,
+                        fechaProgramada: tiempoRecordatorio
+                    });
+                }
+            } catch (error) {
+                // Loggear error pero no fallar la creación del evento
+                console.error('Error al programar recordatorio automático para evento:', error);
+            }
+
             // Mapear respuesta para incluir IDs
             const eventoMapeado = {
                 idEvento: eventoCompleto.idEvento,
@@ -135,6 +226,7 @@ export const EventoService = {
                 fechaEvento: eventoCompleto.fechaEvento,
                 horaEvento: eventoCompleto.horaEvento,
                 descripcionEvento: eventoCompleto.descripcionEvento,
+                estado: eventoCompleto.estado,
                 idUsuario: eventoCompleto.usuario?.idUsuario,
                 idMetodo: eventoCompleto.metodoEstudio?.idMetodo,
                 idAlbum: eventoCompleto.album?.idAlbum,
@@ -230,6 +322,15 @@ export const EventoService = {
             if (data.fechaEvento !== undefined) updateData.fechaEvento = data.fechaEvento;
             if (data.horaEvento !== undefined) updateData.horaEvento = data.horaEvento;
             if (data.descripcionEvento !== undefined) updateData.descripcionEvento = data.descripcionEvento;
+            if (data.estado !== undefined) {
+                if (!validarStatus(data.estado)) {
+                    return {
+                        success: false,
+                        error: 'Estado inválido. Debe ser null, "pendiente" o "completado"'
+                    };
+                }
+                updateData.estado = data.estado;
+            }
 
             // Validar y actualizar método de estudio si se proporciona
             if (data.idMetodo !== undefined) {
@@ -280,6 +381,7 @@ export const EventoService = {
                 fechaEvento: eventoActualizado.fechaEvento,
                 horaEvento: eventoActualizado.horaEvento,
                 descripcionEvento: eventoActualizado.descripcionEvento,
+                estado: eventoActualizado.estado,
                 idUsuario: eventoActualizado.usuario?.idUsuario,
                 idMetodo: eventoActualizado.metodoEstudio?.idMetodo,
                 idAlbum: eventoActualizado.album?.idAlbum,
@@ -299,7 +401,143 @@ export const EventoService = {
                 error: "Error interno al actualizar evento"
             };
         }
+    },
+    /**
+     * Marca un evento como completado
+     * Verifica que el evento pertenezca al usuario antes de actualizar
+     */
+    async marcarComoCompletado(id: number, userId: number) {
+        try {
+            console.log(`🔍 Buscando evento ${id} para usuario ${userId}`);
+            const evento = await EventoRepository.findOne({
+                where: { idEvento: id },
+                relations: ['usuario']
+            });
+
+            console.log(`📋 Evento encontrado:`, {
+                idEvento: evento?.idEvento,
+                usuario: evento?.usuario ? {
+                    idUsuario: evento.usuario.idUsuario,
+                    nombre: evento.usuario.nombreUsuario
+                } : null
+            });
+
+            if (!evento) {
+                return {
+                    success: false,
+                    error: "Evento no encontrado"
+                };
+            }
+
+            // Verificar que el evento pertenece al usuario autenticado
+            const eventOwnerId = evento.usuario?.idUsuario;
+            console.log(`🔐 Verificando permisos: eventOwnerId=${eventOwnerId}, userId=${userId}`);
+
+            if (eventOwnerId !== userId) {
+                console.log(`❌ Permiso denegado: evento pertenece a ${eventOwnerId}, usuario actual ${userId}`);
+                return {
+                    success: false,
+                    error: "No tienes permisos para modificar este evento"
+                };
+            }
+
+            console.log(`✅ Permiso concedido, actualizando evento`);
+
+            await EventoRepository.update(id, { estado: 'completado' });
+
+            return {
+                success: true,
+                message: "Evento marcado como completado"
+            };
+        } catch (error) {
+            console.error("Error al marcar evento como completado:", error);
+            return {
+                success: false,
+                error: "Error interno al marcar evento como completado"
+            };
+        }
+    },
+    /**
+     * Marca un evento como pendiente
+     * Verifica que el evento pertenezca al usuario antes de actualizar
+     */
+    async marcarComoPendiente(id: number, userId: number) {
+        try {
+            const evento = await EventoRepository.findOne({
+                where: { idEvento: id },
+                relations: ['usuario']
+            });
+
+            if (!evento) {
+                return {
+                    success: false,
+                    error: "Evento no encontrado"
+                };
+            }
+
+            // Verificar que el evento pertenece al usuario autenticado
+            if (evento.usuario?.idUsuario !== userId) {
+                return {
+                    success: false,
+                    error: "No tienes permisos para modificar este evento"
+                };
+            }
+
+            await EventoRepository.update(id, { estado: 'pendiente' });
+
+            return {
+                success: true,
+                message: "Evento marcado como pendiente"
+            };
+        } catch (error) {
+            console.error("Error al marcar evento como pendiente:", error);
+            return {
+                success: false,
+                error: "Error interno al marcar evento como pendiente"
+            };
+        }
+    },
+
+    /**
+     * Actualiza el estado de un evento
+     * Permite cambiar el estado a cualquier valor válido: null, 'pending', 'completed'
+     */
+    async actualizarEstado(id: number, userId: number, estado: 'pendiente' | 'completado' | null) {
+        try {
+            const evento = await EventoRepository.findOne({
+                where: { idEvento: id },
+                relations: ['usuario']
+            });
+
+            if (!evento) {
+                return {
+                    success: false,
+                    error: "Evento no encontrado"
+                };
+            }
+
+            // Verificar que el evento pertenece al usuario autenticado
+            if (evento.usuario?.idUsuario !== userId) {
+                return {
+                    success: false,
+                    error: "No tienes permisos para modificar este evento"
+                };
+            }
+
+            await EventoRepository.update(id, { estado });
+
+            return {
+                success: true,
+                message: `Estado del evento actualizado a ${estado === null ? 'null' : estado}`
+            };
+        } catch (error) {
+            console.error("Error al actualizar estado del evento:", error);
+            return {
+                success: false,
+                error: "Error interno al actualizar estado del evento"
+            };
+        }
     }
 
-    
+
 }

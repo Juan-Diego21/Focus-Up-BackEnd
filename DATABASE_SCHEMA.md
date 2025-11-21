@@ -151,6 +151,26 @@ WHERE scr.id_usuario = ?
 ORDER BY scr.fecha_creacion DESC
 ```
 
+### Events Table
+
+#### `eventos`
+
+```sql
+CREATE TABLE eventos (
+  id_evento SERIAL PRIMARY KEY,
+  nombre_evento VARCHAR(100) NOT NULL,
+  fecha_evento DATE NOT NULL,
+  hora_evento TIME NOT NULL,
+  descripcion_evento TEXT,
+  estado VARCHAR(20) CHECK (estado IN ('pending', 'completed')) OR estado IS NULL,
+  id_usuario INTEGER NOT NULL REFERENCES usuario(id_usuario),
+  id_metodo INTEGER REFERENCES bibliotecametodosestudio(id_metodo),
+  id_album INTEGER REFERENCES musica(id_album),
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
 ### Testing
 
 Run the reports API tests:

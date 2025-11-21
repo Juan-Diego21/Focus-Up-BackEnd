@@ -32,6 +32,9 @@ export class EventoEntity {
   @Column({ type: "text", name: "descripcion_evento", nullable: true })
   descripcionEvento?: string;
 
+  @Column({ type: "varchar", name: "estado", nullable: true })
+  estado?: 'pendiente' | 'completado' | null;
+
   // Relación con usuario (obligatoria)
   @ManyToOne(() => UserEntity, usuario => usuario.eventos)
   @JoinColumn({ name: "id_usuario" })

@@ -155,6 +155,8 @@ router.get("/", authenticateToken, reportsController.getUserReports.bind(reports
  *                 enum: [0, 50, 100]
  *                 description: Progreso del método (0=iniciado, 50=mitad, 100=completado)
  *                 example: 50
+ *               duracionTotal:
+ *                 type: integer
  *                 description: Duración total en segundos
  *                 example: 1800
  *               finalizar:

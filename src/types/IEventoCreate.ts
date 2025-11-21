@@ -10,6 +10,7 @@ export interface IEventoCreate {
   idUsuario: number; // ID del usuario que crea el evento, obligatorio
   idMetodo?: number; // ID del método de estudio asociado, opcional (técnica Pomodoro puede no aplicarse)
   idAlbum?: number; // ID del álbum de música opcional
+  estado?: 'pending' | 'completed' | null; // Estado opcional del evento, por defecto null
 }
 
 /**
@@ -23,4 +24,5 @@ export interface IEventoUpdate {
   descripcionEvento?: string; // Descripción del evento
   idMetodo?: number; // ID del método de estudio
   idAlbum?: number; // ID del álbum de música
+  estado?: 'pending' | 'completed' | null; // Estado opcional del evento
 }
