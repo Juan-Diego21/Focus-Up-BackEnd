@@ -21,6 +21,8 @@ import * as cron from 'node-cron';
 import { AppDataSource } from '../config/ormconfig';
 import { getPendingNotifications, markAsSent } from '../repositories/NotificacionesProgramadasRepository';
 import { getWeeklyMotivationalMessage } from '../config/motivationalMessages';
+import { SessionService } from '../services/SessionService';
+import { NotificationService } from '../services/NotificationService';
 import logger from '../utils/logger';
 import nodemailer from 'nodemailer';
 
@@ -168,6 +170,57 @@ function generateStudyMethodEmailTemplate(methodName: string, progress: number):
 }
 
 /**
+ * Generates HTML email template for session reminders
+ */
+function generateSessionReminderEmailTemplate(sessionTitle?: string): string {
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Recordatorio de Sesión de Concentración</title>
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f4f4; }
+        .container { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .logo { font-size: 28px; font-weight: bold; color: #007bff; margin-bottom: 10px; }
+        .reminder-box { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .session-title { font-size: 20px; font-weight: bold; color: #856404; margin-bottom: 10px; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 14px; color: #6c757d; text-align: center; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0; font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">Focus-Up</div>
+          <h2>🎯 Recordatorio de Sesión Pendiente</h2>
+        </div>
+
+        <p>Hola,</p>
+        <p>Hace más de una semana que tienes una sesión de concentración pendiente:</p>
+
+        <div class="reminder-box">
+          <div class="session-title">📚 ${sessionTitle || 'Sesión de concentración'}</div>
+          <p>Es hora de retomar tu sesión y continuar con tu progreso de estudio.</p>
+        </div>
+
+        <p>¡La consistencia es clave para el éxito! Dedica un tiempo hoy para avanzar en tus metas de estudio.</p>
+
+        <p>Recuerda: cada sesión completada te acerca más a tus objetivos.</p>
+
+        <div class="footer">
+          <p>Este es un mensaje automático semanal de Focus-Up.</p>
+          <p>&copy; 2024 Focus-Up. Todos los derechos reservados.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
  * Generates HTML email template for weekly motivation
  */
 function generateMotivationEmailTemplate(message: string): string {
@@ -215,6 +268,56 @@ function generateMotivationEmailTemplate(message: string): string {
     </body>
     </html>
   `;
+}
+
+/**
+ * Processes session notifications: finds pending sessions > 7 days and creates notifications
+ */
+async function processSessionNotifications(): Promise<void> {
+  try {
+    logger.info('🔄 Starting session notification processing...');
+
+    const sessionService = new SessionService();
+    const notificationService = new NotificationService();
+
+    // Get sessions pending more than 7 days
+    const pendingSessions = await sessionService.getPendingSessionsOlderThan(7);
+
+    if (pendingSessions.length === 0) {
+      logger.info('✅ No pending sessions older than 7 days');
+      return;
+    }
+
+    logger.info(`📧 Found ${pendingSessions.length} sessions pending > 7 days`);
+
+    let notificationCount = 0;
+
+    for (const session of pendingSessions) {
+      try {
+        // Create notification for the session
+        const scheduledAt = new Date();
+        scheduledAt.setHours(9, 0, 0, 0); // Schedule for 9 AM
+
+        await notificationService.createScheduledNotification({
+          userId: session.idUsuario,
+          sessionId: session.idSesion,
+          title: "Sesión de concentración pendiente",
+          message: `Tienes una sesión de concentración pendiente desde hace más de una semana. ¡Continúa con tu progreso!`,
+          scheduledAt,
+        });
+
+        notificationCount++;
+        logger.info(`✅ Created notification for session ${session.idSesion}`);
+      } catch (error) {
+        logger.error(`❌ Error creating notification for session ${session.idSesion}:`, error);
+      }
+    }
+
+    logger.info(`📊 Session notification processing completed: ${notificationCount} notifications created`);
+
+  } catch (error) {
+    logger.error('❌ Critical error in session notification processing:', error);
+  }
 }
 
 /**
@@ -286,6 +389,19 @@ async function processPendingEmails(): Promise<void> {
             }
             break;
 
+          case 'sesion_pendiente':
+            // Session reminder
+            try {
+              const sessionData = JSON.parse(notification.mensaje || '{}');
+              subject = 'Recordatorio: Sesión de concentración pendiente';
+              html = generateSessionReminderEmailTemplate(sessionData.message || notification.titulo);
+            } catch (parseError) {
+              logger.error(`Failed to parse session data for notification ${notification.idNotificacion}:`, parseError);
+              subject = 'Recordatorio: Sesión de concentración pendiente';
+              html = generateSessionReminderEmailTemplate(notification.titulo);
+            }
+            break;
+
           case 'motivation':
             // Weekly motivation - mensaje contains the motivational text
             subject = 'Motivación Semanal - Focus-Up';
@@ -346,12 +462,17 @@ async function initialize(): Promise<void> {
     await transporter.verify();
     logger.info('✅ Email transporter verified successfully');
 
-    // Start cron job - runs every minute
+    // Start cron job - runs every minute for email sending
     cron.schedule('* * * * *', processPendingEmails);
     logger.info('🚀 Automated email delivery system started - running every minute');
 
-    // Run initial check
+    // Start daily cron job for session notifications - runs daily at 2 AM
+    cron.schedule('0 2 * * *', processSessionNotifications);
+    logger.info('🚀 Session notification system started - running daily at 2 AM');
+
+    // Run initial checks
     await processPendingEmails();
+    await processSessionNotifications();
 
   } catch (error) {
     logger.error('❌ Failed to initialize email delivery system:', error);
