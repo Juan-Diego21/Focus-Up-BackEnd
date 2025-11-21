@@ -4,6 +4,7 @@ import { SesionConcentracionRealizadaEntity, SesionEstado } from "../models/Sesi
 import { UserEntity } from "../models/User.entity";
 import { MetodoEstudioEntity } from "../models/MetodoEstudio.entity";
 import { MusicaEntity } from "../models/Musica.entity";
+import { NotificacionesProgramadasService } from "./NotificacionesProgramadasService";
 import logger from "../utils/logger";
 
 // Load method configurations from external file
@@ -463,6 +464,36 @@ export class ReportsService {
       });
 
       const savedMetodo = await this.metodoRealizadoRepository.save(metodoRealizado);
+
+      // Sistema de recordatorios automáticos para métodos incompletos
+      // Regla de negocio: Si el método tiene progreso < 100%, programar recordatorio para 7 días después
+      // Esto motiva a los usuarios a completar sus métodos de estudio pendientes
+      if (savedMetodo.progreso < MetodoProgreso.COMPLETADO) {
+        try {
+          // Calcular fecha del recordatorio: fecha de creación + 7 días
+          const fechaRecordatorio = new Date(savedMetodo.fechaCreacion);
+          fechaRecordatorio.setDate(fechaRecordatorio.getDate() + 7);
+
+          // Verificar que la fecha del recordatorio esté en el futuro
+          const ahora = new Date();
+          if (fechaRecordatorio <= ahora) {
+            logger.warn(`Fecha de recordatorio calculada ${fechaRecordatorio} no está en el futuro para método ${savedMetodo.idMetodoRealizado}`);
+          } else {
+            // Programar notificación automática
+            await NotificacionesProgramadasService.createScheduledNotification({
+              idUsuario: data.idUsuario,
+              tipo: "metodo_pendiente",
+              titulo: "Recordatorio de método pendiente",
+              mensaje: `Aún tienes un método sin finalizar: ${savedMetodo.metodo?.nombreMetodo || 'Método de estudio'}. ¡Continúa con tu aprendizaje!`,
+              fechaProgramada: fechaRecordatorio
+            });
+            logger.info(`Recordatorio programado para método ${savedMetodo.idMetodoRealizado} del usuario ${data.idUsuario} en ${fechaRecordatorio}`);
+          }
+        } catch (error) {
+          // Loggear error pero no fallar la creación del método
+          logger.error('Error al programar recordatorio automático para método:', error);
+        }
+      }
 
       return {
         success: true,

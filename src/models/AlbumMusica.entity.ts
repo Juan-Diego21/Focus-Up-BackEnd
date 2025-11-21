@@ -31,4 +31,7 @@ export class AlbumMusicaEntity {
   // Relationship with Music
   @OneToMany(() => MusicaEntity, musica => musica.album)
   musicas?: MusicaEntity[];
+
+  // Relación con eventos (uno a muchos)
+  eventos?: any[]; // Para la relación inversa con EventoEntity
 }

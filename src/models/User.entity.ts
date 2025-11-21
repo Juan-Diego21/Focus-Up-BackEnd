@@ -8,6 +8,7 @@ import {
 } from "typeorm";
 import { UsuarioInteresesEntity } from "./UsuarioIntereses.entity";
 import { UsuarioDistraccionesEntity } from "./UsuarioDistracciones.entity";
+import { EventoEntity } from "./Evento.entity";
 
 @Entity("usuario")
 export class UserEntity {
@@ -56,4 +57,8 @@ export class UserEntity {
 
   @OneToMany(() => UsuarioDistraccionesEntity, usuarioDistraccion => usuarioDistraccion.usuario)
   usuarioDistracciones?: UsuarioDistraccionesEntity[];
+
+  // Relación con eventos (uno a muchos)
+  @OneToMany(() => EventoEntity, evento => evento.usuario)
+  eventos?: EventoEntity[];
 }

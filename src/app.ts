@@ -103,3 +103,5 @@ app.listen(PORT, async () => {
 
 // Exportar app para testing
 export default app;
+
+// Force restart comment

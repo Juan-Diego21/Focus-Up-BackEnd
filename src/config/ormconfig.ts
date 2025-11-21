@@ -21,6 +21,8 @@ import { EventoEntity } from "../models/Evento.entity";
 import { PasswordResetEntity } from "../models/PasswordReset.entity";
 import { MetodoRealizadoEntity } from "../models/MetodoRealizado.entity";
 import { SesionConcentracionRealizadaEntity } from "../models/SesionConcentracionRealizada.entity";
+import { NotificacionesUsuarioEntity } from "../models/NotificacionesUsuario.entity";
+import { NotificacionesProgramadasEntity } from "../models/NotificacionesProgramadas.entity";
 
 /**
  * Instancia principal de DataSource para TypeORM
@@ -63,6 +65,10 @@ export const AppDataSource = new DataSource({
     // Entidades de reportes
     MetodoRealizadoEntity,
     SesionConcentracionRealizadaEntity,
+
+    // Entidades de notificaciones
+    NotificacionesUsuarioEntity,
+    NotificacionesProgramadasEntity,
   ],
   migrations: [__dirname + "/../migrations/*{.ts,.js}"],
   subscribers: [],
