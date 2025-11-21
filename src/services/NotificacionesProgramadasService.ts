@@ -2,6 +2,7 @@ import { NotificacionesProgramadasRepository, createScheduledNotification, getPe
 import { AppDataSource } from '../config/ormconfig';
 import { UserEntity } from '../models/User.entity';
 import { NotificacionesUsuarioEntity } from '../models/NotificacionesUsuario.entity';
+import { MetodoRealizadoEntity } from '../models/MetodoRealizado.entity';
 import { getWeeklyMotivationalMessage, getCurrentWeekNumber } from '../config/motivationalMessages';
 import logger from '../utils/logger';
 
@@ -127,104 +128,206 @@ export const NotificacionesProgramadasService = {
   },
 
   /**
-    * Obtiene eventos próximos con sus tiempos de notificación calculados
-    * Retorna eventos cuya NotificationTime >= ahora y estado es null o 'pendiente'
-    * Calcula correctamente los tiempos de notificación según reglas de negocio
-    */
-  async getUpcomingEventsWithNotifications(userId: number) {
-    try {
-      logger.info(`Consultando eventos próximos para usuario ${userId}`);
+     * Obtiene todas las notificaciones programadas para un usuario
+     * Incluye eventos próximos, recordatorios de métodos incompletos y notificaciones motivacionales semanales
+     * Retorna notificaciones cuya NotificationTime >= ahora
+     */
+   async getUpcomingEventsWithNotifications(userId: number) {
+     try {
+       logger.info(`Consultando todas las notificaciones programadas para usuario ${userId}`);
 
-      // Obtener eventos del usuario que no están completados
-      const eventos = await AppDataSource.getRepository('EventoEntity')
-        .createQueryBuilder("evento")
-        .leftJoinAndSelect("evento.metodoEstudio", "metodo")
-        .leftJoinAndSelect("evento.album", "album")
-        .where("evento.id_usuario = :userId", { userId })
-        .andWhere("(evento.estado IS NULL OR evento.estado = :pendiente)", { pendiente: 'pendiente' })
-        .orderBy("evento.fecha_evento", "ASC")
-        .addOrderBy("evento.hora_evento", "ASC")
-        .getMany();
+       const now = new Date();
+       const today = new Date(now);
+       today.setHours(0, 0, 0, 0);
 
-      logger.info(`Encontrados ${eventos.length} eventos pendientes/completados para usuario ${userId}`);
+       const allNotifications = [];
 
-      const now = new Date();
-      const today = new Date(now);
-      today.setHours(0, 0, 0, 0);
+       // 1. EVENT NOTIFICATIONS - Eventos próximos con notificaciones
+       try {
+         const eventos = await AppDataSource.getRepository('EventoEntity')
+           .createQueryBuilder("evento")
+           .leftJoinAndSelect("evento.metodoEstudio", "metodo")
+           .leftJoinAndSelect("evento.album", "album")
+           .where("evento.id_usuario = :userId", { userId })
+           .andWhere("(evento.estado IS NULL OR evento.estado = :pendiente)", { pendiente: 'pendiente' })
+           .orderBy("evento.fecha_evento", "ASC")
+           .addOrderBy("evento.hora_evento", "ASC")
+           .getMany();
 
-      const eventosConNotificaciones = [];
+         logger.info(`Encontrados ${eventos.length} eventos pendientes para usuario ${userId}`);
 
-      for (const evento of eventos) {
-        try {
-          // Combinar fecha y hora del evento de manera segura
-          const eventDateTime = new Date(`${evento.fechaEvento}T${evento.horaEvento}`);
+         for (const evento of eventos) {
+           try {
+             const eventDateTime = new Date(`${evento.fechaEvento}T${evento.horaEvento}`);
 
-          if (isNaN(eventDateTime.getTime())) {
-            logger.warn(`Fecha/hora inválida para evento ${evento.idEvento}: ${evento.fechaEvento}T${evento.horaEvento}`);
-            continue;
-          }
+             if (isNaN(eventDateTime.getTime())) {
+               logger.warn(`Fecha/hora inválida para evento ${evento.idEvento}: ${evento.fechaEvento}T${evento.horaEvento}`);
+               continue;
+             }
 
-          // Obtener fecha del evento (solo fecha, sin hora)
-          const eventDate = new Date(evento.fechaEvento + 'T00:00:00');
+             const eventDate = new Date(evento.fechaEvento + 'T00:00:00');
+             let notificationTime: Date;
 
-          // Calcular tiempo de notificación según reglas de negocio
-          let notificationTime: Date;
+             if (eventDate.getTime() === today.getTime()) {
+               notificationTime = new Date(eventDateTime);
+               logger.debug(`Evento ${evento.idEvento} es hoy - notificación a las ${evento.horaEvento}`);
+             } else {
+               notificationTime = new Date(eventDateTime.getTime() - 10 * 60 * 1000);
+               logger.debug(`Evento ${evento.idEvento} es futuro - notificación 10 min antes: ${notificationTime}`);
+             }
 
-          if (eventDate.getTime() === today.getTime()) {
-            // Evento hoy: notificación a la hora exacta del evento
-            notificationTime = new Date(eventDateTime);
-            logger.debug(`Evento ${evento.idEvento} es hoy - notificación a las ${evento.horaEvento}`);
-          } else {
-            // Evento futuro: notificación 10 minutos antes
-            notificationTime = new Date(eventDateTime.getTime() - 10 * 60 * 1000); // 10 minutos en ms
-            logger.debug(`Evento ${evento.idEvento} es futuro - notificación 10 min antes: ${notificationTime}`);
-          }
+             if (notificationTime >= now) {
+               // Create stored notification for email delivery
+               try {
+                 await this.createScheduledNotification({
+                   idUsuario: userId,
+                   tipo: 'evento',
+                   titulo: `Recordatorio: ${evento.nombreEvento}`,
+                   mensaje: JSON.stringify({
+                     nombreEvento: evento.nombreEvento,
+                     fechaEvento: evento.fechaEvento,
+                     horaEvento: evento.horaEvento,
+                     descripcionEvento: evento.descripcionEvento,
+                     metodoEstudio: evento.metodoEstudio?.nombreMetodo,
+                     album: evento.album?.nombreAlbum
+                   }),
+                   fechaProgramada: notificationTime
+                 });
+                 logger.debug(`Stored notification created for event ${evento.idEvento}`);
+               } catch (storeError) {
+                 logger.error(`Failed to create stored notification for event ${evento.idEvento}:`, storeError);
+               }
 
-          // Solo incluir si el tiempo de notificación está en el futuro o es ahora
-          if (notificationTime >= now) {
-            eventosConNotificaciones.push({
-              idEvento: evento.idEvento,
-              nombreEvento: evento.nombreEvento,
-              fechaEvento: evento.fechaEvento,
-              horaEvento: evento.horaEvento,
-              descripcionEvento: evento.descripcionEvento,
-              estado: evento.estado,
-              metodoEstudio: evento.metodoEstudio ? {
-                idMetodo: evento.metodoEstudio.idMetodo,
-                nombreMetodo: evento.metodoEstudio.nombreMetodo
-              } : null,
-              album: evento.album ? {
-                idAlbum: evento.album.idAlbum,
-                nombreAlbum: evento.album.nombreAlbum
-              } : null,
-              fechaCreacion: evento.fechaCreacion,
-              fechaActualizacion: evento.fechaActualizacion,
-              notificationTime: notificationTime.toISOString(),
-              notificationRule: eventDate.getTime() === today.getTime() ? 'same_day' : 'future_10min_before'
-            });
-          } else {
-            logger.debug(`Evento ${evento.idEvento} - tiempo de notificación ${notificationTime} ya pasó`);
-          }
+               allNotifications.push({
+                 type: 'event',
+                 idEvento: evento.idEvento,
+                 nombreEvento: evento.nombreEvento,
+                 fechaEvento: evento.fechaEvento,
+                 horaEvento: evento.horaEvento,
+                 descripcionEvento: evento.descripcionEvento,
+                 estado: evento.estado,
+                 metodoEstudio: evento.metodoEstudio ? {
+                   idMetodo: evento.metodoEstudio.idMetodo,
+                   nombreMetodo: evento.metodoEstudio.nombreMetodo
+                 } : null,
+                 album: evento.album ? {
+                   idAlbum: evento.album.idAlbum,
+                   nombreAlbum: evento.album.nombreAlbum
+                 } : null,
+                 notificationTime: notificationTime.toISOString(),
+                 notificationRule: eventDate.getTime() === today.getTime() ? 'same_day' : 'future_10min_before'
+               });
+             }
+           } catch (error) {
+             logger.error(`Error procesando evento ${evento.idEvento}:`, error);
+           }
+         }
+       } catch (error) {
+         logger.error(`Error obteniendo notificaciones de eventos para usuario ${userId}:`, error);
+       }
 
-        } catch (error) {
-          logger.error(`Error procesando evento ${evento.idEvento}:`, error);
-        }
-      }
+       // 2. STUDY METHOD REMINDERS - Métodos con progreso < 100% y > 7 días
+       try {
+         const sevenDaysAgo = new Date();
+         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      logger.info(`Retornando ${eventosConNotificaciones.length} eventos con notificaciones futuras`);
+         const metodosIncompletos = await AppDataSource.getRepository('MetodoRealizadoEntity')
+           .createQueryBuilder("mr")
+           .leftJoinAndSelect("mr.metodo", "m")
+           .where("mr.id_usuario = :userId", { userId })
+           .andWhere("mr.progreso < :completado", { completado: 100 })
+           .andWhere("mr.fecha_creacion <= :sevenDaysAgo", { sevenDaysAgo })
+           .orderBy("mr.fecha_creacion", "ASC")
+           .getMany();
 
-      return {
-        success: true,
-        data: eventosConNotificaciones
-      };
-    } catch (error) {
-      logger.error(`Error al obtener eventos próximos para usuario ${userId}:`, error);
-      return {
-        success: false,
-        error: 'Error interno al obtener eventos próximos'
-      };
-    }
-  },
+         logger.info(`Encontrados ${metodosIncompletos.length} métodos incompletos para recordatorios`);
+
+         for (const metodo of metodosIncompletos) {
+           try {
+             // Para métodos incompletos, mostrar recordatorio inmediato (próximos 24 horas)
+             const notificationTime = new Date(now);
+             notificationTime.setHours(notificationTime.getHours() + 1); // Recordatorio en 1 hora
+
+             // Create stored notification for email delivery
+             try {
+               await this.createScheduledNotification({
+                 idUsuario: userId,
+                 tipo: 'metodo_pendiente',
+                 titulo: 'Recordatorio de método pendiente',
+                 mensaje: JSON.stringify({
+                   nombreMetodo: metodo.metodo?.nombreMetodo || 'Método desconocido',
+                   progreso: metodo.progreso,
+                   idMetodoRealizado: metodo.idMetodoRealizado
+                 }),
+                 fechaProgramada: notificationTime
+               });
+               logger.debug(`Stored notification created for incomplete method ${metodo.idMetodoRealizado}`);
+             } catch (storeError) {
+               logger.error(`Failed to create stored notification for method ${metodo.idMetodoRealizado}:`, storeError);
+             }
+
+             allNotifications.push({
+               type: 'incomplete_study_method',
+               idReporte: metodo.idMetodoRealizado,
+               nombreMetodo: metodo.metodo?.nombreMetodo || 'Método desconocido',
+               progreso: metodo.progreso,
+               notificationTime: notificationTime.toISOString()
+             });
+
+             logger.debug(`Recordatorio agregado para método incompleto ${metodo.idMetodoRealizado} (${metodo.progreso}%)`);
+           } catch (error) {
+             logger.error(`Error procesando recordatorio de método ${metodo.idMetodoRealizado}:`, error);
+           }
+         }
+       } catch (error) {
+         logger.error(`Error obteniendo recordatorios de métodos para usuario ${userId}:`, error);
+       }
+
+       // 3. WEEKLY MOTIVATIONAL NOTIFICATIONS - Una por semana
+       try {
+         // Verificar si el usuario tiene habilitadas las notificaciones motivacionales
+         const notificacionesUsuario = await AppDataSource.getRepository('NotificacionesUsuarioEntity')
+           .findOne({
+             where: { idUsuario: userId, motivacion: true }
+           });
+
+         if (notificacionesUsuario) {
+           // Calcular la próxima notificación semanal (7 días desde ahora)
+           const notificationTime = new Date();
+           notificationTime.setDate(notificationTime.getDate() + 7);
+
+           // Obtener número de semana actual para seleccionar mensaje
+           const currentWeek = getCurrentWeekNumber();
+
+           allNotifications.push({
+             type: 'weekly_motivation',
+             notificationTime: notificationTime.toISOString(),
+             templateId: currentWeek
+           });
+
+           logger.debug(`Notificación motivacional semanal programada para usuario ${userId} en semana ${currentWeek}`);
+         }
+       } catch (error) {
+         logger.error(`Error obteniendo notificaciones motivacionales para usuario ${userId}:`, error);
+       }
+
+       // Ordenar todas las notificaciones por tiempo
+       allNotifications.sort((a, b) => new Date(a.notificationTime).getTime() - new Date(b.notificationTime).getTime());
+
+       logger.info(`Retornando ${allNotifications.length} notificaciones programadas totales para usuario ${userId}`);
+
+       return {
+         success: true,
+         data: allNotifications
+       };
+     } catch (error) {
+       logger.error(`Error al obtener notificaciones programadas para usuario ${userId}:`, error);
+       return {
+         success: false,
+         error: 'Error interno al obtener notificaciones programadas'
+       };
+     }
+   },
 
   /**
    * Marca una notificación específica como enviada

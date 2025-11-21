@@ -7,6 +7,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
     "build": "tsc",
     "start": "node dist/app.js",
+    "send-emails": "ts-node src/scripts/send-pending-emails.ts",
     "test:db": "ts-node src/scripts/test-connection.ts",
     "test:integration": "ts-node src/scripts/test-integration.ts",
     "test:orm": "ts-node src/scripts/test-integration.ts",
@@ -17,6 +18,7 @@
   },
   "dependencies": {
     "@react-email/components": "^0.5.6",
+    "@types/node-cron": "^3.0.11",
     "axios": "^1.6.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
@@ -25,6 +27,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "node-cron": "^4.2.1",
     "nodemailer": "^7.0.9",
     "reflect-metadata": "^0.2.2",
     "swagger-jsdoc": "^6.2.8",

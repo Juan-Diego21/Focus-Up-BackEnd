@@ -179,34 +179,52 @@ router.get('/programadas', authenticateToken, notificacionesProgramadasControlle
  *                 data:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       idNotificacion:
- *                         type: integer
- *                         description: ID único de la notificación
- *                       idUsuario:
- *                         type: integer
- *                         description: ID del usuario destinatario
- *                       tipo:
- *                         type: string
- *                         description: Tipo de notificación
- *                       titulo:
- *                         type: string
- *                         description: Título de la notificación
- *                       mensaje:
- *                         type: string
- *                         description: Contenido del mensaje
- *                       fechaProgramada:
- *                         type: string
- *                         format: date-time
- *                         description: Fecha programada para envío
- *                       enviada:
- *                         type: boolean
- *                         description: Estado de envío
- *                       fechaEnvio:
- *                         type: string
- *                         format: date-time
- *                         description: Fecha real de envío
+ *                     oneOf:
+ *                       - type: object
+ *                         properties:
+ *                           type:
+ *                             type: string
+ *                             example: "event"
+ *                           idEvento:
+ *                             type: integer
+ *                             description: ID del evento
+ *                           nombreEvento:
+ *                             type: string
+ *                             description: Nombre del evento
+ *                           notificationTime:
+ *                             type: string
+ *                             format: date-time
+ *                             description: Fecha y hora de la notificación
+ *                       - type: object
+ *                         properties:
+ *                           type:
+ *                             type: string
+ *                             example: "incomplete_study_method"
+ *                           idReporte:
+ *                             type: integer
+ *                             description: ID del reporte de método
+ *                           nombreMetodo:
+ *                             type: string
+ *                             description: Nombre del método de estudio
+ *                           progreso:
+ *                             type: integer
+ *                             description: Progreso actual del método
+ *                           notificationTime:
+ *                             type: string
+ *                             format: date-time
+ *                             description: Fecha y hora de la notificación
+ *                       - type: object
+ *                         properties:
+ *                           type:
+ *                             type: string
+ *                             example: "weekly_motivation"
+ *                           notificationTime:
+ *                             type: string
+ *                             format: date-time
+ *                             description: Fecha y hora de la notificación
+ *                           templateId:
+ *                             type: integer
+ *                             description: ID del template motivacional semanal
  *       401:
  *         description: No autorizado
  * */

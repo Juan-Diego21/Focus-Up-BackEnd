@@ -227,7 +227,12 @@ export const EventoService = {
                             idUsuario: data.idUsuario,
                             tipo: "evento",
                             titulo: `Recordatorio: ${eventoCompleto.nombreEvento}`,
-                            mensaje: `Tienes un evento próximo: ${eventoCompleto.nombreEvento}${eventoCompleto.descripcionEvento ? ' - ' + eventoCompleto.descripcionEvento : ''}`,
+                            mensaje: JSON.stringify({
+                                nombreEvento: eventoCompleto.nombreEvento,
+                                fechaEvento: eventoCompleto.fechaEvento,
+                                horaEvento: eventoCompleto.horaEvento,
+                                descripcionEvento: eventoCompleto.descripcionEvento
+                            }),
                             fechaProgramada: tiempoRecordatorio
                         });
                         console.log(`✅ Notificación programada exitosamente para evento ${eventoCompleto.idEvento}`);
