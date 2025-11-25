@@ -91,8 +91,12 @@ export class ReportsController {
   }
 
   /**
-   * Obtiene todos los reportes del usuario especificado o del usuario actual
+   * Obtiene todos los reportes del usuario (AGREGADOR - DEPRECATED)
    * GET /api/v1/reports?userId=123
+   *
+   * @deprecated Use GET /api/v1/reports/sessions and GET /api/v1/reports/methods instead
+   * Este endpoint es mantenido temporalmente para compatibilidad hacia atrás.
+   * Se recomienda usar los endpoints dedicados por dominio.
    */
   async getUserReports(req: Request, res: Response) {
     try {
@@ -111,36 +115,37 @@ export class ReportsController {
         return res.status(400).json(response);
       }
 
-      const result = await reportsService.getUserReports(targetUserId);
+      // Obtener reportes separados por dominio
+      const [sessionsResult, methodsResult] = await Promise.all([
+        reportsService.getUserSessionReports(targetUserId),
+        reportsService.getUserMethodReports(targetUserId)
+      ]);
 
-      if (!result.success) {
-        // Check if it's a "user not found" error
-        if (result.error === "Usuario no encontrado") {
-          const response: ApiResponse = {
-            success: false,
-            message: "Usuario no encontrado",
-            error: result.error,
-            timestamp: new Date(),
-          };
-          return res.status(404).json(response);
-        }
-
-        // Other errors
+      if (!sessionsResult.success || !methodsResult.success) {
+        const error = sessionsResult.error || methodsResult.error || "Error al obtener reportes";
         const response: ApiResponse = {
           success: false,
           message: "Error al obtener reportes",
-          error: result.error,
+          error: error,
           timestamp: new Date(),
         };
         return res.status(500).json(response);
       }
 
+      // Formatear respuesta agregada
       const response: ApiResponse = {
         success: true,
-        message: result.reports!.combined.length > 0 ? "User reports fetched successfully" : "No reports found for this user",
-        data: result.reports!.combined,
+        message: "Reportes obtenidos exitosamente (DEPRECATED: use /reports/sessions y /reports/methods)",
+        data: {
+          sessions: sessionsResult.sessions || [],
+          methods: methodsResult.methods || []
+        },
         timestamp: new Date(),
       };
+
+      // Agregar header de deprecation
+      res.set('X-Deprecated', 'true');
+      res.set('X-Deprecation-Message', 'Use GET /api/v1/reports/sessions and GET /api/v1/reports/methods instead');
 
       res.status(200).json(response);
     } catch (error) {
@@ -226,12 +231,16 @@ export class ReportsController {
   /**
    * Actualiza el progreso de una sesión de concentración
    * PATCH /api/v1/reports/sessions/:id/progress
+   *
+   * Maneja transiciones de estado: complete/finish-later
+   * Si status === "completed", marca como completada y actualiza tiempo
+   * Si status === "pending", mantiene pendiente y actualiza tiempo
    */
   async updateSessionProgress(req: Request, res: Response) {
     try {
       const userPayload = (req as any).user as JwtPayload;
       const sessionId = parseInt(req.params.id);
-      const { estado } = req.body;
+      const { status, elapsedMs, notes } = req.body;
 
       if (isNaN(sessionId)) {
         const response: ApiResponse = {
@@ -242,18 +251,37 @@ export class ReportsController {
         return res.status(400).json(response);
       }
 
-      // Validar que al menos un campo de actualización esté presente
-      if (estado === undefined) {
+      // Validar que el status sea válido
+      if (!status || !["completed", "pending"].includes(status)) {
         const response: ApiResponse = {
           success: false,
-          message: "Debe proporcionar al menos un campo para actualizar (estado)",
+          message: "Status inválido. Debe ser 'completed' o 'pending'",
           timestamp: new Date(),
         };
         return res.status(400).json(response);
       }
 
+      // Validar elapsedMs si se proporciona
+      if (elapsedMs !== undefined && (typeof elapsedMs !== 'number' || elapsedMs < 0)) {
+        const response: ApiResponse = {
+          success: false,
+          message: "elapsedMs debe ser un número positivo",
+          timestamp: new Date(),
+        };
+        return res.status(400).json(response);
+      }
+
+      logger.info(`Actualizando progreso de sesión ${sessionId} para usuario ${userPayload.userId}`, {
+        status,
+        elapsedMs,
+        notes
+      });
+
+      // Llamar al servicio con los nuevos parámetros
       const result = await reportsService.updateSessionProgress(sessionId, userPayload.userId, {
-        estado,
+        status,
+        elapsedMs,
+        notes
       });
 
       if (!result.success) {
@@ -269,13 +297,121 @@ export class ReportsController {
       const response: ApiResponse = {
         success: true,
         message: result.message || "Progreso de la sesión actualizado exitosamente",
-        data: result.sesionRealizada,
+        data: result.session,
         timestamp: new Date(),
       };
 
       res.status(200).json(response);
     } catch (error) {
       logger.error("Error en ReportsController.updateSessionProgress:", JSON.stringify(error));
+
+      const response: ApiResponse = {
+        success: false,
+        message: "Error interno del servidor",
+        error: "Ocurrió un error inesperado",
+        timestamp: new Date(),
+      };
+
+      res.status(500).json(response);
+    }
+  }
+
+  /**
+   * Obtiene reportes de sesiones de concentración del usuario
+   * GET /api/v1/reports/sessions
+   */
+  async getUserSessionReports(req: Request, res: Response) {
+    try {
+      const userPayload = (req as any).user as JwtPayload;
+
+      const result = await reportsService.getUserSessionReports(userPayload.userId);
+
+      if (!result.success) {
+        // Check if it's a "user not found" error
+        if (result.error === "Usuario no encontrado") {
+          const response: ApiResponse = {
+            success: false,
+            message: "Usuario no encontrado",
+            error: result.error,
+            timestamp: new Date(),
+          };
+          return res.status(404).json(response);
+        }
+
+        // Other errors
+        const response: ApiResponse = {
+          success: false,
+          message: "Error al obtener reportes de sesiones",
+          error: result.error,
+          timestamp: new Date(),
+        };
+        return res.status(500).json(response);
+      }
+
+      const response: ApiResponse = {
+        success: true,
+        message: result.sessions!.length > 0 ? "Reportes de sesiones obtenidos exitosamente" : "No se encontraron sesiones para este usuario",
+        data: result.sessions,
+        timestamp: new Date(),
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      logger.error("Error en ReportsController.getUserSessionReports:", JSON.stringify(error));
+
+      const response: ApiResponse = {
+        success: false,
+        message: "Error interno del servidor",
+        error: "Ocurrió un error inesperado",
+        timestamp: new Date(),
+      };
+
+      res.status(500).json(response);
+    }
+  }
+
+  /**
+   * Obtiene reportes de métodos de estudio del usuario
+   * GET /api/v1/reports/methods
+   */
+  async getUserMethodReports(req: Request, res: Response) {
+    try {
+      const userPayload = (req as any).user as JwtPayload;
+
+      const result = await reportsService.getUserMethodReports(userPayload.userId);
+
+      if (!result.success) {
+        // Check if it's a "user not found" error
+        if (result.error === "Usuario no encontrado") {
+          const response: ApiResponse = {
+            success: false,
+            message: "Usuario no encontrado",
+            error: result.error,
+            timestamp: new Date(),
+          };
+          return res.status(404).json(response);
+        }
+
+        // Other errors
+        const response: ApiResponse = {
+          success: false,
+          message: "Error al obtener reportes de métodos",
+          error: result.error,
+          timestamp: new Date(),
+        };
+        return res.status(500).json(response);
+      }
+
+      const response: ApiResponse = {
+        success: true,
+        message: result.methods!.length > 0 ? "Reportes de métodos obtenidos exitosamente" : "No se encontraron métodos para este usuario",
+        data: result.methods,
+        timestamp: new Date(),
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      logger.error("Error en ReportsController.getUserMethodReports:", JSON.stringify(error));
 
       const response: ApiResponse = {
         success: false,

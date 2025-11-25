@@ -39,13 +39,25 @@ router.post("/active-methods", authenticateToken, reportsController.createActive
  * @swagger
  * /reports:
  *   get:
- *     summary: Obtener todos los reportes del usuario (métodos y sesiones)
+ *     summary: Obtener todos los reportes del usuario (AGREGADOR - DEPRECATED)
+ *     description: |
+ *       **⚠️ DEPRECATED**: Este endpoint está marcado como obsoleto.
+ *
+ *       Se mantiene temporalmente para compatibilidad hacia atrás, pero se recomienda
+ *       usar los endpoints dedicados por dominio:
+ *
+ *       - `GET /api/v1/reports/sessions` - Para reportes de sesiones de concentración
+ *       - `GET /api/v1/reports/methods` - Para reportes de métodos de estudio
+ *
+ *       Este endpoint retorna ambas categorías en arrays separados para facilitar
+ *       la transición, pero será removido en futuras versiones.
+ *     deprecated: true
  *     tags: [Reports]
  *     security:
  *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: Reportes obtenidos exitosamente
+ *         description: Reportes obtenidos exitosamente (usar endpoints dedicados)
  *         content:
  *           application/json:
  *             schema:
@@ -56,71 +68,42 @@ router.post("/active-methods", authenticateToken, reportsController.createActive
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: "Reportes obtenidos exitosamente"
+ *                   example: "Reportes obtenidos exitosamente (DEPRECATED: use /reports/sessions y /reports/methods)"
  *                 data:
  *                   type: object
  *                   properties:
- *                     metodos:
+ *                     sessions:
  *                       type: array
+ *                       description: Reportes de sesiones de concentración
  *                       items:
  *                         type: object
  *                         properties:
- *                           id:
+ *                           id_reporte:
  *                             type: integer
- *                           metodo:
- *                             type: object
- *                             properties:
- *                               id:
- *                                 type: integer
- *                               nombre:
- *                                 type: string
- *                               descripcion:
- *                                 type: string
+ *                           id_sesion:
+ *                             type: integer
+ *                           nombre_sesion:
+ *                             type: string
+ *                           estado:
+ *                             type: string
+ *                           tiempo_total:
+ *                             type: integer
+ *                     methods:
+ *                       type: array
+ *                       description: Reportes de métodos de estudio
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id_reporte:
+ *                             type: integer
+ *                           id_metodo:
+ *                             type: integer
+ *                           nombre_metodo:
+ *                             type: string
  *                           progreso:
  *                             type: integer
- *                             enum: [0, 50, 100]
  *                           estado:
  *                             type: string
- *                           duracionTotal:
- *                             type: integer
- *                           fechaInicio:
- *                             type: string
- *                             format: date-time
- *                           fechaFin:
- *                             type: string
- *                             format: date-time
- *                     sesiones:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: integer
- *                           musica:
- *                             type: object
- *                             nullable: true
- *                             properties:
- *                               id:
- *                                 type: integer
- *                               nombre:
- *                                 type: string
- *                               artista:
- *                                 type: string
- *                               genero:
- *                                 type: string
- *                           duracion:
- *                             type: integer
- *                           fechaProgramada:
- *                             type: string
- *                             format: date-time
- *                           estado:
- *                             type: string
- *                           fechaInicio:
- *                             type: string
- *                             format: date-time
- *                           fechaFin:
- *                             type: string
- *                             format: date-time
  *       401:
  *         description: No autorizado
  *       500:
@@ -227,6 +210,169 @@ router.patch("/methods/:id/progress", authenticateToken, reportsController.updat
  *         description: Sesión no encontrada
  */
 router.patch("/sessions/:id/progress", authenticateToken, reportsController.updateSessionProgress.bind(reportsController));
+
+/**
+ * @swagger
+ * /reports/sessions:
+ *   get:
+ *     summary: Obtener reportes de sesiones de concentración del usuario
+ *     description: |
+ *       Retorna una lista de reportes de sesiones de concentración para el usuario autenticado.
+ *
+ *       **Campos incluidos:**
+ *       - id_reporte: ID único del reporte de sesión
+ *       - id_sesion: ID de la sesión de concentración
+ *       - id_usuario: ID del usuario propietario
+ *       - nombre_sesion: Título de la sesión
+ *       - descripcion: Descripción de la sesión
+ *       - estado: Estado actual ('pendiente' | 'completado')
+ *       - tiempo_total: Tiempo total transcurrido en milisegundos
+ *       - metodo_asociado: Información del método de estudio asociado (opcional)
+ *       - album_asociado: Información del álbum de música asociado (opcional)
+ *       - fecha_creacion: Fecha de creación de la sesión
+ *     tags: [Reports]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Reportes de sesiones obtenidos exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Reportes de sesiones obtenidos exitosamente"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_reporte:
+ *                         type: integer
+ *                         example: 1
+ *                       id_sesion:
+ *                         type: integer
+ *                         example: 1
+ *                       id_usuario:
+ *                         type: integer
+ *                         example: 18
+ *                       nombre_sesion:
+ *                         type: string
+ *                         example: "Sesión matutina"
+ *                       descripcion:
+ *                         type: string
+ *                         example: "Enfoque en matemáticas"
+ *                       estado:
+ *                         type: string
+ *                         enum: [pendiente, completado]
+ *                         example: "pendiente"
+ *                       tiempo_total:
+ *                         type: integer
+ *                         example: 3600000
+ *                       metodo_asociado:
+ *                         type: object
+ *                         nullable: true
+ *                         properties:
+ *                           id_metodo:
+ *                             type: integer
+ *                             example: 1
+ *                           nombre_metodo:
+ *                             type: string
+ *                             example: "Método Feynman"
+ *                       album_asociado:
+ *                         type: object
+ *                         nullable: true
+ *                         properties:
+ *                           id_album:
+ *                             type: integer
+ *                             example: 1
+ *                           nombre_album:
+ *                             type: string
+ *                             example: "Jazz Classics"
+ *                       fecha_creacion:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-01-15T08:30:00.000Z"
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get("/sessions", authenticateToken, reportsController.getUserSessionReports.bind(reportsController));
+
+/**
+ * @swagger
+ * /reports/methods:
+ *   get:
+ *     summary: Obtener reportes de métodos de estudio del usuario
+ *     description: |
+ *       Retorna una lista de reportes de métodos de estudio para el usuario autenticado.
+ *
+ *       **Campos incluidos:**
+ *       - id_reporte: ID único del reporte de método
+ *       - id_metodo: ID del método de estudio
+ *       - id_usuario: ID del usuario propietario
+ *       - nombre_metodo: Nombre del método de estudio
+ *       - progreso: Progreso actual (0-100)
+ *       - estado: Estado actual del método
+ *       - fecha_creacion: Fecha de creación del reporte
+ *     tags: [Reports]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Reportes de métodos obtenidos exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Reportes de métodos obtenidos exitosamente"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_reporte:
+ *                         type: integer
+ *                         example: 1
+ *                       id_metodo:
+ *                         type: integer
+ *                         example: 1
+ *                       id_usuario:
+ *                         type: integer
+ *                         example: 18
+ *                       nombre_metodo:
+ *                         type: string
+ *                         example: "Método Feynman"
+ *                       progreso:
+ *                         type: integer
+ *                         minimum: 0
+ *                         maximum: 100
+ *                         example: 50
+ *                       estado:
+ *                         type: string
+ *                         example: "en_progreso"
+ *                       fecha_creacion:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-01-15T08:30:00.000Z"
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get("/methods", authenticateToken, reportsController.getUserMethodReports.bind(reportsController));
 
 /**
  * @swagger

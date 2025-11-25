@@ -222,8 +222,8 @@ export class SessionService {
   }
 
   /**
-   * Lista sesiones del usuario con filtros
-   * @param filters - Filtros de búsqueda
+   * Lista sesiones del usuario
+   * @param filters - Filtros simplificados (solo paginación)
    * @param userId - ID del usuario
    * @returns Lista paginada de sesiones
    */
@@ -233,21 +233,7 @@ export class SessionService {
     const queryBuilder = this.sessionRepository.createQueryBuilder("s")
       .where("s.idUsuario = :userId", { userId });
 
-    // Aplicar filtros
-    if (filters.status) {
-      queryBuilder.andWhere("s.estado = :status", { status: filters.status });
-    }
-    if (filters.type) {
-      queryBuilder.andWhere("s.tipo = :type", { type: filters.type });
-    }
-    if (filters.fromDate) {
-      queryBuilder.andWhere("s.fechaCreacion >= :fromDate", { fromDate: filters.fromDate });
-    }
-    if (filters.toDate) {
-      queryBuilder.andWhere("s.fechaCreacion <= :toDate", { toDate: filters.toDate });
-    }
-
-    // Paginación
+    // Solo aplicar paginación, sin otros filtros según nueva especificación
     const page = filters.page || 1;
     const perPage = filters.perPage || 10;
     const skip = (page - 1) * perPage;
@@ -311,183 +297,7 @@ export class SessionService {
     return this.entityToDto(updatedSession);
   }
 
-  /**
-   * Pausa una sesión de concentración
-   * @param sessionId - ID de la sesión
-   * @param userId - ID del usuario
-   * @returns Sesión pausada
-   */
-  async pauseSession(sessionId: number, userId: number): Promise<SessionResponseDto> {
-    logger.info(`Pausando sesión ${sessionId} para usuario ${userId}`);
 
-    const session = await this.sessionRepository.findOne({
-      where: { idSesion: sessionId, idUsuario: userId }
-    });
-
-    if (!session) {
-      throw new Error("Sesión no encontrada o no pertenece al usuario");
-    }
-
-    // Si ya está pausada, devolver estado actual (idempotente)
-    if (session.estado === "completada") {
-      logger.info(`Sesión ${sessionId} ya está completada`);
-      return this.entityToDto(session);
-    }
-
-    // Calcular tiempo transcurrido adicional
-    const now = new Date();
-    const lastInteraction = session.ultimaInteraccion;
-    const additionalMs = now.getTime() - lastInteraction.getTime();
-
-    // Actualizar tiempo transcurrido
-    const currentMs = this.intervalToMs(session.tiempoTranscurrido);
-    const newMs = currentMs + additionalMs;
-    session.tiempoTranscurrido = this.msToInterval(newMs);
-
-    // Actualizar última interacción
-    session.ultimaInteraccion = now;
-
-    const updatedSession = await this.sessionRepository.save(session);
-
-    logger.info(`Sesión ${sessionId} pausada exitosamente`, {
-      additionalMs,
-      totalElapsed: session.tiempoTranscurrido
-    });
-
-    return this.entityToDto(updatedSession);
-  }
-
-  /**
-   * Reanuda una sesión de concentración
-   * @param sessionId - ID de la sesión
-   * @param userId - ID del usuario
-   * @returns Sesión reanudada
-   */
-  async resumeSession(sessionId: number, userId: number): Promise<SessionResponseDto> {
-    logger.info(`Reanudando sesión ${sessionId} para usuario ${userId}`);
-
-    const session = await this.sessionRepository.findOne({
-      where: { idSesion: sessionId, idUsuario: userId }
-    });
-
-    if (!session) {
-      throw new Error("Sesión no encontrada o no pertenece al usuario");
-    }
-
-    // Si ya está corriendo, devolver estado actual (idempotente)
-    if (session.estado === "completada") {
-      logger.info(`Sesión ${sessionId} ya está completada`);
-      return this.entityToDto(session);
-    }
-
-    // Actualizar última interacción a ahora
-    session.ultimaInteraccion = new Date();
-
-    const updatedSession = await this.sessionRepository.save(session);
-
-    logger.info(`Sesión ${sessionId} reanudada exitosamente`);
-
-    return this.entityToDto(updatedSession);
-  }
-
-  /**
-   * Completa una sesión de concentración
-   * @param sessionId - ID de la sesión
-   * @param userId - ID del usuario
-   * @returns Sesión completada
-   */
-  async completeSession(sessionId: number, userId: number): Promise<SessionResponseDto> {
-    logger.info(`Completando sesión ${sessionId} para usuario ${userId}`);
-
-    const session = await this.sessionRepository.findOne({
-      where: { idSesion: sessionId, idUsuario: userId },
-      relations: ["metodo"]
-    });
-
-    if (!session) {
-      throw new Error("Sesión no encontrada o no pertenece al usuario");
-    }
-
-    if (session.estado === "completada") {
-      logger.info(`Sesión ${sessionId} ya está completada`);
-      return this.entityToDto(session);
-    }
-
-    // Verificar si hay método asociado y si está completado
-    if (session.idMetodo) {
-      const metodoRealizado = await this.metodoRealizadoRepository.findOne({
-        where: { idMetodo: session.idMetodo, idUsuario: userId }
-      });
-
-      if (!metodoRealizado || metodoRealizado.estado !== "completado") {
-        throw new Error("No se puede completar la sesión: el método asociado no está completado");
-      }
-    }
-
-    // Calcular tiempo final transcurrido
-    const now = new Date();
-    const lastInteraction = session.ultimaInteraccion;
-    const additionalMs = now.getTime() - lastInteraction.getTime();
-
-    const currentMs = this.intervalToMs(session.tiempoTranscurrido);
-    const finalMs = currentMs + additionalMs;
-    session.tiempoTranscurrido = this.msToInterval(finalMs);
-
-    // Marcar como completada
-    session.estado = "completada";
-    session.ultimaInteraccion = now;
-
-    const updatedSession = await this.sessionRepository.save(session);
-
-    logger.info(`Sesión ${sessionId} completada exitosamente`, {
-      finalElapsed: session.tiempoTranscurrido
-    });
-
-    return this.entityToDto(updatedSession);
-  }
-
-  /**
-   * Finaliza una sesión más tarde (pausa y mantiene pendiente)
-   * @param sessionId - ID de la sesión
-   * @param userId - ID del usuario
-   * @returns Sesión finalizada más tarde
-   */
-  async finishLater(sessionId: number, userId: number): Promise<SessionResponseDto> {
-    logger.info(`Finalizando más tarde sesión ${sessionId} para usuario ${userId}`);
-
-    const session = await this.sessionRepository.findOne({
-      where: { idSesion: sessionId, idUsuario: userId }
-    });
-
-    if (!session) {
-      throw new Error("Sesión no encontrada o no pertenece al usuario");
-    }
-
-    if (session.estado === "completada") {
-      logger.info(`Sesión ${sessionId} ya está completada`);
-      return this.entityToDto(session);
-    }
-
-    // Calcular tiempo transcurrido adicional
-    const now = new Date();
-    const lastInteraction = session.ultimaInteraccion;
-    const additionalMs = now.getTime() - lastInteraction.getTime();
-
-    const currentMs = this.intervalToMs(session.tiempoTranscurrido);
-    const newMs = currentMs + additionalMs;
-    session.tiempoTranscurrido = this.msToInterval(newMs);
-
-    // Mantener como pendiente pero actualizar tiempo
-    session.ultimaInteraccion = now;
-
-    const updatedSession = await this.sessionRepository.save(session);
-
-    logger.info(`Sesión ${sessionId} finalizada más tarde exitosamente`, {
-      totalElapsed: session.tiempoTranscurrido
-    });
-
-    return this.entityToDto(updatedSession);
-  }
 
   /**
    * Obtiene sesiones pendientes más antiguas que los días especificados
@@ -503,7 +313,7 @@ export class SessionService {
     const sessions = await this.sessionRepository
       .createQueryBuilder("s")
       .where("s.estado = :status", { status: "pendiente" })
-      .andWhere("s.fechaCreacion < :cutoffDate", { cutoffDate })
+      .andWhere("(s.ultimaInteraccion < :cutoffDate OR (s.ultimaInteraccion IS NULL AND s.fechaActualizacion < :cutoffDate))", { cutoffDate })
       .orderBy("s.fechaCreacion", "ASC")
       .getMany();
 
