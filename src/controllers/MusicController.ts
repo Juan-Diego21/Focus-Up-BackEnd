@@ -77,19 +77,20 @@ export class MusicController {
   }
 
   async getCancionesByAlbum(req: Request, res: Response) {
-    const id = parseInt(req.params.id);
-    if (isNaN(id))
+    const albumId = parseInt(req.params.albumId);
+    if (isNaN(albumId))
       return res.status(400).json({
         success: false,
-        message: "ID inválido",
+        message: "ID de álbum inválido",
         timestamp: new Date(),
       });
 
-    const result = await musicService.getCancionesByAlbum(id);
+    const result = await musicService.getCancionesByAlbum(albumId);
+    const hasSongs = result.canciones && result.canciones.length > 0;
     const response: ApiResponse = {
       success: result.success,
       message: result.success
-        ? "Canciones por álbum obtenidas"
+        ? (hasSongs ? "Songs fetched successfully" : "No songs found for this album")
         : "Error al obtener canciones por álbum",
       data: result.canciones,
       error: result.error,

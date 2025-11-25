@@ -19,15 +19,15 @@ export class MusicRepository {
 
   private mapToMusicaDTO(entity: MusicaEntity): Musica {
     return {
-      id_cancion: entity.idCancion,
-      nombre_cancion: entity.nombreCancion,
-      artista_cancion: entity.artistaCancion ?? null,
-      genero_cancion: entity.generoCancion ?? null,
-      categoria_musica: entity.categoriaMusica ?? null,
-      id_album: entity.idAlbum ?? null,
-      fecha_creacion: entity.fechaCreacion,
-      fecha_actualizacion: entity.fechaActualizacion,
-      url_musica: entity.urlMusica,
+      idCancion: entity.idCancion,
+      nombreCancion: entity.nombreCancion,
+      artistaCancion: entity.artistaCancion ?? null,
+      generoCancion: entity.generoCancion ?? null,
+      categoriaMusica: entity.categoriaMusica ?? null,
+      idAlbum: entity.idAlbum ?? null,
+      fechaCreacion: entity.fechaCreacion,
+      fechaActualizacion: entity.fechaActualizacion,
+      urlMusica: entity.urlMusica,
     };
   }
 

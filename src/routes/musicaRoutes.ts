@@ -108,26 +108,26 @@ router.get("/:id", authenticateToken, musicController.getCancionById.bind(musicC
  *         description: No encontrada
  */
 
-// GET /api/v1/musica/albums/:id - Obtener álbum por ID
-router.get("/albums/:id", authenticateToken, musicController.getAlbumById.bind(musicController));
+// GET /api/v1/musica/albums/:albumId - Obtener canciones por ID de álbum
+router.get("/albums/:albumId", authenticateToken, musicController.getCancionesByAlbum.bind(musicController));
 
 /**
  * @swagger
- * /musica/albums/{id}:
+ * /musica/albums/{albumId}:
  *   get:
- *     summary: Obtener un álbum por ID
+ *     summary: Obtener canciones por ID de álbum
  *     tags: [Música]
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: albumId
  *         required: true
  *         schema:
  *           type: integer
  *     responses:
  *       200:
- *         description: Álbum encontrado
+ *         description: Canciones del álbum obtenidas exitosamente
  *       404:
- *         description: No encontrado
+ *         description: Álbum no encontrado o sin canciones
  */
 
 // GET /api/v1/musica/albums/nombre/:nombre - Obtener álbum por nombre
