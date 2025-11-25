@@ -1086,56 +1086,71 @@ export class ReportsService {
   }
 
   /**
-   * Elimina un reporte (método realizado) por ID y usuario
-   * Solo permite eliminar reportes que pertenecen al usuario autenticado
-   */
-  async deleteReport(reportId: number, userId: number): Promise<{
-    success: boolean;
-    message?: string;
-    error?: string;
-  }> {
-    try {
-      // Asegurar que los IDs sean números
-      const numericReportId = Number(reportId);
-      const numericUserId = Number(userId);
+    * Elimina un reporte (método realizado o sesión de concentración) por ID y usuario
+    * Solo permite eliminar reportes que pertenecen al usuario autenticado
+    * Primero intenta eliminar un método, luego una sesión si no encuentra el método
+    */
+   async deleteReport(reportId: number, userId: number): Promise<{
+     success: boolean;
+     message?: string;
+     error?: string;
+   }> {
+     try {
+       // Asegurar que los IDs sean números
+       const numericReportId = Number(reportId);
+       const numericUserId = Number(userId);
 
-      logger.info("Buscando reporte con ID:", numericReportId, "para usuario:", numericUserId);
+       logger.info("Buscando reporte con ID:", numericReportId, "para usuario:", numericUserId);
 
-      // Verificar que el reporte existe y pertenece al usuario usando query builder
-      const report = await this.metodoRealizadoRepository
-        .createQueryBuilder("mr")
-        .where("mr.idMetodoRealizado = :reportId", { reportId: numericReportId })
-        .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
-        .getOne();
+       // Primero intentar eliminar un método realizado
+       const methodReport = await this.metodoRealizadoRepository
+         .createQueryBuilder("mr")
+         .where("mr.idMetodoRealizado = :reportId", { reportId: numericReportId })
+         .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
+         .getOne();
 
-      if (!report) {
-        logger.warn(`Reporte ${numericReportId} no encontrado para usuario ${numericUserId}`);
-        return {
-          success: false,
-          error: "Reporte no encontrado o no autorizado"
-        };
-      }
+       if (methodReport) {
+         logger.info(`Eliminando reporte de método ${numericReportId} del usuario ${numericUserId}`);
+         await this.metodoRealizadoRepository.remove(methodReport);
+         logger.info(`Reporte de método ${numericReportId} eliminado correctamente`);
+         return {
+           success: true,
+           message: "Reporte de método eliminado correctamente"
+         };
+       }
 
-      logger.info(`Eliminando reporte ${numericReportId} del usuario ${numericUserId}`);
+       // Si no es un método, intentar eliminar una sesión de concentración
+       const sessionReport = await this.sesionRepository
+         .createQueryBuilder("sesion")
+         .where("sesion.idSesion = :reportId", { reportId: numericReportId })
+         .andWhere("sesion.idUsuario = :userId", { userId: numericUserId })
+         .getOne();
 
-      // Eliminar el reporte
-      await this.metodoRealizadoRepository.remove(report);
+       if (sessionReport) {
+         logger.info(`Eliminando reporte de sesión ${numericReportId} del usuario ${numericUserId}`);
+         await this.sesionRepository.remove(sessionReport);
+         logger.info(`Reporte de sesión ${numericReportId} eliminado correctamente`);
+         return {
+           success: true,
+           message: "Reporte de sesión eliminado correctamente"
+         };
+       }
 
-      logger.info(`Reporte ${numericReportId} eliminado correctamente`);
+       // Si no se encontró ni método ni sesión
+       logger.warn(`Reporte ${numericReportId} no encontrado para usuario ${numericUserId} (ni método ni sesión)`);
+       return {
+         success: false,
+         error: "Reporte no encontrado o no autorizado"
+       };
 
-      return {
-        success: true,
-        message: "Reporte eliminado correctamente"
-      };
-
-    } catch (error) {
-      logger.error("Error en ReportsService.deleteReport:", error);
-      return {
-        success: false,
-        error: "Error al eliminar reporte"
-      };
-    }
-  }
+     } catch (error) {
+       logger.error("Error en ReportsService.deleteReport:", error);
+       return {
+         success: false,
+         error: "Error al eliminar reporte"
+       };
+     }
+   }
 }
 
 export const reportsService = new ReportsService();

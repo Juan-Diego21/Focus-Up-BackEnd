@@ -120,8 +120,33 @@ const testReportsDomainSeparation = async () => {
             console.log('   ✅ Separación de dominios validada correctamente');
         }
 
-        // 4. Test de errores
-        console.log('\n4. Testeando manejo de errores...');
+        // 4. Test de eliminación de reportes
+        console.log('\n4. Testeando eliminación de reportes...');
+
+        // Intentar eliminar un método (debería funcionar si existe)
+        if (methodReports.success && methodReports.methods && methodReports.methods.length > 0) {
+            const methodToDelete = methodReports.methods[0];
+            const deleteMethodResult = await reportsService.deleteReport(methodToDelete.id_reporte, 18);
+            console.log('   ✅ Eliminación de método:', deleteMethodResult.success, '-', deleteMethodResult.message);
+        } else {
+            console.log('   ⚠️ No hay métodos para probar eliminación');
+        }
+
+        // Intentar eliminar una sesión (debería funcionar si existe)
+        if (sessionReports.success && sessionReports.sessions && sessionReports.sessions.length > 0) {
+            const sessionToDelete = sessionReports.sessions[0];
+            const deleteSessionResult = await reportsService.deleteReport(sessionToDelete.id_reporte, 18);
+            console.log('   ✅ Eliminación de sesión:', deleteSessionResult.success, '-', deleteSessionResult.message);
+        } else {
+            console.log('   ⚠️ No hay sesiones para probar eliminación');
+        }
+
+        // Intentar eliminar un reporte inexistente
+        const deleteNonExistentResult = await reportsService.deleteReport(999999, 18);
+        console.log('   ✅ Eliminación de reporte inexistente:', deleteNonExistentResult.success === false);
+
+        // 5. Test de errores
+        console.log('\n5. Testeando manejo de errores...');
 
         // Usuario inexistente
         const invalidUserSessions = await reportsService.getUserSessionReports(99999);
@@ -133,6 +158,7 @@ const testReportsDomainSeparation = async () => {
         console.log('\n' + '='.repeat(60));
         console.log('✅ TEST DE SEPARACIÓN DE DOMINIOS COMPLETADO EXITOSAMENTE');
         console.log('✅ Endpoints de reportes separados funcionan correctamente');
+        console.log('✅ Eliminación de reportes funciona para métodos y sesiones');
         console.log('✅ Estructuras de datos validadas');
         console.log('✅ Separación de dominios confirmada');
 

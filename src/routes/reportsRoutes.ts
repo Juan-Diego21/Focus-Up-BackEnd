@@ -378,7 +378,18 @@ router.get("/methods", authenticateToken, reportsController.getUserMethodReports
  * @swagger
  * /reports/{id}:
  *   delete:
- *     summary: Eliminar un reporte por ID
+ *     summary: Eliminar un reporte (método o sesión) por ID
+ *     description: |
+ *       Elimina un reporte de método de estudio o sesión de concentración por su ID.
+ *
+ *       **Lógica de eliminación:**
+ *       - Primero busca y elimina reportes de métodos de estudio
+ *       - Si no encuentra método, busca y elimina sesiones de concentración
+ *       - Solo permite eliminar reportes que pertenecen al usuario autenticado
+ *
+ *       **Tipos de reportes eliminables:**
+ *       - Reportes de métodos de estudio (id_metodo_realizado)
+ *       - Reportes de sesiones de concentración (id_sesion)
  *     tags: [Reports]
  *     security:
  *       - BearerAuth: []
@@ -388,12 +399,41 @@ router.get("/methods", authenticateToken, reportsController.getUserMethodReports
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID del reporte a eliminar
+ *         description: ID del reporte a eliminar (puede ser método o sesión)
+ *         example: 1
  *     responses:
  *       200:
  *         description: Reporte eliminado correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Reporte de método eliminado correctamente"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
  *       404:
  *         description: Reporte no encontrado o no autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Reporte no encontrado o no autorizado"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
  *       401:
  *         description: No autorizado
  */

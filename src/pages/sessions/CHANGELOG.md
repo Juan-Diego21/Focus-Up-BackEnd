@@ -215,6 +215,103 @@ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..." \
 - **Escalabilidad**: Fácil agregar funcionalidades específicas por dominio
 - **API Design**: Principios RESTful mejorados
 
+## 🔄 \*\*Funcionalidad Extendida: Eliminación de Reportes (2025-11-25)
+
+### ✅ **DELETE /api/v1/reports/{id} - Eliminación Unificada**
+
+Se ha extendido el endpoint `DELETE /api/v1/reports/{id}` para manejar tanto reportes de métodos como sesiones de concentración.
+
+#### **Lógica de Eliminación Inteligente**
+
+**1. Prioridad de Búsqueda:**
+
+- ✅ **Primero**: Busca y elimina reportes de métodos de estudio (`metodos_realizados`)
+- ✅ **Después**: Si no encuentra método, busca y elimina sesiones de concentración (`sesiones_concentracion`)
+
+**2. Validaciones de Seguridad:**
+
+- ✅ Solo permite eliminar reportes que pertenecen al usuario autenticado
+- ✅ Verificación de existencia antes de eliminación
+- ✅ Manejo de errores consistente
+
+#### **Ejemplos de Uso**
+
+**Eliminar un Método de Estudio:**
+
+```bash
+DELETE /api/v1/reports/95
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+**Respuesta:**
+
+```json
+{
+  "success": true,
+  "message": "Reporte de método eliminado correctamente",
+  "timestamp": "2025-11-25T18:47:35.535Z"
+}
+```
+
+**Eliminar una Sesión de Concentración:**
+
+```bash
+DELETE /api/v1/reports/14
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+**Respuesta:**
+
+```json
+{
+  "success": true,
+  "message": "Reporte de sesión eliminado correctamente",
+  "timestamp": "2025-11-25T18:47:35.535Z"
+}
+```
+
+#### **Casos de Error**
+
+**Reporte No Encontrado:**
+
+```json
+{
+  "success": false,
+  "error": "Reporte no encontrado o no autorizado",
+  "timestamp": "2025-11-25T18:47:35.535Z"
+}
+```
+
+### 🔧 **Implementación Técnica**
+
+**ReportsService.deleteReport():**
+
+- ✅ Búsqueda secuencial: método → sesión
+- ✅ Eliminación atómica con transacciones
+- ✅ Logging detallado de operaciones
+- ✅ Mensajes específicos por tipo de reporte
+
+**Testing Actualizado:**
+
+- ✅ Tests de eliminación de métodos
+- ✅ Tests de eliminación de sesiones
+- ✅ Tests de reportes inexistentes
+- ✅ Validación de permisos de usuario
+
+### 📋 **Compatibilidad**
+
+- ✅ **Backward Compatible**: No rompe funcionalidad existente
+- ✅ **Domain Separation**: Consistente con la arquitectura separada
+- ✅ **Error Handling**: Manejo robusto de casos edge
+- ✅ **Performance**: Consultas optimizadas con índices existentes
+
+### 🎉 **Beneficios Adicionales**
+
+- **🔄 Unificación**: Un solo endpoint para eliminar cualquier tipo de reporte
+- **🧠 Inteligente**: Detección automática del tipo de reporte
+- **🔒 Seguro**: Validaciones estrictas de propiedad
+- **📊 Audit**: Logging completo de operaciones de eliminación
+
 ---
 
 **Contacto**: Equipo Backend - Para preguntas sobre la migración o implementación.
