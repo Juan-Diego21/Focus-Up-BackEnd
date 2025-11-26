@@ -6,6 +6,7 @@ import metodoEstudioRoutes from "./metodoEstudioRoutes";
 import reportsRoutes from "./reportsRoutes";
 import notificacionesPreferenciasRutas from "./notificacionesPreferenciasRutas";
 import notificacionesProgramadasRutas from "./notificacionesProgramadasRutas";
+import sessionRoutes from "./sessionRoutes";
 import { env } from "../config/env";
 import eventosRutas from "../routes/eventosRutas"
 
@@ -72,6 +73,9 @@ router.use("/notificaciones", notificacionesPreferenciasRutas);
 
 // Rutas de notificaciones programadas
 router.use("/notificaciones", notificacionesProgramadasRutas);
+
+// Rutas de sesiones de concentración
+router.use("/sessions", sessionRoutes);
 
 
 // Ruta por defecto para manejar endpoints no encontrados

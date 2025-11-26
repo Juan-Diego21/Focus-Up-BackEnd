@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { userController } from "../controllers/UserController";
+import { SessionController } from "../controllers/SessionController";
 import {
   validateUserCreate,
   validateUserUpdate,
@@ -7,6 +8,7 @@ import {
 import { authenticateToken } from "../middleware/auth";
 
 const router = Router();
+const sessionController = new SessionController();
 
 // GET /api/v1/users - Obtener todos los usuarios
 router.get("/", authenticateToken, userController.getAllUsers.bind(userController));
@@ -328,6 +330,9 @@ router.post('/request-password-reset', userController.requestPasswordReset.bind(
 
 // POST /api/v1/users/reset-password-with-code - Restablecer contraseña
 router.post('/reset-password-with-code', userController.resetPasswordWithCode.bind(userController));
+
+// GET /api/v1/users/:userId/sessions - Listar sesiones de un usuario
+router.get('/:userId/sessions', authenticateToken, sessionController.listUserSessions.bind(sessionController));
 
 /**
  * @swagger

@@ -1,8 +1,10 @@
 import { AppDataSource } from "../config/ormconfig";
 import { MetodoRealizadoEntity, MetodoProgreso, MetodoEstado } from "../models/MetodoRealizado.entity";
 import { SesionConcentracionRealizadaEntity, SesionEstado } from "../models/SesionConcentracionRealizada.entity";
+import { SesionConcentracionEntity } from "../models/SesionConcentracion.entity";
 import { UserEntity } from "../models/User.entity";
 import { MetodoEstudioEntity } from "../models/MetodoEstudio.entity";
+import { EventoEntity } from "../models/Evento.entity";
 import { MusicaEntity } from "../models/Musica.entity";
 import { NotificacionesProgramadasService } from "./NotificacionesProgramadasService";
 import logger from "../utils/logger";
@@ -35,7 +37,9 @@ export interface UpdateMethodProgressData {
 }
 
 export interface UpdateSessionProgressData {
-  estado?: SesionEstado;
+   status?: "completed" | "pending";
+   elapsedMs?: number;
+   notes?: string;
 }
 
 export interface ReportItem {
@@ -332,22 +336,154 @@ function getResumeInfo(methodType: string, progress: number): {
 export class ReportsService {
 
   private metodoRealizadoRepository = AppDataSource.getRepository(MetodoRealizadoEntity);
-  private sesionRealizadaRepository = AppDataSource.getRepository(SesionConcentracionRealizadaEntity);
+  private sesionRepository = AppDataSource.getRepository(SesionConcentracionEntity);
   private userRepository = AppDataSource.getRepository(UserEntity);
   private metodoRepository = AppDataSource.getRepository(MetodoEstudioEntity);
   private musicaRepository = AppDataSource.getRepository(MusicaEntity);
 
   /**
-   * Obtiene información para reanudar un método específico
-   */
-  getResumeInfo(methodType: string, progress: number): {
-    route: string;
-    currentStep?: number;
-    progress: number;
-    methodType: string;
-  } {
-    return getResumeInfo(methodType, progress);
-  }
+    * Obtiene información para reanudar un método específico
+    */
+   getResumeInfo(methodType: string, progress: number): {
+     route: string;
+     currentStep?: number;
+     progress: number;
+     methodType: string;
+   } {
+     return getResumeInfo(methodType, progress);
+   }
+
+   /**
+    * Obtiene reportes de sesiones de concentración para un usuario
+    * Retorna solo sesiones, sin métodos de estudio
+    */
+   async getUserSessionReports(userId: number): Promise<{
+     success: boolean;
+     sessions?: any[];
+     error?: string;
+   }> {
+     try {
+       // Asegurar que userId sea un número
+       const numericUserId = Number(userId);
+       logger.info("Buscando reportes de sesiones para usuario ID:", numericUserId);
+
+       // Verificar que el usuario existe
+       const user = await this.userRepository.findOne({
+         where: { idUsuario: numericUserId }
+       });
+
+       if (!user) {
+         return {
+           success: false,
+           error: "Usuario no encontrado"
+         };
+       }
+
+       // Obtener sesiones del usuario desde la tabla principal de sesiones
+       const sesiones = await this.sesionRepository
+         .createQueryBuilder("sesion")
+         .leftJoinAndSelect("sesion.album", "album")
+         .leftJoinAndSelect("sesion.metodo", "metodo")
+         .where("sesion.idUsuario = :userId", { userId: numericUserId })
+         .orderBy("sesion.fechaCreacion", "DESC")
+         .getMany();
+
+       logger.info(`Encontradas ${sesiones.length} sesiones para usuario ${numericUserId}`);
+
+       // Formatear datos de sesiones según especificación del endpoint dedicado
+       const sessionsFormatted = sesiones.map(sesion => ({
+         id_reporte: sesion.idSesion, // Usamos idSesion como id_reporte para sesiones
+         id_sesion: sesion.idSesion,
+         id_usuario: sesion.idUsuario,
+         nombre_sesion: sesion.titulo || 'Sesión sin título',
+         descripcion: sesion.descripcion || '',
+         estado: sesion.estado,
+         tiempo_total: this.intervalToMs(sesion.tiempoTranscurrido), // Retornamos elapsedMs
+         metodo_asociado: sesion.metodo ? {
+           id_metodo: sesion.metodo.idMetodo,
+           nombre_metodo: sesion.metodo.nombreMetodo
+         } : null,
+         album_asociado: sesion.album ? {
+           id_album: sesion.album.idAlbum,
+           nombre_album: sesion.album.nombreAlbum
+         } : null,
+         fecha_creacion: sesion.fechaCreacion
+       }));
+
+       return {
+         success: true,
+         sessions: sessionsFormatted
+       };
+
+     } catch (error) {
+       logger.error("Error en ReportsService.getUserSessionReports:", error);
+       return {
+         success: false,
+         error: "Error al obtener reportes de sesiones"
+       };
+     }
+   }
+
+   /**
+    * Obtiene reportes de métodos de estudio para un usuario
+    * Retorna solo métodos, sin sesiones de concentración
+    */
+   async getUserMethodReports(userId: number): Promise<{
+     success: boolean;
+     methods?: any[];
+     error?: string;
+   }> {
+     try {
+       // Asegurar que userId sea un número
+       const numericUserId = Number(userId);
+       logger.info("Buscando reportes de métodos para usuario ID:", numericUserId);
+
+       // Verificar que el usuario existe
+       const user = await this.userRepository.findOne({
+         where: { idUsuario: numericUserId }
+       });
+
+       if (!user) {
+         return {
+           success: false,
+           error: "Usuario no encontrado"
+         };
+       }
+
+       // Obtener métodos realizados del usuario
+       const metodosRealizados = await this.metodoRealizadoRepository
+         .createQueryBuilder("mr")
+         .leftJoinAndSelect("mr.metodo", "m")
+         .where("mr.idUsuario = :userId", { userId: numericUserId })
+         .orderBy("mr.fechaCreacion", "DESC")
+         .getMany();
+
+       logger.info(`Encontrados ${metodosRealizados.length} métodos realizados para usuario ${numericUserId}`);
+
+       // Formatear datos de métodos según especificación del endpoint dedicado
+       const methodsFormatted = metodosRealizados.map(metodoRealizado => ({
+         id_reporte: metodoRealizado.idMetodoRealizado, // Usamos idMetodoRealizado como id_reporte para métodos
+         id_metodo: metodoRealizado.idMetodo,
+         id_usuario: metodoRealizado.idUsuario,
+         nombre_metodo: metodoRealizado.metodo?.nombreMetodo || 'Método desconocido',
+         progreso: metodoRealizado.progreso,
+         estado: metodoRealizado.estado,
+         fecha_creacion: metodoRealizado.fechaCreacion
+       }));
+
+       return {
+         success: true,
+         methods: methodsFormatted
+       };
+
+     } catch (error) {
+       logger.error("Error en ReportsService.getUserMethodReports:", error);
+       return {
+         success: false,
+         error: "Error al obtener reportes de métodos"
+       };
+     }
+   }
 
   /**
     * Crea un nuevo método activo para un usuario
@@ -546,12 +682,11 @@ export class ReportsService {
 
       logger.info(`Encontrados ${metodosRealizados.length} métodos realizados para usuario ${numericUserId}`);
 
-      // Obtener sesiones realizadas del usuario (directas o a través de métodos realizados)
-      const sesionesRealizadas = await this.sesionRealizadaRepository
+      // Obtener sesiones del usuario desde la tabla principal de sesiones
+      const sesiones = await this.sesionRepository
         .createQueryBuilder("sesion")
-        .leftJoinAndSelect("sesion.musica", "musica")
-        .leftJoin("sesion.metodoRealizado", "metodoRealizado")
-        .where("sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId", { userId: numericUserId })
+        .leftJoinAndSelect("sesion.album", "album")
+        .where("sesion.idUsuario = :userId", { userId: numericUserId })
         .orderBy("sesion.fechaCreacion", "DESC")
         .getMany();
 
@@ -570,21 +705,22 @@ export class ReportsService {
         fechaCreacion: metodoRealizado.fechaCreacion,
       }));
 
-      // Formatear datos de sesiones
-      const sesiones = sesionesRealizadas.map(sesionRealizada => ({
-        id: sesionRealizada.idSesionRealizada,
-        musica: sesionRealizada.musica ? {
-          id: sesionRealizada.musica.idCancion,
-          nombre: sesionRealizada.musica.nombreCancion,
-          artista: sesionRealizada.musica.artistaCancion,
-          genero: sesionRealizada.musica.generoCancion,
+      // Formatear datos de sesiones desde la tabla principal
+      const sesionesFormateadas = sesiones.map(sesion => ({
+        id: sesion.idSesion,
+        album: sesion.album ? {
+          id: sesion.album.idAlbum,
+          nombre: sesion.album.nombreAlbum,
+          genero: sesion.album.genero,
         } : null,
-        duracion: null, // Not available in current database schema
-        fechaProgramada: sesionRealizada.fechaProgramada,
-        estado: sesionRealizada.estado,
-        fechaInicio: null, // Not available in current database schema
-        fechaFin: null, // Not available in current database schema
-        fechaCreacion: sesionRealizada.fechaCreacion,
+        titulo: sesion.titulo,
+        descripcion: sesion.descripcion,
+        tipo: sesion.tipo,
+        estado: sesion.estado,
+        tiempoTranscurrido: sesion.tiempoTranscurrido,
+        fechaCreacion: sesion.fechaCreacion,
+        fechaActualizacion: sesion.fechaActualizacion,
+        ultimaInteraccion: sesion.ultimaInteraccion,
       }));
 
       // Crear array combinado para el formato simplificado
@@ -597,10 +733,10 @@ export class ReportsService {
           estado: metodo.estado,
           fecha_creacion: metodo.fechaCreacion,
         })),
-        ...sesiones.map(sesion => ({
+        ...sesionesFormateadas.map(sesion => ({
           id_reporte: sesion.id,
           id_usuario: numericUserId,
-          nombre_metodo: sesion.musica ? `Sesión: ${sesion.musica.nombre}` : 'Sesión de concentración',
+          nombre_metodo: sesion.titulo ? `Sesión: ${sesion.titulo}` : 'Sesión de concentración',
           progreso: undefined, // Sessions don't have progress
           estado: sesion.estado,
           fecha_creacion: sesion.fechaCreacion,
@@ -611,7 +747,7 @@ export class ReportsService {
         success: true,
         reports: {
           metodos,
-          sesiones,
+          sesiones: sesionesFormateadas,
           combined
         }
       };
@@ -747,7 +883,8 @@ export class ReportsService {
 
   /**
    * Actualiza el progreso de una sesión de concentración
-   * Maneja cambios de estado y timestamps
+   * Maneja transiciones de estado: complete/finish-later
+   * Se ejecuta en transacción para asegurar atomicidad
    */
   async updateSessionProgress(
     sessionId: number,
@@ -755,7 +892,7 @@ export class ReportsService {
     data: UpdateSessionProgressData
   ): Promise<{
     success: boolean;
-    sesionRealizada?: SesionConcentracionRealizadaEntity;
+    session?: any;
     message?: string;
     error?: string;
   }> {
@@ -764,70 +901,119 @@ export class ReportsService {
       const numericSessionId = Number(sessionId);
       const numericUserId = Number(userId);
 
-      // Buscar la sesión realizada (directa o a través de métodos realizados)
-      const sesionRealizada = await this.sesionRealizadaRepository
-        .createQueryBuilder("sesion")
-        .leftJoinAndSelect("sesion.metodoRealizado", "metodoRealizado")
-        .leftJoinAndSelect("metodoRealizado.metodo", "metodo")
-        .where("sesion.idSesionRealizada = :sessionId", { sessionId: numericSessionId })
-        .andWhere("(sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId)", { userId: numericUserId })
-        .getOne();
+      logger.info(`Actualizando progreso de sesión ${numericSessionId} para usuario ${numericUserId}`, data);
 
-      if (!sesionRealizada) {
-        return {
-          success: false,
-          error: "Sesión realizada no encontrada"
-        };
-      }
+      // Ejecutar en transacción para atomicidad
+      const result = await AppDataSource.transaction(async (transactionalEntityManager) => {
+        // Buscar la sesión usando el repositorio de sesiones de concentración
+        const session = await transactionalEntityManager
+          .getRepository(SesionConcentracionEntity)
+          .findOne({
+            where: { idSesion: numericSessionId, idUsuario: numericUserId },
+            relations: ["evento"]
+          });
 
-      // Validate and update status based on method type using registry
-      if (data.estado !== undefined) {
-        const metodoRealizado = sesionRealizada.metodoRealizado;
-        if (!metodoRealizado || !metodoRealizado.metodo) {
-          return {
-            success: false,
-            error: "Método de estudio no encontrado para la sesión"
-          };
+        if (!session) {
+          throw new Error("Sesión no encontrada o no pertenece al usuario");
         }
-        try {
-          const type = getMethodType(metodoRealizado.metodo.nombreMetodo);
-          // For sessions, we validate that the status is acceptable for the method
-          const validStatuses = getValidStatusMethods(type);
-          const normalizedStatus = normalizeText(data.estado);
 
-          if (!validStatuses.some(status => normalizeText(status) === normalizedStatus)) {
-            logger.warn(`Estado inválido para sesión ${numericSessionId}: "${data.estado}". Estados válidos para ${type}: ${validStatuses.join(', ')}`);
-            return {
-              success: false,
-              message: "Estado inválido para este tipo de método"
-            };
+        // Actualizar tiempo transcurrido si se proporciona
+        if (data.elapsedMs !== undefined) {
+          // Convertir ms a formato de intervalo HH:MM:SS
+          const hours = Math.floor(data.elapsedMs / 3600000);
+          const minutes = Math.floor((data.elapsedMs % 3600000) / 60000);
+          const seconds = Math.floor((data.elapsedMs % 60000) / 1000);
+          session.tiempoTranscurrido = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Actualizar estado según el status
+        if (data.status === "completed") {
+          session.estado = "completada";
+          session.ultimaInteraccion = new Date();
+
+          // Si la sesión está ligada a un evento, actualizar el evento también
+          if (session.evento) {
+            session.evento.estado = "completado";
+            await transactionalEntityManager.save(session.evento);
+            logger.info(`Evento ${session.evento.idEvento} marcado como completado`);
           }
-
-          // Map to database format - for sessions, we use the same status values
-          sesionRealizada.estado = data.estado as SesionEstado;
-        } catch (error) {
-          return {
-            success: false,
-            error: (error as Error).message
-          };
+        } else if (data.status === "pending") {
+          session.estado = "pendiente";
+          session.ultimaInteraccion = new Date();
         }
-      }
 
-      const updatedSesion = await this.sesionRealizadaRepository.save(sesionRealizada);
+        // Guardar la sesión actualizada
+        const updatedSession = await transactionalEntityManager.save(session);
+
+        logger.info(`Sesión ${numericSessionId} actualizada exitosamente`, {
+          status: session.estado,
+          elapsedMs: data.elapsedMs,
+          notes: data.notes
+        });
+
+        return updatedSession;
+      });
+
+      // Convertir a DTO de respuesta
+      const sessionDto = {
+        sessionId: result.idSesion,
+        userId: result.idUsuario,
+        title: result.titulo,
+        description: result.descripcion,
+        type: result.tipo as "rapid" | "scheduled",
+        status: result.estado as "pending" | "completed",
+        eventId: result.idEvento,
+        methodId: result.idMetodo,
+        albumId: result.idAlbum,
+        elapsedInterval: result.tiempoTranscurrido,
+        elapsedMs: this.intervalToMs(result.tiempoTranscurrido),
+        createdAt: result.fechaCreacion.toISOString(),
+        updatedAt: result.fechaActualizacion.toISOString(),
+        lastInteractionAt: result.ultimaInteraccion.toISOString(),
+      };
 
       return {
         success: true,
-        sesionRealizada: updatedSesion,
-        message: "Sesión retomada correctamente"
+        session: sessionDto,
+        message: data.status === "completed" ? "Sesión completada exitosamente" : "Sesión actualizada exitosamente"
       };
 
     } catch (error) {
       logger.error("Error en ReportsService.updateSessionProgress:", error);
       return {
         success: false,
-        error: "Error al actualizar progreso de la sesión"
+        error: (error as Error).message || "Error al actualizar progreso de la sesión"
       };
     }
+  }
+
+  /**
+   * Convierte intervalo de PostgreSQL a milisegundos
+   * @param intervalValue - String del intervalo (ej: "01:30:45") o objeto Interval de PostgreSQL
+   * @returns Milisegundos
+   */
+  private intervalToMs(intervalValue: string | any): number {
+    // Si es un string, parsearlo como HH:MM:SS
+    if (typeof intervalValue === 'string') {
+      const parts = intervalValue.split(':');
+      const hours = parseInt(parts[0]) || 0;
+      const minutes = parseInt(parts[1]) || 0;
+      const seconds = parseInt(parts[2]) || 0;
+      return (hours * 3600 + minutes * 60 + seconds) * 1000;
+    }
+
+    // Si es un objeto Interval de PostgreSQL, extraer las propiedades
+    if (typeof intervalValue === 'object' && intervalValue !== null) {
+      const hours = intervalValue.hours || 0;
+      const minutes = intervalValue.minutes || 0;
+      const seconds = intervalValue.seconds || 0;
+      const milliseconds = intervalValue.milliseconds || 0;
+      return (hours * 3600 + minutes * 60 + seconds) * 1000 + milliseconds;
+    }
+
+    // Fallback: asumir 0 si no se puede parsear
+    logger.warn('No se pudo parsear el intervalo, usando 0', { intervalValue });
+    return 0;
   }
 
   /**
@@ -876,7 +1062,7 @@ export class ReportsService {
    */
   async getSessionById(sessionId: number, userId: number): Promise<{
     success: boolean;
-    sesionRealizada?: SesionConcentracionRealizadaEntity;
+    session?: any;
     error?: string;
   }> {
     try {
@@ -884,24 +1070,23 @@ export class ReportsService {
       const numericSessionId = Number(sessionId);
       const numericUserId = Number(userId);
 
-      const sesionRealizada = await this.sesionRealizadaRepository
+      const session = await this.sesionRepository
         .createQueryBuilder("sesion")
-        .leftJoinAndSelect("sesion.musica", "musica")
-        .leftJoin("sesion.metodoRealizado", "metodoRealizado")
-        .where("sesion.idSesionRealizada = :sessionId", { sessionId: numericSessionId })
-        .andWhere("(sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId)", { userId: numericUserId })
+        .leftJoinAndSelect("sesion.album", "album")
+        .where("sesion.idSesion = :sessionId", { sessionId: numericSessionId })
+        .andWhere("sesion.idUsuario = :userId", { userId: numericUserId })
         .getOne();
 
-      if (!sesionRealizada) {
+      if (!session) {
         return {
           success: false,
-          error: "Sesión realizada no encontrada"
+          error: "Sesión no encontrada"
         };
       }
 
       return {
         success: true,
-        sesionRealizada
+        session
       };
 
     } catch (error) {
@@ -914,56 +1099,71 @@ export class ReportsService {
   }
 
   /**
-   * Elimina un reporte (método realizado) por ID y usuario
-   * Solo permite eliminar reportes que pertenecen al usuario autenticado
-   */
-  async deleteReport(reportId: number, userId: number): Promise<{
-    success: boolean;
-    message?: string;
-    error?: string;
-  }> {
-    try {
-      // Asegurar que los IDs sean números
-      const numericReportId = Number(reportId);
-      const numericUserId = Number(userId);
+    * Elimina un reporte (método realizado o sesión de concentración) por ID y usuario
+    * Solo permite eliminar reportes que pertenecen al usuario autenticado
+    * Primero intenta eliminar un método, luego una sesión si no encuentra el método
+    */
+   async deleteReport(reportId: number, userId: number): Promise<{
+     success: boolean;
+     message?: string;
+     error?: string;
+   }> {
+     try {
+       // Asegurar que los IDs sean números
+       const numericReportId = Number(reportId);
+       const numericUserId = Number(userId);
 
-      logger.info("Buscando reporte con ID:", numericReportId, "para usuario:", numericUserId);
+       logger.info("Buscando reporte con ID:", numericReportId, "para usuario:", numericUserId);
 
-      // Verificar que el reporte existe y pertenece al usuario usando query builder
-      const report = await this.metodoRealizadoRepository
-        .createQueryBuilder("mr")
-        .where("mr.idMetodoRealizado = :reportId", { reportId: numericReportId })
-        .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
-        .getOne();
+       // Primero intentar eliminar un método realizado
+       const methodReport = await this.metodoRealizadoRepository
+         .createQueryBuilder("mr")
+         .where("mr.idMetodoRealizado = :reportId", { reportId: numericReportId })
+         .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
+         .getOne();
 
-      if (!report) {
-        logger.warn(`Reporte ${numericReportId} no encontrado para usuario ${numericUserId}`);
-        return {
-          success: false,
-          error: "Reporte no encontrado o no autorizado"
-        };
-      }
+       if (methodReport) {
+         logger.info(`Eliminando reporte de método ${numericReportId} del usuario ${numericUserId}`);
+         await this.metodoRealizadoRepository.remove(methodReport);
+         logger.info(`Reporte de método ${numericReportId} eliminado correctamente`);
+         return {
+           success: true,
+           message: "Reporte de método eliminado correctamente"
+         };
+       }
 
-      logger.info(`Eliminando reporte ${numericReportId} del usuario ${numericUserId}`);
+       // Si no es un método, intentar eliminar una sesión de concentración
+       const sessionReport = await this.sesionRepository
+         .createQueryBuilder("sesion")
+         .where("sesion.idSesion = :reportId", { reportId: numericReportId })
+         .andWhere("sesion.idUsuario = :userId", { userId: numericUserId })
+         .getOne();
 
-      // Eliminar el reporte
-      await this.metodoRealizadoRepository.remove(report);
+       if (sessionReport) {
+         logger.info(`Eliminando reporte de sesión ${numericReportId} del usuario ${numericUserId}`);
+         await this.sesionRepository.remove(sessionReport);
+         logger.info(`Reporte de sesión ${numericReportId} eliminado correctamente`);
+         return {
+           success: true,
+           message: "Reporte de sesión eliminado correctamente"
+         };
+       }
 
-      logger.info(`Reporte ${numericReportId} eliminado correctamente`);
+       // Si no se encontró ni método ni sesión
+       logger.warn(`Reporte ${numericReportId} no encontrado para usuario ${numericUserId} (ni método ni sesión)`);
+       return {
+         success: false,
+         error: "Reporte no encontrado o no autorizado"
+       };
 
-      return {
-        success: true,
-        message: "Reporte eliminado correctamente"
-      };
-
-    } catch (error) {
-      logger.error("Error en ReportsService.deleteReport:", error);
-      return {
-        success: false,
-        error: "Error al eliminar reporte"
-      };
-    }
-  }
+     } catch (error) {
+       logger.error("Error en ReportsService.deleteReport:", error);
+       return {
+         success: false,
+         error: "Error al eliminar reporte"
+       };
+     }
+   }
 }
 
 export const reportsService = new ReportsService();

@@ -13,6 +13,8 @@
     "test:orm": "ts-node src/scripts/test-integration.ts",
     "test:routes": "ts-node src/scripts/debug-routes.ts",
     "test:reports": "ts-node src/scripts/test-reports.ts",
+    "test:reports-separation": "ts-node src/scripts/test-reports-domain-separation.ts",
+    "test:sessions": "ts-node src/tests/sessions/session-endpoints.test.ts",
     "test:feynman": "node test-feynman-regression.js",
     "test:cornell": "node test-cornell-regression.js"
   },

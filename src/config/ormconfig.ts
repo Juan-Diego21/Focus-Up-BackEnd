@@ -21,6 +21,7 @@ import { EventoEntity } from "../models/Evento.entity";
 import { PasswordResetEntity } from "../models/PasswordReset.entity";
 import { MetodoRealizadoEntity } from "../models/MetodoRealizado.entity";
 import { SesionConcentracionRealizadaEntity } from "../models/SesionConcentracionRealizada.entity";
+import { SesionConcentracionEntity } from "../models/SesionConcentracion.entity";
 import { NotificacionesUsuarioEntity } from "../models/NotificacionesUsuario.entity";
 import { NotificacionesProgramadasEntity } from "../models/NotificacionesProgramadas.entity";
 
@@ -65,6 +66,7 @@ export const AppDataSource = new DataSource({
     // Entidades de reportes
     MetodoRealizadoEntity,
     SesionConcentracionRealizadaEntity,
+    SesionConcentracionEntity,
 
     // Entidades de notificaciones
     NotificacionesUsuarioEntity,
