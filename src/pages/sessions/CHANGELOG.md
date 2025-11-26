@@ -1,5 +1,229 @@
 # CHANGELOG - Módulo de Sesiones de Concentración
 
+## v2.1.0 - Reestructuración de API de Sesiones (2025-11-26)
+
+### 🚀 **Cambios Principales en la API de Sesiones**
+
+Se ha reestructurado completamente la API de sesiones de concentración para simplificar el contrato y centralizar la gestión de estado en el módulo de reportes.
+
+#### ✅ **GET /api/v1/users/{userId}/sessions - Simplificado**
+
+**Cambios:**
+
+- ❌ **Removido**: Filtros opcionales (`status`, `type`, `fromDate`, `toDate`)
+- ✅ **Nuevo**: Retorna todas las sesiones del usuario sin filtros adicionales
+- ✅ **Formato**: Array directo de sesiones en snake_case
+- ✅ **Paginación**: Básica con `page` y `perPage` (default: 10 elementos)
+
+**Campos de respuesta (snake_case):**
+
+```json
+[
+  {
+    "id_sesion": 1,
+    "titulo": "Sesión de estudio matutina",
+    "descripcion": "Enfoque en matemáticas capítulo 5",
+    "estado": "pendiente",
+    "tipo": "rapid",
+    "id_evento": null,
+    "id_metodo": 456,
+    "id_album": 789,
+    "tiempo_transcurrido": "01:30:45",
+    "fecha_creacion": "2024-01-15T08:30:00.000Z",
+    "fecha_actualizacion": "2024-01-15T09:15:30.000Z",
+    "ultima_interaccion": "2024-01-15T09:15:30.000Z"
+  }
+]
+```
+
+#### ❌ **Endpoints Removidos - Pause/Resume**
+
+**Eliminados completamente:**
+
+- `POST /api/v1/sessions/{sessionId}/pause`
+- `POST /api/v1/sessions/{sessionId}/resume`
+
+**Motivo:** Gestión de temporizadores movida al frontend. El backend solo persiste el tiempo final.
+
+#### ✅ **PATCH /api/v1/reports/sessions/{id}/progress - Nuevo Endpoint Central**
+
+**Reemplaza:**
+
+- `POST /api/v1/sessions/{sessionId}/complete`
+- `POST /api/v1/sessions/{sessionId}/finish-later`
+
+**Nuevo contrato:**
+
+```json
+{
+  "status": "completed" | "pending",
+  "elapsedMs": 3600000,
+  "notes": "Notas opcionales"
+}
+```
+
+**Comportamiento:**
+
+- `status: "completed"` → `estado = 'completada'`, actualiza tiempo, marca evento como completado si existe
+- `status: "pending"` → `estado = 'pendiente'`, actualiza tiempo
+- Transacción atómica para consistencia de datos
+
+#### ✅ **GET /api/v1/sessions/pending/aged - Mantenido**
+
+**Mejoras:**
+
+- ✅ Parámetro `days` configurable (default: 7)
+- ✅ Optimizado con índices en `(estado, ultima_interaccion)`
+- ✅ Usado por cron job para notificaciones automáticas
+
+#### ❌ **POST /api/v1/sessions/{sessionId}/notify-weekly - Removido**
+
+**Reemplazado por:** Sistema automático en `send-pending-emails.ts`
+
+- ✅ Cron job crea notificaciones directamente en `notificaciones_programadas`
+- ✅ `PATCH /api/v1/notificaciones/programadas/{id}/enviada` marca como enviada
+
+### 🔄 **Migración para Frontend**
+
+#### **Obtener Sesiones del Usuario**
+
+```javascript
+// ✅ Nuevo - simplificado
+const response = await fetch(
+  `/api/v1/users/${userId}/sessions?page=1&perPage=10`,
+  {
+    headers: { Authorization: `Bearer ${token}` },
+  }
+);
+const sessions = await response.json(); // Array directo
+```
+
+#### **Completar Sesión**
+
+```javascript
+// ❌ Anterior
+await fetch(`/api/v1/sessions/${sessionId}/complete`, { method: "POST" });
+
+// ✅ Nuevo
+await fetch(`/api/v1/reports/sessions/${sessionId}/progress`, {
+  method: "PATCH",
+  headers: {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    status: "completed",
+    elapsedMs: 3600000,
+    notes: "Completada exitosamente",
+  }),
+});
+```
+
+#### **Marcar como Pendiente**
+
+```javascript
+// ✅ Nuevo - para "finish later"
+await fetch(`/api/v1/reports/sessions/${sessionId}/progress`, {
+  method: "PATCH",
+  headers: {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    status: "pending",
+    elapsedMs: 1800000, // Tiempo acumulado hasta ahora
+  }),
+});
+```
+
+### 📋 **Mapeo de Campos - snake_case → camelCase**
+
+| Campo API             | Campo Frontend    | Tipo   | Descripción              |
+| --------------------- | ----------------- | ------ | ------------------------ |
+| `id_sesion`           | `sessionId`       | number | ID único                 |
+| `titulo`              | `title`           | string | Título                   |
+| `descripcion`         | `description`     | string | Descripción              |
+| `estado`              | `status`          | string | 'pendiente'/'completada' |
+| `tipo`                | `type`            | string | 'rapid'/'scheduled'      |
+| `tiempo_transcurrido` | `elapsedInterval` | string | 'HH:MM:SS'               |
+| `fecha_creacion`      | `createdAt`       | string | ISO 8601                 |
+
+### 🧪 **Testing**
+
+**Nuevo script de pruebas:**
+
+```bash
+npm run test:sessions
+```
+
+**Valida:**
+
+- ✅ GET `/users/{userId}/sessions` retorna formato correcto
+- ✅ PATCH `/reports/sessions/{id}/progress` actualiza estado y tiempo
+- ✅ GET `/sessions/pending/aged` filtra correctamente
+- ✅ Endpoints removidos retornan 404
+
+### 🔧 **Cambios Técnicos**
+
+#### **Backend**
+
+- **SessionController**: Nuevo método `listUserSessions()` con formato snake_case
+- **ReportsController**: Nuevo método `updateSessionProgress()` con lógica centralizada
+- **SessionService**: Método `listUserSessionsPaginated()` para formato específico
+- **ReportsService**: `updateSessionProgress()` con transacciones atómicas
+- **Routes**: Eliminadas rutas pause/resume, agregado PATCH progress
+
+#### **Base de Datos**
+
+- ✅ Índices optimizados en `sesiones_concentracion (estado, ultima_interaccion)`
+- ✅ Compatibilidad mantenida con `focusupdb.sql`
+- ✅ Transacciones para integridad referencial (sesiones → eventos)
+
+### 📚 **Ejemplos de Uso**
+
+#### **Listar Sesiones**
+
+```bash
+curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..." \
+     "http://localhost:3001/api/v1/users/18/sessions?page=1&perPage=5"
+```
+
+#### **Completar Sesión**
+
+```bash
+curl -X PATCH -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..." \
+     -H "Content-Type: application/json" \
+     -d '{"status":"completed","elapsedMs":7200000}' \
+     http://localhost:3001/api/v1/reports/sessions/123/progress
+```
+
+#### **Sesiones Pendientes (Cron)**
+
+```bash
+curl -H "Authorization: Bearer <INTERNAL-TOKEN>" \
+     "http://localhost:3001/api/v1/sessions/pending/aged?days=7"
+```
+
+### ⚠️ **Breaking Changes**
+
+1. **GET /users/{userId}/sessions**: Removidos filtros, cambio de formato de respuesta
+2. **POST /sessions/{id}/complete**: Reemplazado por PATCH /reports/sessions/{id}/progress
+3. **POST /sessions/{id}/finish-later**: Reemplazado por PATCH /reports/sessions/{id}/progress
+4. **POST /sessions/{id}/pause**: Removido completamente
+5. **POST /sessions/{id}/resume**: Removido completamente
+6. **POST /sessions/{id}/notify-weekly**: Reemplazado por sistema automático
+
+### 🎯 **Beneficios**
+
+- **🎨 Simplificación**: API más limpia y predecible
+- **⚡ Performance**: Consultas optimizadas, menos endpoints
+- **🔄 Centralización**: Toda gestión de estado en un lugar
+- **🔒 Consistencia**: Transacciones atómicas
+- **📱 Frontend**: Lógica de temporizadores movida al cliente
+- **🤖 Automatización**: Notificaciones manejadas por cron job
+
+---
+
 ## v2.0.0 - Separación de Dominios en Reportes (2025-11-25)
 
 ### 🚀 **Nuevos Endpoints - Separación por Dominios**

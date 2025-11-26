@@ -989,10 +989,11 @@ export class ReportsService {
 
   /**
    * Convierte intervalo de PostgreSQL a milisegundos
-   * @param intervalValue - String del intervalo (ej: "01:30:45")
+   * @param intervalValue - String del intervalo (ej: "01:30:45") o objeto Interval de PostgreSQL
    * @returns Milisegundos
    */
-  private intervalToMs(intervalValue: string): number {
+  private intervalToMs(intervalValue: string | any): number {
+    // Si es un string, parsearlo como HH:MM:SS
     if (typeof intervalValue === 'string') {
       const parts = intervalValue.split(':');
       const hours = parseInt(parts[0]) || 0;
@@ -1000,6 +1001,18 @@ export class ReportsService {
       const seconds = parseInt(parts[2]) || 0;
       return (hours * 3600 + minutes * 60 + seconds) * 1000;
     }
+
+    // Si es un objeto Interval de PostgreSQL, extraer las propiedades
+    if (typeof intervalValue === 'object' && intervalValue !== null) {
+      const hours = intervalValue.hours || 0;
+      const minutes = intervalValue.minutes || 0;
+      const seconds = intervalValue.seconds || 0;
+      const milliseconds = intervalValue.milliseconds || 0;
+      return (hours * 3600 + minutes * 60 + seconds) * 1000 + milliseconds;
+    }
+
+    // Fallback: asumir 0 si no se puede parsear
+    logger.warn('No se pudo parsear el intervalo, usando 0', { intervalValue });
     return 0;
   }
 

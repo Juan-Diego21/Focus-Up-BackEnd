@@ -235,12 +235,15 @@ export class ReportsController {
    * Maneja transiciones de estado: complete/finish-later
    * Si status === "completed", marca como completada y actualiza tiempo
    * Si status === "pending", mantiene pendiente y actualiza tiempo
+   *
+   * Acepta tanto el nuevo formato (status, elapsedMs) como el antiguo (estado, duracion)
+   * para compatibilidad hacia atrás
    */
   async updateSessionProgress(req: Request, res: Response) {
     try {
       const userPayload = (req as any).user as JwtPayload;
       const sessionId = parseInt(req.params.id);
-      const { status, elapsedMs, notes } = req.body;
+      const { status, elapsedMs, notes, estado, duracion } = req.body;
 
       if (isNaN(sessionId)) {
         const response: ApiResponse = {
@@ -251,8 +254,12 @@ export class ReportsController {
         return res.status(400).json(response);
       }
 
+      // Determinar el status (nuevo formato) o estado (formato antiguo)
+      const finalStatus = status || estado;
+      const finalElapsedMs = elapsedMs !== undefined ? elapsedMs : duracion;
+
       // Validar que el status sea válido
-      if (!status || !["completed", "pending"].includes(status)) {
+      if (!finalStatus || !["completed", "pending"].includes(finalStatus)) {
         const response: ApiResponse = {
           success: false,
           message: "Status inválido. Debe ser 'completed' o 'pending'",
@@ -262,25 +269,25 @@ export class ReportsController {
       }
 
       // Validar elapsedMs si se proporciona
-      if (elapsedMs !== undefined && (typeof elapsedMs !== 'number' || elapsedMs < 0)) {
+      if (finalElapsedMs !== undefined && (typeof finalElapsedMs !== 'number' || finalElapsedMs < 0)) {
         const response: ApiResponse = {
           success: false,
-          message: "elapsedMs debe ser un número positivo",
+          message: "elapsedMs/duracion debe ser un número positivo",
           timestamp: new Date(),
         };
         return res.status(400).json(response);
       }
 
       logger.info(`Actualizando progreso de sesión ${sessionId} para usuario ${userPayload.userId}`, {
-        status,
-        elapsedMs,
+        status: finalStatus,
+        elapsedMs: finalElapsedMs,
         notes
       });
 
-      // Llamar al servicio con los nuevos parámetros
+      // Llamar al servicio con los parámetros normalizados
       const result = await reportsService.updateSessionProgress(sessionId, userPayload.userId, {
-        status,
-        elapsedMs,
+        status: finalStatus,
+        elapsedMs: finalElapsedMs,
         notes
       });
 

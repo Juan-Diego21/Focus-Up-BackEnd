@@ -92,7 +92,7 @@ export class SessionService {
       title: session.titulo,
       description: session.descripcion,
       type: session.tipo as "rapid" | "scheduled",
-      status: session.estado as "pending" | "completed",
+      status: session.estado as "pendiente" | "completada",
       eventId: session.idEvento,
       methodId: session.idMetodo,
       albumId: session.idAlbum,
@@ -320,5 +320,61 @@ export class SessionService {
     logger.info(`Encontradas ${sessions.length} sesiones pendientes antiguas`);
 
     return sessions;
+  }
+
+  /**
+   * Lista sesiones del usuario sin filtros (solo paginación básica)
+   * Retorna sesiones en formato snake_case según especificación del endpoint
+   * @param userId - ID del usuario
+   * @param page - Número de página (default: 1)
+   * @param perPage - Elementos por página (default: 10)
+   * @returns Array de sesiones en formato snake_case
+   */
+  async listUserSessionsPaginated(userId: number, page: number = 1, perPage: number = 10): Promise<any[]> {
+    logger.info(`Listando sesiones paginadas para usuario ${userId}`, { page, perPage });
+
+    const skip = (page - 1) * perPage;
+
+    const sessions = await this.sessionRepository
+      .createQueryBuilder("s")
+      .where("s.idUsuario = :userId", { userId })
+      .orderBy("s.fechaCreacion", "DESC")
+      .skip(skip)
+      .take(perPage)
+      .getMany();
+
+    // Convertir a formato snake_case según especificación
+    return sessions.map(session => {
+      // Convertir tiempo_transcurrido a string HH:MM:SS
+      let tiempoTranscurridoStr: string;
+      const tiempoTranscurrido = session.tiempoTranscurrido as any;
+
+      if (typeof tiempoTranscurrido === 'string') {
+        tiempoTranscurridoStr = tiempoTranscurrido;
+      } else if (typeof tiempoTranscurrido === 'object' && tiempoTranscurrido !== null) {
+        // Si es un objeto Interval de PostgreSQL, convertirlo a string
+        const hours = tiempoTranscurrido.hours || 0;
+        const minutes = tiempoTranscurrido.minutes || 0;
+        const seconds = tiempoTranscurrido.seconds || 0;
+        tiempoTranscurridoStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      } else {
+        tiempoTranscurridoStr = "00:00:00"; // fallback
+      }
+
+      return {
+        id_sesion: session.idSesion,
+        titulo: session.titulo,
+        descripcion: session.descripcion,
+        estado: session.estado,
+        tipo: session.tipo,
+        id_evento: session.idEvento,
+        id_metodo: session.idMetodo,
+        id_album: session.idAlbum,
+        tiempo_transcurrido: tiempoTranscurridoStr,
+        fecha_creacion: session.fechaCreacion.toISOString(),
+        fecha_actualizacion: session.fechaActualizacion.toISOString(),
+        ultima_interaccion: session.ultimaInteraccion.toISOString(),
+      };
+    });
   }
 }

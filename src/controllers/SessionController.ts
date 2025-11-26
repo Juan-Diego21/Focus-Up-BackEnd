@@ -319,152 +319,202 @@ export class SessionController {
     }
   }
 
-  /**
-   /**
-    * Lista sesiones del usuario
-    * GET /api/v1/users/:userId/sessions
-    *
-    * @swagger
-    * /users/{userId}/sessions:
-    *   get:
-    *     summary: Listar sesiones de un usuario
-    *     description: |
-    *       Obtiene una lista paginada de sesiones de concentración para un usuario específico.
-    *
-    *       **Características:**
-    *       - Retorna todas las sesiones del usuario sin filtros adicionales
-    *       - Ordenado por fecha de creación descendente
-    *       - Solo el propietario puede ver sus sesiones
-    *       - Incluye campos: id_sesion, titulo, descripcion, estado, tipo, id_evento, id_metodo, id_album, tiempo_transcurrido, fecha_creacion, fecha_actualizacion, ultima_interaccion
-    *     tags: [Sessions]
-    *     security:
-    *       - BearerAuth: []
-    *     parameters:
-    *       - in: path
-    *         name: userId
-    *         required: true
-    *         schema:
-    *           type: integer
-    *         description: ID del usuario propietario de las sesiones
-    *         example: 123
-    *     responses:
-    *       200:
-    *         description: Sesiones obtenidas exitosamente
-    *         content:
-    *           application/json:
-    *             schema:
-    *               allOf:
-    *                 - $ref: '#/components/schemas/ApiResponse'
-    *                 - type: object
-    *                   properties:
-    *                     data:
-    *                       $ref: '#/components/schemas/SessionListResponse'
-    *             example:
-    *               success: true
-    *               message: "Sesiones obtenidas exitosamente"
-    *               data:
-    *                 sessions:
-    *                   - sessionId: 1
-    *                     userId: 123
-    *                     title: "Sesión matutina"
-    *                     description: "Enfoque en matemáticas capítulo 5"
-    *                     type: "rapid"
-    *                     status: "pending"
-    *                     eventId: 456
-    *                     methodId: 789
-    *                     albumId: 101
-    *                     elapsedInterval: "01:30:45"
-    *                     elapsedMs: 5445000
-    *                     createdAt: "2024-01-15T08:30:00.000Z"
-    *                     updatedAt: "2024-01-15T09:15:30.000Z"
-    *                     lastInteractionAt: "2024-01-15T09:15:30.000Z"
-    *                   - sessionId: 2
-    *                     userId: 123
-    *                     title: "Preparación examen"
-    *                     description: "Repaso completo de conceptos"
-    *                     type: "scheduled"
-    *                     status: "completed"
-    *                     eventId: null
-    *                     methodId: 456
-    *                     albumId: 789
-    *                     elapsedInterval: "02:15:30"
-    *                     elapsedMs: 8130000
-    *                     createdAt: "2024-01-14T10:00:00.000Z"
-    *                     updatedAt: "2024-01-14T12:15:30.000Z"
-    *                     lastInteractionAt: "2024-01-14T12:15:30.000Z"
-    *                 total: 25
-    *                 page: 1
-    *                 perPage: 10
-    *                 totalPages: 3
-    *               timestamp: "2024-01-15T09:15:30.000Z"
-    *       403:
-    *         description: Usuario no autorizado para ver las sesiones
-    *         content:
-    *           application/json:
-    *             schema:
-    *               $ref: '#/components/schemas/ApiResponse'
-    *             example:
-    *               success: false
-    *               message: "No tienes permisos para ver las sesiones de este usuario"
-    *               timestamp: "2024-01-15T09:15:30.000Z"
-    *       401:
-    *         description: Usuario no autenticado
-    *         content:
-    *           application/json:
-    *             schema:
-    *               $ref: '#/components/schemas/ApiResponse'
-    *       500:
-    *         description: Error interno del servidor
-    *         content:
-    *           application/json:
-    *             schema:
-    *               $ref: '#/components/schemas/ApiResponse'
-    */
-   async listUserSessions(req: Request, res: Response): Promise<void> {
-     try {
-       const tokenUserId = (req as any).user.userId;
-       const requestedUserId = parseInt(req.params.userId);
+ /**
+  * Lista sesiones del usuario
+  * GET /api/v1/users/:userId/sessions
+  *
+  * @swagger
+  * /users/{userId}/sessions:
+  *   get:
+  *     summary: Listar sesiones de un usuario
+  *     description: |
+  *       Obtiene una lista paginada de sesiones de concentración para un usuario específico.
+  *
+  *       **Comportamiento:**
+  *       - Retorna todas las sesiones del usuario sin filtros adicionales
+  *       - Ordenado por fecha de creación descendente
+  *       - Solo el propietario puede ver sus sesiones
+  *       - Soporta paginación básica (page, perPage)
+  *     tags: [Sessions]
+  *     security:
+  *       - BearerAuth: []
+  *     parameters:
+  *       - in: path
+  *         name: userId
+  *         required: true
+  *         schema:
+  *           type: integer
+  *         description: ID del usuario propietario de las sesiones
+  *         example: 123
+  *       - in: query
+  *         name: page
+  *         schema:
+  *           type: integer
+  *           minimum: 1
+  *           default: 1
+  *         description: Número de página
+  *         example: 1
+  *       - in: query
+  *         name: perPage
+  *         schema:
+  *           type: integer
+  *           minimum: 1
+  *           maximum: 100
+  *           default: 10
+  *         description: Elementos por página
+  *         example: 10
+  *     responses:
+  *       200:
+  *         description: Sesiones obtenidas exitosamente
+  *         content:
+  *           application/json:
+  *             schema:
+  *               allOf:
+  *                 - $ref: '#/components/schemas/ApiResponse'
+  *                 - type: object
+  *                   properties:
+  *                     data:
+  *                       type: array
+  *                       items:
+  *                         type: object
+  *                         properties:
+  *                           id_sesion:
+  *                             type: integer
+  *                           titulo:
+  *                             type: string
+  *                           descripcion:
+  *                             type: string
+  *                           estado:
+  *                             type: string
+  *                             enum: [pendiente, completada]
+  *                           tipo:
+  *                             type: string
+  *                             enum: [rapid, scheduled]
+  *                           id_evento:
+  *                             type: integer
+  *                             nullable: true
+  *                           id_metodo:
+  *                             type: integer
+  *                             nullable: true
+  *                           id_album:
+  *                             type: integer
+  *                             nullable: true
+  *                           tiempo_transcurrido:
+  *                             type: string
+  *                           fecha_creacion:
+  *                             type: string
+  *                             format: date-time
+  *                           fecha_actualizacion:
+  *                             type: string
+  *                             format: date-time
+  *                           ultima_interaccion:
+  *                             type: string
+  *                             format: date-time
+  *             example:
+  *               success: true
+  *               message: "Sesiones obtenidas exitosamente"
+  *               data:
+  *                 - id_sesion: 1
+  *                   titulo: "Sesión matutina"
+  *                   descripcion: "Enfoque en matemáticas"
+  *                   estado: "pendiente"
+  *                   tipo: "rapid"
+  *                   id_evento: null
+  *                   id_metodo: 1
+  *                   id_album: 2
+  *                   tiempo_transcurrido: "01:30:45"
+  *                   fecha_creacion: "2024-01-15T08:30:00.000Z"
+  *                   fecha_actualizacion: "2024-01-15T09:15:30.000Z"
+  *                   ultima_interaccion: "2024-01-15T09:15:30.000Z"
+  *                 - id_sesion: 2
+  *                   titulo: "Preparación examen"
+  *                   descripcion: "Repaso completo"
+  *                   estado: "completada"
+  *                   tipo: "scheduled"
+  *                   id_evento: 123
+  *                   id_metodo: 2
+  *                   id_album: 3
+  *                   tiempo_transcurrido: "02:15:30"
+  *                   fecha_creacion: "2024-01-14T10:00:00.000Z"
+  *                   fecha_actualizacion: "2024-01-14T12:15:30.000Z"
+  *                   ultima_interaccion: "2024-01-14T12:15:30.000Z"
+  *               timestamp: "2024-01-15T09:15:30.000Z"
+  *       403:
+  *         description: Usuario no autorizado para ver las sesiones
+  *         content:
+  *           application/json:
+  *             schema:
+  *               $ref: '#/components/schemas/ApiResponse'
+  *             example:
+  *               success: false
+  *               message: "No tienes permisos para ver las sesiones de este usuario"
+  *               timestamp: "2024-01-15T09:15:30.000Z"
+  *       401:
+  *         description: Usuario no autenticado
+  *         content:
+  *           application/json:
+  *             schema:
+  *               $ref: '#/components/schemas/ApiResponse'
+  *       500:
+  *         description: Error interno del servidor
+  *         content:
+  *           application/json:
+  *             schema:
+  *               $ref: '#/components/schemas/ApiResponse'
+  */
+  async listUserSessions(req: Request, res: Response): Promise<void> {
+    try {
+      const tokenUserId = (req as any).user.userId;
+      const requestedUserId = parseInt(req.params.userId);
 
-       // Verificar que el usuario autenticado es el propietario
-       if (tokenUserId !== requestedUserId) {
-         const response: ApiResponse = {
-           success: false,
-           message: "No tienes permisos para ver las sesiones de este usuario",
-           timestamp: new Date(),
-         };
-         res.status(403).json(response);
-         return;
-       }
+      // Verificar que el usuario autenticado es el propietario
+      if (tokenUserId !== requestedUserId) {
+        const response: ApiResponse = {
+          success: false,
+          message: "No tienes permisos para ver las sesiones de este usuario",
+          timestamp: new Date(),
+        };
+        res.status(403).json(response);
+        return;
+      }
 
-       // Simplificar: obtener todas las sesiones del usuario sin filtros adicionales
-       // Se mantiene la paginación por defecto para compatibilidad
-       const filters: SessionFilters = {
-         page: req.query.page ? parseInt(req.query.page as string) : undefined,
-         perPage: req.query.perPage ? parseInt(req.query.perPage as string) : undefined,
-       };
+      // Solo paginación básica, sin filtros
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const perPage = req.query.perPage ? parseInt(req.query.perPage as string) : 10;
 
-       const result = await this.sessionService.listSessions(filters, requestedUserId);
+      // Validar parámetros de paginación
+      if (page < 1 || perPage < 1 || perPage > 100) {
+        const response: ApiResponse = {
+          success: false,
+          message: "Parámetros de paginación inválidos",
+          timestamp: new Date(),
+        };
+        res.status(400).json(response);
+        return;
+      }
 
-       const response: ApiResponse = {
-         success: true,
-         message: "Sesiones obtenidas exitosamente",
-         data: result,
-         timestamp: new Date(),
-       };
+      const result = await this.sessionService.listUserSessionsPaginated(requestedUserId, page, perPage);
 
-       res.status(200).json(response);
-     } catch (error: any) {
-       logger.error(`Error listando sesiones para usuario ${req.params.userId}:`, error);
+      const response: ApiResponse = {
+        success: true,
+        message: "Sesiones obtenidas exitosamente",
+        data: result,
+        timestamp: new Date(),
+      };
 
-       const response: ApiResponse = {
-         success: false,
-         message: error.message || "Error interno del servidor",
-         timestamp: new Date(),
-       };
+      res.status(200).json(response);
+    } catch (error: any) {
+      logger.error(`Error listando sesiones para usuario ${req.params.userId}:`, error);
 
-       res.status(500).json(response);
-     }
-   }
+      const response: ApiResponse = {
+        success: false,
+        message: error.message || "Error interno del servidor",
+        timestamp: new Date(),
+      };
+
+      res.status(500).json(response);
+    }
+  }
 
   /**
    * Actualiza una sesión existente

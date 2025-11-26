@@ -163,6 +163,32 @@ router.patch("/methods/:id/progress", authenticateToken, reportsController.updat
  * /reports/sessions/{id}/progress:
  *   patch:
  *     summary: Actualizar el progreso de una sesión de concentración
+ *     description: |
+ *       Actualiza el estado y tiempo transcurrido de una sesión de concentración.
+ *
+ *       **Formatos de request aceptados:**
+ *
+ *       **Nuevo formato (recomendado):**
+ *       ```json
+ *       {
+ *         "status": "completed",
+ *         "elapsedMs": 1800000,
+ *         "notes": "Sesión completada exitosamente"
+ *       }
+ *       ```
+ *
+ *       **Formato antiguo (compatibilidad):**
+ *       ```json
+ *       {
+ *         "estado": "completed",
+ *         "duracion": 1800
+ *       }
+ *       ```
+ *
+ *       **Campos:**
+ *       - `status`/`estado`: Estado de la sesión ("completed" o "pending")
+ *       - `elapsedMs`/`duracion`: Tiempo transcurrido en ms/segundos
+ *       - `notes`: Notas opcionales sobre la sesión
  *     tags: [Reports]
  *     security:
  *       - BearerAuth: []
@@ -180,25 +206,28 @@ router.patch("/methods/:id/progress", authenticateToken, reportsController.updat
  *           schema:
  *             type: object
  *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [completed, pending]
+ *                 description: Estado de la sesión (nuevo formato)
+ *                 example: "completed"
  *               estado:
  *                 type: string
- *                 enum: [pendiente, en_proceso, completada, cancelada]
- *                 description: Estado de la sesión
- *                 example: "completada"
+ *                 enum: [completed, pending]
+ *                 description: Estado de la sesión (formato antiguo, compatibilidad)
+ *                 example: "completed"
+ *               elapsedMs:
+ *                 type: integer
+ *                 description: Tiempo transcurrido en milisegundos (nuevo formato)
+ *                 example: 1800000
  *               duracion:
  *                 type: integer
- *                 description: Duración en segundos
+ *                 description: Duración en segundos (formato antiguo, compatibilidad)
  *                 example: 1800
- *               fechaInicio:
+ *               notes:
  *                 type: string
- *                 format: date-time
- *                 description: Fecha y hora de inicio
- *                 example: "2023-12-01T10:00:00Z"
- *               fechaFin:
- *                 type: string
- *                 format: date-time
- *                 description: Fecha y hora de fin
- *                 example: "2023-12-01T11:30:00Z"
+ *                 description: Notas opcionales sobre la sesión
+ *                 example: "Sesión completada exitosamente"
  *     responses:
  *       200:
  *         description: Progreso de la sesión actualizado exitosamente

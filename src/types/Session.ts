@@ -29,7 +29,7 @@ export interface SessionResponseDto {
   title?: string;
   description?: string;
   type: "rapid" | "scheduled";
-  status: "pending" | "completed";
+  status: "pendiente" | "completada";
   eventId?: number;
   methodId?: number;
   albumId?: number;
@@ -42,7 +42,7 @@ export interface SessionResponseDto {
 
 // Filtros para listar sesiones
 export interface SessionFilters {
-  status?: "pending" | "completed";
+  status?: "pendiente" | "completada";
   type?: "rapid" | "scheduled";
   fromDate?: string;
   toDate?: string;
