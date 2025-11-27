@@ -377,4 +377,68 @@ export class SessionService {
       };
     });
   }
+
+  /**
+   * Crea una sesión de concentración desde un evento
+   * @param eventId - ID del evento
+   * @param userId - ID del usuario
+   * @returns Sesión creada
+   * @throws Error si el evento no existe, no pertenece al usuario, no es de tipo concentración o ya tiene una sesión
+   */
+  async createSessionFromEvent(eventId: number, userId: number): Promise<SessionResponseDto> {
+    logger.info(`Creando sesión desde evento ${eventId} para usuario ${userId}`);
+
+    // Validar usuario
+    await this.validateUserExists(userId);
+
+    // Obtener evento con relaciones
+    const evento = await this.eventoRepository.findOne({
+      where: { idEvento: eventId },
+      relations: ['usuario', 'metodoEstudio', 'album']
+    });
+
+    if (!evento) {
+      throw new Error("Evento no encontrado");
+    }
+
+    // Verificar que el evento pertenece al usuario
+    if (evento.usuario?.idUsuario !== userId) {
+      throw new Error("Evento no pertenece al usuario");
+    }
+
+    // Verificar que el evento es de tipo concentración
+    if (evento.tipoEvento !== 'concentracion') {
+      throw new Error("El evento no es de tipo concentración");
+    }
+
+    // Verificar que no existe ya una sesión para este evento
+    const existingSession = await this.sessionRepository.findOne({
+      where: { idEvento: eventId, idUsuario: userId }
+    });
+
+    if (existingSession) {
+      throw new Error("Ya existe una sesión para este evento");
+    }
+
+    // Crear la sesión usando los datos del evento
+    const session = this.sessionRepository.create({
+      idUsuario: userId,
+      titulo: evento.nombreEvento,
+      descripcion: evento.descripcionEvento,
+      tipo: "scheduled",
+      estado: "pendiente",
+      idEvento: eventId,
+      idMetodo: evento.metodoEstudio?.idMetodo,
+      idAlbum: evento.album?.idAlbum,
+      tiempoTranscurrido: "00:00:00",
+      ultimaInteraccion: new Date(),
+    });
+
+    // Guardar en BD
+    const savedSession = await this.sessionRepository.save(session);
+
+    logger.info(`Sesión creada exitosamente desde evento ${eventId}`, { sessionId: savedSession.idSesion });
+
+    return this.entityToDto(savedSession);
+  }
 }

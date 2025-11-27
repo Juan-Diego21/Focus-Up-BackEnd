@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const SessionController_1 = require("../controllers/SessionController");
+const auth_1 = require("../middleware/auth");
+const session_1 = require("../middleware/session");
+const router = (0, express_1.Router)();
+const sessionController = new SessionController_1.SessionController();
+router.use(auth_1.authenticateToken);
+router.use(session_1.snakeToCamelCase);
+router.post("/", sessionController.createSession.bind(sessionController));
+router.get("/:sessionId", session_1.checkSessionOwnership, sessionController.getSession.bind(sessionController));
+router.patch("/:sessionId", session_1.checkSessionOwnership, session_1.optimisticConcurrencyCheck, sessionController.updateSession.bind(sessionController));
+router.get("/pending/aged", sessionController.getPendingAgedSessions.bind(sessionController));
+router.get("/from-event/:eventId", sessionController.createSessionFromEvent.bind(sessionController));
+exports.default = router;

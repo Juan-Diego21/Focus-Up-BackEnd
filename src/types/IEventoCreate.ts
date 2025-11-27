@@ -7,6 +7,7 @@ export interface IEventoCreate {
   fechaEvento: string; // Fecha del evento en formato YYYY-MM-DD, obligatorio
   horaEvento: string; // Hora del evento, obligatorio
   descripcionEvento?: string; // Descripción opcional del evento
+  tipoEvento?: string; // Tipo del evento (ej: 'concentracion'), opcional
   idUsuario: number; // ID del usuario que crea el evento, obligatorio
   idMetodo?: number; // ID del método de estudio asociado, opcional (técnica Pomodoro puede no aplicarse)
   idAlbum?: number; // ID del álbum de música opcional
@@ -22,6 +23,7 @@ export interface IEventoUpdate {
   fechaEvento?: string; // Fecha del evento en formato YYYY-MM-DD
   horaEvento?: string; // Hora del evento
   descripcionEvento?: string; // Descripción del evento
+  tipoEvento?: string; // Tipo del evento (ej: 'concentracion')
   idMetodo?: number; // ID del método de estudio
   idAlbum?: number; // ID del álbum de música
   estado?: 'pending' | 'completed' | null; // Estado opcional del evento

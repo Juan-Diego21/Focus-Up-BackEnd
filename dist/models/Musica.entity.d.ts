@@ -1,3 +1,4 @@
+import { AlbumMusicaEntity } from "./AlbumMusica.entity";
 export declare class MusicaEntity {
     idCancion: number;
     nombreCancion: string;
@@ -8,5 +9,5 @@ export declare class MusicaEntity {
     fechaCreacion: Date;
     fechaActualizacion: Date;
     urlMusica: string;
-    urlImagen: string;
+    album?: AlbumMusicaEntity;
 }

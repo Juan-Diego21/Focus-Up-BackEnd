@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AlbumMusicaEntity = void 0;
 const typeorm_1 = require("typeorm");
+const Musica_entity_1 = require("./Musica.entity");
 let AlbumMusicaEntity = class AlbumMusicaEntity {
 };
 exports.AlbumMusicaEntity = AlbumMusicaEntity;
@@ -31,9 +32,17 @@ __decorate([
     __metadata("design:type", Date)
 ], AlbumMusicaEntity.prototype, "fechaActualizacion", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: "url_imagen", type: "text", nullable: false }),
+    (0, typeorm_1.Column)({ name: "descripcion", type: "text", nullable: true }),
     __metadata("design:type", String)
-], AlbumMusicaEntity.prototype, "urlImagen", void 0);
+], AlbumMusicaEntity.prototype, "descripcion", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: "genero", length: 50, nullable: true }),
+    __metadata("design:type", String)
+], AlbumMusicaEntity.prototype, "genero", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => Musica_entity_1.MusicaEntity, musica => musica.album),
+    __metadata("design:type", Array)
+], AlbumMusicaEntity.prototype, "musicas", void 0);
 exports.AlbumMusicaEntity = AlbumMusicaEntity = __decorate([
     (0, typeorm_1.Entity)("albummusica")
 ], AlbumMusicaEntity);

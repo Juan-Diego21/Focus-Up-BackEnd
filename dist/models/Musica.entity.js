@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MusicaEntity = void 0;
 const typeorm_1 = require("typeorm");
+const AlbumMusica_entity_1 = require("./AlbumMusica.entity");
 let MusicaEntity = class MusicaEntity {
 };
 exports.MusicaEntity = MusicaEntity;
@@ -51,9 +52,10 @@ __decorate([
     __metadata("design:type", String)
 ], MusicaEntity.prototype, "urlMusica", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: "url_imagen", type: "text", nullable: false }),
-    __metadata("design:type", String)
-], MusicaEntity.prototype, "urlImagen", void 0);
+    (0, typeorm_1.ManyToOne)(() => AlbumMusica_entity_1.AlbumMusicaEntity, album => album.musicas, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: "id_album" }),
+    __metadata("design:type", AlbumMusica_entity_1.AlbumMusicaEntity)
+], MusicaEntity.prototype, "album", void 0);
 exports.MusicaEntity = MusicaEntity = __decorate([
     (0, typeorm_1.Entity)("musica")
 ], MusicaEntity);

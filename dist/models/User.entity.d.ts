@@ -1,5 +1,6 @@
 import { UsuarioInteresesEntity } from "./UsuarioIntereses.entity";
 import { UsuarioDistraccionesEntity } from "./UsuarioDistracciones.entity";
+import { EventoEntity } from "./Evento.entity";
 export declare class UserEntity {
     idUsuario: number;
     nombreUsuario: string;
@@ -15,4 +16,5 @@ export declare class UserEntity {
     tokenVersion: number;
     usuarioIntereses?: UsuarioInteresesEntity[];
     usuarioDistracciones?: UsuarioDistraccionesEntity[];
+    eventos?: EventoEntity[];
 }

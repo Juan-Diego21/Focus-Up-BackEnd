@@ -812,4 +812,160 @@ export class SessionController {
     }
   }
 
+  /**
+   * Crea una sesión de concentración desde un evento
+   * GET /api/v1/sessions/from-event/:eventId
+   *
+   * @swagger
+   * /sessions/from-event/{eventId}:
+   *   get:
+   *     summary: Crear sesión desde evento de concentración
+   *     description: |
+   *       Crea una nueva sesión de concentración a partir de un evento con tipo_evento="concentracion".
+   *
+   *       **Validaciones:**
+   *       - El usuario debe estar autenticado
+   *       - El evento debe existir y pertenecer al usuario
+   *       - El evento debe tener tipo_evento="concentracion"
+   *       - No se permite crear sesiones duplicadas del mismo evento
+   *
+   *       **Datos de la sesión creada:**
+   *       - title: nombre del evento
+   *       - description: descripción del evento
+   *       - methodId: id_metodo del evento
+   *       - albumId: id_album del evento
+   *       - type: "scheduled"
+   *       - status: "pending"
+   *     tags: [Sessions]
+   *     security:
+   *       - BearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: eventId
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID del evento de concentración
+   *         example: 1
+   *     responses:
+   *       201:
+   *         description: Sesión creada exitosamente desde el evento
+   *         content:
+   *           application/json:
+   *             schema:
+   *               allOf:
+   *                 - $ref: '#/components/schemas/ApiResponse'
+   *                 - type: object
+   *                   properties:
+   *                     data:
+   *                       $ref: '#/components/schemas/SessionResponseDto'
+   *             example:
+   *               success: true
+   *               message: "Sesión creada exitosamente desde el evento"
+   *               data:
+   *                 sessionId: 1
+   *                 userId: 123
+   *                 title: "Sesión de concentración"
+   *                 description: "Sesión creada desde evento"
+   *                 type: "scheduled"
+   *                 status: "pending"
+   *                 methodId: 456
+   *                 albumId: 789
+   *                 elapsedInterval: "00:00:00"
+   *                 elapsedMs: 0
+   *                 createdAt: "2024-01-15T08:30:00.000Z"
+   *                 updatedAt: "2024-01-15T08:30:00.000Z"
+   *                 lastInteractionAt: "2024-01-15T08:30:00.000Z"
+   *               timestamp: "2024-01-15T08:30:00.000Z"
+   *       400:
+   *         description: Evento no es de tipo concentración o ya existe sesión
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ApiResponse'
+   *             examples:
+   *               invalid-event-type:
+   *                 value:
+   *                   success: false
+   *                   message: "El evento no es de tipo concentración"
+   *                   timestamp: "2024-01-15T08:30:00.000Z"
+   *               duplicate-session:
+   *                 value:
+   *                   success: false
+   *                   message: "Ya existe una sesión para este evento"
+   *                   timestamp: "2024-01-15T08:30:00.000Z"
+   *       401:
+   *         description: Usuario no autenticado
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ApiResponse'
+   *       403:
+   *         description: Evento no pertenece al usuario
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ApiResponse'
+   *       404:
+   *         description: Evento no encontrado
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ApiResponse'
+   *       500:
+   *         description: Error interno del servidor
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ApiResponse'
+   */
+  async createSessionFromEvent(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user.userId;
+      const eventId = parseInt(req.params.eventId);
+
+      if (isNaN(eventId)) {
+        const response: ApiResponse = {
+          success: false,
+          message: "ID de evento inválido",
+          timestamp: new Date(),
+        };
+        res.status(400).json(response);
+        return;
+      }
+
+      logger.info(`Creando sesión desde evento ${eventId} para usuario ${userId}`);
+
+      const session = await this.sessionService.createSessionFromEvent(eventId, userId);
+
+      const response: ApiResponse = {
+        success: true,
+        message: "Sesión creada exitosamente desde el evento",
+        data: session,
+        timestamp: new Date(),
+      };
+
+      res.status(201).json(response);
+    } catch (error: any) {
+      logger.error(`Error creando sesión desde evento ${req.params.eventId}:`, error);
+
+      let statusCode = 500;
+      if (error.message.includes("no encontrado")) {
+        statusCode = 404;
+      } else if (error.message.includes("no pertenece")) {
+        statusCode = 403;
+      } else if (error.message.includes("tipo concentración") || error.message.includes("ya existe")) {
+        statusCode = 400;
+      }
+
+      const response: ApiResponse = {
+        success: false,
+        message: error.message || "Error interno del servidor",
+        timestamp: new Date(),
+      };
+
+      res.status(statusCode).json(response);
+    }
+  }
+
 }

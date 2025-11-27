@@ -44,7 +44,7 @@ export const eventosController = {
      * Parsea las fechas correctamente antes de enviar al servicio
      */
     async crearEvento(req: Request, res: Response) {
-        const { nombreEvento, fechaEvento, horaEvento, descripcionEvento, idMetodo, idAlbum } = req.body;
+        const { nombreEvento, fechaEvento, horaEvento, descripcionEvento, tipoEvento, idMetodo, idAlbum } = req.body;
         const idUsuario = (req as any).user.userId; // Obtener ID del usuario autenticado
 
         try {
@@ -62,6 +62,7 @@ export const eventosController = {
                 fechaEvento, // Pasar como string
                 horaEvento,
                 descripcionEvento,
+                tipoEvento,
                 idUsuario,
                 idMetodo,
                 idAlbum
@@ -117,7 +118,7 @@ export const eventosController = {
      */
     async updateEvento(req: Request, res: Response) {
         const { id } = req.params;
-        const { nombreEvento, fechaEvento, horaEvento, descripcionEvento, idMetodo, idAlbum } = req.body;
+        const { nombreEvento, fechaEvento, horaEvento, descripcionEvento, tipoEvento, idMetodo, idAlbum } = req.body;
         const userId = (req as any).user?.userId;
 
         if (!userId) {
@@ -144,6 +145,7 @@ export const eventosController = {
                 fechaEvento, // Pasar como string
                 horaEvento,
                 descripcionEvento,
+                tipoEvento,
                 idMetodo,
                 idAlbum,
             });

@@ -13,6 +13,7 @@ exports.UserEntity = void 0;
 const typeorm_1 = require("typeorm");
 const UsuarioIntereses_entity_1 = require("./UsuarioIntereses.entity");
 const UsuarioDistracciones_entity_1 = require("./UsuarioDistracciones.entity");
+const Evento_entity_1 = require("./Evento.entity");
 let UserEntity = class UserEntity {
 };
 exports.UserEntity = UserEntity;
@@ -76,6 +77,10 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => UsuarioDistracciones_entity_1.UsuarioDistraccionesEntity, usuarioDistraccion => usuarioDistraccion.usuario),
     __metadata("design:type", Array)
 ], UserEntity.prototype, "usuarioDistracciones", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => Evento_entity_1.EventoEntity, evento => evento.usuario),
+    __metadata("design:type", Array)
+], UserEntity.prototype, "eventos", void 0);
 exports.UserEntity = UserEntity = __decorate([
     (0, typeorm_1.Entity)("usuario")
 ], UserEntity);
