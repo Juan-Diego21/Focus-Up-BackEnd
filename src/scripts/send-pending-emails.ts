@@ -45,6 +45,12 @@ const transporter = nodemailer.createTransport({
  */
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
   try {
+    // Skip sending emails to test addresses
+    if (to === 'john@example.com' || to === 'test@example.com') {
+      logger.info(`Skipping email to test address: ${to}`);
+      return true; // Return true to mark as "sent" without actually sending
+    }
+
     const mailOptions = {
       from: `"Focus-Up" <${process.env.EMAIL_USER}>`,
       to,
@@ -342,7 +348,7 @@ async function processPendingEmails(): Promise<void> {
     // Process each notification
     for (const notification of notifications) {
       try {
-        logger.info(`📤 Processing notification ${notification.idNotificacion} (${notification.tipo}) for user ${notification.usuario?.correo}`);
+        logger.info(`📤 Processing notification ${notification.idNotificacion} (${notification.tipo}) for user ${notification.usuario?.correo || 'unknown'}`);
 
         let emailSent = false;
         let subject = '';
@@ -414,10 +420,10 @@ async function processPendingEmails(): Promise<void> {
         }
 
         // Send the email
-        if (notification.usuario?.correo) {
+        if (notification.usuario && notification.usuario.correo) {
           emailSent = await sendEmail(notification.usuario.correo, subject, html);
         } else {
-          logger.error(`No email address found for user in notification ${notification.idNotificacion}`);
+          logger.error(`No user or email address found for notification ${notification.idNotificacion} (user ID: ${notification.idUsuario})`);
           continue;
         }
 
