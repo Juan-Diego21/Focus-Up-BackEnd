@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const userRoutes_1 = __importDefault(require("./userRoutes"));
+const authRoutes_1 = __importDefault(require("./authRoutes"));
 const musicaRoutes_1 = __importDefault(require("./musicaRoutes"));
 const beneficioRoutes_1 = __importDefault(require("./beneficioRoutes"));
 const metodoEstudioRoutes_1 = __importDefault(require("./metodoEstudioRoutes"));
@@ -23,6 +24,7 @@ router.get("/health", (req, res) => {
         environment: env_1.env.NODE_ENV,
     });
 });
+router.use("/auth", authRoutes_1.default);
 router.use("/users", userRoutes_1.default);
 router.use("/beneficios", beneficioRoutes_1.default);
 router.use("/metodos-estudio", metodoEstudioRoutes_1.default);

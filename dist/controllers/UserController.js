@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.userController = exports.UserController = void 0;
 const UserService_1 = require("../services/UserService");
 const jwt_1 = require("../utils/jwt");
+const responseBuilder_1 = require("../utils/responseBuilder");
 const logger_1 = __importDefault(require("../utils/logger"));
 class UserController {
     async createUser(req, res) {
@@ -46,31 +47,13 @@ class UserController {
             const userData = req.body;
             const result = await UserService_1.userService.createUser(userData);
             if (!result.success) {
-                const response = {
-                    success: false,
-                    message: result.message || "Error al crear usuario",
-                    error: result.error,
-                    timestamp: new Date(),
-                };
-                return res.status(400).json(response);
+                return res.status(400).json(responseBuilder_1.ResponseBuilder.error(result.message || "Error al crear usuario", result.error));
             }
-            const response = {
-                success: true,
-                message: "Usuario creado exitosamente",
-                data: result.user,
-                timestamp: new Date(),
-            };
-            res.status(201).json(response);
+            res.status(201).json(responseBuilder_1.ResponseBuilder.success("Usuario creado exitosamente", result.user));
         }
         catch (error) {
             logger_1.default.error("Error en UserController.createUser:", error);
-            const response = {
-                success: false,
-                message: "Error interno del servidor",
-                error: "Ocurrió un error inesperado",
-                timestamp: new Date(),
-            };
-            res.status(500).json(response);
+            res.status(500).json(responseBuilder_1.ResponseBuilder.serverError());
         }
     }
     async getUserById(req, res) {

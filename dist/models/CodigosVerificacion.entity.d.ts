@@ -1,8 +1,9 @@
 export declare class CodigosVerificacionEntity {
-    idCodigoVerificacion: number;
+    id: number;
     email: string;
     codigo: string;
     fechaCreacion: Date;
     expiraEn: Date;
     intentos: number;
+    maxIntentos: number;
 }

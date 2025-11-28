@@ -60,7 +60,7 @@ class CodigosVerificacionRepository {
     }
     async incrementAttempts(id) {
         try {
-            const result = await this.repository.increment({ idCodigoVerificacion: id }, "intentos", 1);
+            const result = await this.repository.increment({ id: id }, "intentos", 1);
             logger_1.default.info(`Intentos incrementados para código ID: ${id}`);
             return true;
         }
@@ -105,12 +105,13 @@ class CodigosVerificacionRepository {
     }
     mapToDTO(entity) {
         return {
-            idCodigoVerificacion: entity.idCodigoVerificacion,
+            id: entity.id,
             email: entity.email,
             codigo: entity.codigo,
             fechaCreacion: entity.fechaCreacion,
             expiraEn: entity.expiraEn,
             intentos: entity.intentos,
+            maxIntentos: entity.maxIntentos,
         };
     }
 }

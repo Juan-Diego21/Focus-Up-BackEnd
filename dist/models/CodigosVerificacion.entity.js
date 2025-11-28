@@ -15,15 +15,15 @@ let CodigosVerificacionEntity = class CodigosVerificacionEntity {
 };
 exports.CodigosVerificacionEntity = CodigosVerificacionEntity;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)({ name: "id_codigo_verificacion" }),
+    (0, typeorm_1.PrimaryGeneratedColumn)({ name: "id" }),
     __metadata("design:type", Number)
-], CodigosVerificacionEntity.prototype, "idCodigoVerificacion", void 0);
+], CodigosVerificacionEntity.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: "email", length: 255, nullable: false }),
+    (0, typeorm_1.Column)({ name: "email", length: 150, nullable: false }),
     __metadata("design:type", String)
 ], CodigosVerificacionEntity.prototype, "email", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: "codigo", length: 6, nullable: false }),
+    (0, typeorm_1.Column)({ name: "codigo", length: 10, nullable: false }),
     __metadata("design:type", String)
 ], CodigosVerificacionEntity.prototype, "codigo", void 0);
 __decorate([
@@ -38,6 +38,10 @@ __decorate([
     (0, typeorm_1.Column)({ name: "intentos", type: "integer", default: 0 }),
     __metadata("design:type", Number)
 ], CodigosVerificacionEntity.prototype, "intentos", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: "max_intentos", type: "integer", default: 5 }),
+    __metadata("design:type", Number)
+], CodigosVerificacionEntity.prototype, "maxIntentos", void 0);
 exports.CodigosVerificacionEntity = CodigosVerificacionEntity = __decorate([
     (0, typeorm_1.Entity)("codigos_verificacion")
 ], CodigosVerificacionEntity);

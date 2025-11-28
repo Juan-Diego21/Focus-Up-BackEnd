@@ -43,8 +43,6 @@ const UsuarioIntereses_entity_1 = require("../models/UsuarioIntereses.entity");
 const UsuarioDistracciones_entity_1 = require("../models/UsuarioDistracciones.entity");
 const User_entity_1 = require("../models/User.entity");
 const logger_1 = __importDefault(require("../utils/logger"));
-const jwt_1 = require("../utils/jwt");
-const nodemailer_1 = __importDefault(require("nodemailer"));
 class UserService {
     static async hashPassword(password) {
         const bcrypt = await Promise.resolve().then(() => __importStar(require("bcryptjs")));
@@ -192,6 +190,9 @@ class UserService {
         }
     }
     async updateUser(id, updateData) {
+        const queryRunner = (await Promise.resolve().then(() => __importStar(require("../config/ormconfig")))).AppDataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
         try {
             if (updateData.contrasena) {
                 if (!validation_1.ValidationUtils.isValidPassword(updateData.contrasena)) {
@@ -245,11 +246,23 @@ class UserService {
             if (!user) {
                 return { success: false, error: "Usuario no encontrado" };
             }
-            return { success: true, user };
+            if (updateData.intereses !== undefined) {
+                await this.updateUserInterestsInTransaction(queryRunner, id, updateData.intereses);
+            }
+            if (updateData.distracciones !== undefined) {
+                await this.updateUserDistractionsInTransaction(queryRunner, id, updateData.distracciones);
+            }
+            await queryRunner.commitTransaction();
+            const updatedUser = await UserRepository_1.userRepository.findById(id);
+            return { success: true, user: updatedUser || user };
         }
         catch (error) {
+            await queryRunner.rollbackTransaction();
             logger_1.default.error("Error en UserService.updateUser:", error);
             return { success: false, error: "Error al actualizar usuario" };
+        }
+        finally {
+            await queryRunner.release();
         }
     }
     async verifyCredentials(identifier, password) {
@@ -331,6 +344,46 @@ class UserService {
             .values(inserts)
             .execute();
     }
+    async updateUserInterestsInTransaction(queryRunner, userId, interestIds) {
+        await queryRunner.manager
+            .createQueryBuilder()
+            .delete()
+            .from("usuariointereses")
+            .where("idUsuario = :userId", { userId })
+            .execute();
+        if (interestIds.length > 0) {
+            const inserts = interestIds.map((interestId) => ({
+                idUsuario: userId,
+                idInteres: interestId,
+            }));
+            await queryRunner.manager
+                .createQueryBuilder()
+                .insert()
+                .into("usuariointereses")
+                .values(inserts)
+                .execute();
+        }
+    }
+    async updateUserDistractionsInTransaction(queryRunner, userId, distractionIds) {
+        await queryRunner.manager
+            .createQueryBuilder()
+            .delete()
+            .from("usuariodistracciones")
+            .where("idUsuario = :userId", { userId })
+            .execute();
+        if (distractionIds.length > 0) {
+            const inserts = distractionIds.map((distractionId) => ({
+                idUsuario: userId,
+                idDistraccion: distractionId,
+            }));
+            await queryRunner.manager
+                .createQueryBuilder()
+                .insert()
+                .into("usuariodistracciones")
+                .values(inserts)
+                .execute();
+        }
+    }
     async deleteUser(id) {
         try {
             const deleted = await UserRepository_1.userRepository.delete(id);
@@ -342,101 +395,6 @@ class UserService {
         catch (error) {
             console.error("Error en UserService.deleteUser:", error);
             return { success: false, error: "Error eliminando usuario" };
-        }
-    }
-    async sendPasswordResetLink(emailOrUsername) {
-        try {
-            let user = await UserRepository_1.userRepository.findByEmail(emailOrUsername);
-            if (!user) {
-                user = await UserRepository_1.userRepository.findByUsername(emailOrUsername);
-            }
-            if (!user) {
-                return {
-                    success: true,
-                    message: "Si el usuario existe, recibirás un enlace para restablecer tu contraseña."
-                };
-            }
-            const tokenPayload = {
-                userId: user.id_usuario,
-                email: user.correo,
-                tokenVersion: 0,
-            };
-            const resetToken = jwt_1.JwtUtils.generateAccessToken(tokenPayload);
-            const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
-            await this.sendResetEmail(user.correo, resetLink, user.nombre_usuario);
-            return {
-                success: true,
-                message: "Se ha enviado un enlace de restablecimiento a tu email."
-            };
-        }
-        catch (error) {
-            logger_1.default.error("Error en sendPasswordResetLink:", error);
-            return {
-                success: true,
-                message: "Si el usuario existe, recibirás un enlace para restablecer tu contraseña."
-            };
-        }
-    }
-    async resetPassword(token, newPassword) {
-        try {
-            const decoded = jwt_1.JwtUtils.verifyAccessToken(token);
-            if (!validation_1.ValidationUtils.isValidPassword(newPassword)) {
-                return {
-                    success: false,
-                    message: "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número"
-                };
-            }
-            const hashedPassword = await UserService.hashPassword(newPassword);
-            const update = await UserRepository_1.userRepository.updatePassword(decoded.userId, hashedPassword);
-            if (!update) {
-                return {
-                    success: false,
-                    message: "Usuario no encontrado"
-                };
-            }
-            return {
-                success: true,
-                message: "Contraseña restablecida exitosamente"
-            };
-        }
-        catch (error) {
-            logger_1.default.error("Error en UserService.resetPassword:", error);
-            return {
-                success: false,
-                message: "Token inválido o expirado"
-            };
-        }
-    }
-    async sendResetEmail(email, resetLink, username) {
-        try {
-            const transporter = nodemailer_1.default.createTransport({
-                service: "gmail",
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS,
-                }
-            });
-            const mailOptions = {
-                from: process.env.EMAIL_USER,
-                to: email,
-                subject: "Restablecer tu contraseña",
-                html: `
-          <h2>Hola ${username}</h2>
-          <p>Has solicitado restablecer tu contraseña.</p>
-          <p>Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
-          <a href="${resetLink}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-            Restablecer Contraseña
-          </a>
-          <p>Este enlace expirará en 15 minutos.</p>
-          <p>Si no solicitaste este cambio, ignora este email.</p>
-        `
-            };
-            await transporter.sendMail(mailOptions);
-            logger_1.default.info(`Email de restablecimiento enviado a: ${email}`);
-        }
-        catch (error) {
-            logger_1.default.error("Error enviando email de restablecimiento:", error);
-            throw error;
         }
     }
 }

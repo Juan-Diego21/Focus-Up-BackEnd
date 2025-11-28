@@ -1,6 +1,0 @@
-{"level":"info","message":"Auth header received: present for GET /api/v1/users","service":"focus-up-backend","timestamp":"2025-11-27 23:16:44"}
-{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2025-11-27 23:16:44"}
-{"level":"info","message":"Token decoded successfully for userId: 18, email: john@example.com, tokenVersion: 60","service":"focus-up-backend","timestamp":"2025-11-27 23:16:44"}
-{"level":"info","message":"Validación de token completada para usuario 18","service":"focus-up-backend","timestamp":"2025-11-27 23:16:45"}
-{"level":"info","message":"Token validation: expires in 23h 42m","service":"focus-up-backend","timestamp":"2025-11-27 23:16:45"}
-{"level":"info","message":"Token version incremented to 34 for user 51","service":"focus-up-backend","timestamp":"2025-11-27 23:16:55"}

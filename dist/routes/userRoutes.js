@@ -7,10 +7,16 @@ const validation_1 = require("../middleware/validation");
 const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
 const sessionController = new SessionController_1.SessionController();
-router.get("/", auth_1.authenticateToken, UserController_1.userController.getAllUsers.bind(UserController_1.userController));
+router.get("/", auth_1.authenticateToken, UserController_1.userController.getProfile.bind(UserController_1.userController));
 router.get("/:id", auth_1.authenticateToken, UserController_1.userController.getUserById.bind(UserController_1.userController));
 router.get("/email/:email", auth_1.authenticateToken, UserController_1.userController.getUserByEmail.bind(UserController_1.userController));
-router.post("/", validation_1.validateUserCreate, UserController_1.userController.createUser.bind(UserController_1.userController));
+router.post("/", (req, res) => {
+    res.status(410).json({
+        success: false,
+        message: "This endpoint has been disabled. User registration now requires email verification. Use POST /api/v1/auth/register after verifying your email.",
+        timestamp: new Date(),
+    });
+});
 router.put("/:id", auth_1.authenticateToken, validation_1.validateUserUpdate, UserController_1.userController.updateUser.bind(UserController_1.userController));
 router.post("/login", UserController_1.userController.login.bind(UserController_1.userController));
 router.post("/logout", auth_1.authenticateToken, UserController_1.userController.logout.bind(UserController_1.userController));

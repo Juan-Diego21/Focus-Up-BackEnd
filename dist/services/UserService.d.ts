@@ -38,18 +38,11 @@ export declare class UserService {
     private insertUserDistractions;
     private insertUserInterestsInTransaction;
     private insertUserDistractionsInTransaction;
+    private updateUserInterestsInTransaction;
+    private updateUserDistractionsInTransaction;
     deleteUser(id: number): Promise<{
         success: boolean;
         error?: string;
     }>;
-    sendPasswordResetLink(emailOrUsername: string): Promise<{
-        success: boolean;
-        message: string;
-    }>;
-    resetPassword(token: string, newPassword: string): Promise<{
-        success: boolean;
-        message: string;
-    }>;
-    private sendResetEmail;
 }
 export declare const userService: UserService;

@@ -1,10 +1,11 @@
 export interface CodigosVerificacion {
-    idCodigoVerificacion?: number;
+    id?: number;
     email: string;
     codigo: string;
     fechaCreacion: Date;
     expiraEn: Date;
     intentos: number;
+    maxIntentos: number;
 }
 export interface CodigosVerificacionCreateInput {
     email: string;

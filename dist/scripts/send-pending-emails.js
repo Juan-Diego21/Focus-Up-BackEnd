@@ -42,6 +42,7 @@ const ormconfig_1 = require("../config/ormconfig");
 const NotificacionesProgramadasRepository_1 = require("../repositories/NotificacionesProgramadasRepository");
 const SessionService_1 = require("../services/SessionService");
 const NotificationService_1 = require("../services/NotificationService");
+const EmailVerificationService_1 = require("../services/EmailVerificationService");
 const logger_1 = __importDefault(require("../utils/logger"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const transporter = nodemailer_1.default.createTransport({
@@ -703,6 +704,17 @@ async function processSessionNotifications() {
         logger_1.default.error('❌ Critical error in session notification processing:', error);
     }
 }
+async function cleanupExpiredVerificationCodes() {
+    try {
+        logger_1.default.info('🧹 Starting cleanup of expired verification codes...');
+        const emailVerificationService = new EmailVerificationService_1.EmailVerificationService();
+        const deletedCount = await emailVerificationService.cleanupExpiredCodes();
+        logger_1.default.info(`🧹 Cleanup completed: ${deletedCount} expired verification codes removed`);
+    }
+    catch (error) {
+        logger_1.default.error('❌ Error during verification codes cleanup:', error);
+    }
+}
 async function processPendingEmails() {
     try {
         logger_1.default.info('🔄 Starting automated email processing...');
@@ -808,8 +820,11 @@ async function initialize() {
         logger_1.default.info('🚀 Automated email delivery system started - running every 10 seconds');
         cron.schedule('0 2 * * *', processSessionNotifications);
         logger_1.default.info('🚀 Session notification system started - running daily at 2 AM');
+        cron.schedule('0 3 * * *', cleanupExpiredVerificationCodes);
+        logger_1.default.info('🚀 Verification codes cleanup system started - running daily at 3 AM');
         await processPendingEmails();
         await processSessionNotifications();
+        await cleanupExpiredVerificationCodes();
     }
     catch (error) {
         logger_1.default.error('❌ Failed to initialize email delivery system:', error);
