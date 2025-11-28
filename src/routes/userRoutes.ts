@@ -92,18 +92,6 @@ router.post("/", (req, res) => {
   });
 });
 
-/**
- * @swagger
- * /users:
- *   post:
- *     summary: ❌ DISABLED - Use /auth/register instead
- *     description: This endpoint has been disabled. User registration now requires email verification. Use POST /auth/register after verifying your email.
- *     tags: [Users]
- *     deprecated: true
- *     responses:
- *       410:
- *         description: Endpoint disabled - use email verification workflow
- */
 
 // PUT /api/v1/users/:id - Actualizar usuario por id
 router.put(
@@ -137,26 +125,44 @@ router.put(
  *             properties:
  *               nombre_usuario:
  *                 type: string
+ *                 description: "Username"
  *                 example: "johndoe"
- *               correo:
- *                 type: string
- *                 format: email
- *                 example: "john@example.com"
- *               contrasena:
- *                 type: string
- *                 format: password
- *                 example: "NewSecurePassword123"
  *               pais:
  *                 type: string
+ *                 description: "Country"
  *                 example: "Colombia"
  *               genero:
  *                 type: string
- *                 enum: [Masculino, Femenino, Otro, Prefiero no decir]
+ *                 description: "Gender"
+ *                 enum: [Masculino, Femenino, Otro, "Prefiero no decir"]
  *                 example: "Masculino"
+ *               fecha_nacimiento:
+ *                 type: string
+ *                 description: "Date of birth"
+ *                 format: date
+ *                 example: "2000-01-01"
  *               horario_fav:
  *                 type: string
+ *                 description: "Favorite time"
  *                 format: time
  *                 example: "08:00"
+ *               contrasena:
+ *                 type: string
+ *                 description: "Password"
+ *                 format: password
+ *                 example: "NewSecurePassword123"
+ *               intereses:
+ *                 type: array
+ *                 description: "Interests"
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *               distracciones:
+ *                 type: array
+ *                 description: "Distractions"
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2]
  *     responses:
  *       200:
  *         description: Usuario actualizado exitosamente

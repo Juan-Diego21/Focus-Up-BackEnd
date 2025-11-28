@@ -33,6 +33,8 @@ export interface UserUpdateInput {
   horario_fav?: string;
   correo?: string;
   contrasena?: string;
+  intereses?: number[];
+  distracciones?: number[];
   id_objetivo_estudio?: number;
 }
 
