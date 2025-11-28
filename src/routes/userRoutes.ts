@@ -10,20 +10,20 @@ import { authenticateToken } from "../middleware/auth";
 const router = Router();
 const sessionController = new SessionController();
 
-// GET /api/v1/users - Obtener todos los usuarios
-router.get("/", authenticateToken, userController.getAllUsers.bind(userController));
+// GET /api/v1/users - Obtener perfil del usuario autenticado
+router.get("/", authenticateToken, userController.getProfile.bind(userController));
 
 /**
  * @swagger
  * /users:
  *   get:
- *     summary: Obtener todos los usuarios
+ *     summary: Obtener perfil del usuario autenticado
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: Lista de usuarios obtenida exitosamente
+ *         description: Perfil del usuario obtenido exitosamente
  *       401:
  *         description: No autorizado
  */
