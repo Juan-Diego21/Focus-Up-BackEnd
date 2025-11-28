@@ -1,5 +1,4 @@
 import { MetodoRealizadoEntity, MetodoProgreso } from "../models/MetodoRealizado.entity";
-import { SesionConcentracionRealizadaEntity, SesionEstado } from "../models/SesionConcentracionRealizada.entity";
 export interface CreateActiveMethodData {
     idMetodo: number;
     estado?: string;
@@ -11,7 +10,9 @@ export interface UpdateMethodProgressData {
     finalizar?: boolean;
 }
 export interface UpdateSessionProgressData {
-    estado?: SesionEstado;
+    status?: "completed" | "pending";
+    elapsedMs?: number;
+    notes?: string;
 }
 export interface ReportItem {
     id_reporte: number;
@@ -28,7 +29,7 @@ export interface ReportData {
 }
 export declare class ReportsService {
     private metodoRealizadoRepository;
-    private sesionRealizadaRepository;
+    private sesionRepository;
     private userRepository;
     private metodoRepository;
     private musicaRepository;
@@ -38,6 +39,16 @@ export declare class ReportsService {
         progress: number;
         methodType: string;
     };
+    getUserSessionReports(userId: number): Promise<{
+        success: boolean;
+        sessions?: any[];
+        error?: string;
+    }>;
+    getUserMethodReports(userId: number): Promise<{
+        success: boolean;
+        methods?: any[];
+        error?: string;
+    }>;
     createActiveMethod(data: CreateActiveMethodData): Promise<{
         success: boolean;
         metodoRealizado?: MetodoRealizadoEntity;
@@ -57,10 +68,11 @@ export declare class ReportsService {
     }>;
     updateSessionProgress(sessionId: number, userId: number, data: UpdateSessionProgressData): Promise<{
         success: boolean;
-        sesionRealizada?: SesionConcentracionRealizadaEntity;
+        session?: any;
         message?: string;
         error?: string;
     }>;
+    private intervalToMs;
     getMethodById(methodId: number, userId: number): Promise<{
         success: boolean;
         metodoRealizado?: MetodoRealizadoEntity;
@@ -68,7 +80,7 @@ export declare class ReportsService {
     }>;
     getSessionById(sessionId: number, userId: number): Promise<{
         success: boolean;
-        sesionRealizada?: SesionConcentracionRealizadaEntity;
+        session?: any;
         error?: string;
     }>;
     deleteReport(reportId: number, userId: number): Promise<{

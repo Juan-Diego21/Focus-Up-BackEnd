@@ -9,6 +9,6 @@ router.get("/nombre/:nombre", auth_1.authenticateToken, MusicController_1.musicC
 router.get("/albums", auth_1.authenticateToken, MusicController_1.musicController.getAllAlbums.bind(MusicController_1.musicController));
 router.get("/albums/:id/canciones", auth_1.authenticateToken, MusicController_1.musicController.getCancionesByAlbum.bind(MusicController_1.musicController));
 router.get("/:id", auth_1.authenticateToken, MusicController_1.musicController.getCancionById.bind(MusicController_1.musicController));
-router.get("/albums/:id", auth_1.authenticateToken, MusicController_1.musicController.getAlbumById.bind(MusicController_1.musicController));
+router.get("/albums/:albumId", auth_1.authenticateToken, MusicController_1.musicController.getCancionesByAlbum.bind(MusicController_1.musicController));
 router.get("/albums/nombre/:nombre", auth_1.authenticateToken, MusicController_1.musicController.getAlbumByNombre.bind(MusicController_1.musicController));
 exports.default = router;

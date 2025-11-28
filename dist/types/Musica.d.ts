@@ -1,19 +1,19 @@
 export interface Musica {
-    id_cancion: number;
-    nombre_cancion: string;
-    artista_cancion?: string | null;
-    genero_cancion?: string | null;
-    categoria_musica?: string | null;
-    id_album?: number | null;
-    fecha_creacion?: Date;
-    fecha_actualizacion?: Date;
-    url_musica: string;
-    url_imagen: string;
+    idCancion: number;
+    nombreCancion: string;
+    artistaCancion?: string | null;
+    generoCancion?: string | null;
+    categoriaMusica?: string | null;
+    idAlbum?: number | null;
+    fechaCreacion?: Date;
+    fechaActualizacion?: Date;
+    urlMusica: string;
 }
 export interface Album {
     id_album: number;
     nombre_album: string;
     fecha_creacion?: Date;
     fecha_actualizacion?: Date;
-    url_imagen: string;
+    descripcion?: string | null;
+    genero?: string | null;
 }

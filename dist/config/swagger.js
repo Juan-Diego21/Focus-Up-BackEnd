@@ -188,6 +188,246 @@ const swaggerOptions = {
                         },
                     },
                 },
+                CreateSessionDto: {
+                    type: "object",
+                    required: ["type"],
+                    properties: {
+                        title: {
+                            type: "string",
+                            description: "Título opcional para la sesión",
+                            example: "Sesión de estudio matutina",
+                        },
+                        description: {
+                            type: "string",
+                            description: "Descripción opcional de la sesión",
+                            example: "Enfocándose en el capítulo 5 de matemáticas",
+                        },
+                        type: {
+                            type: "string",
+                            enum: ["rapid", "scheduled"],
+                            description: "Tipo de sesión de concentración",
+                            example: "rapid",
+                        },
+                        event_id: {
+                            type: "integer",
+                            description: "ID de evento asociado opcional (enviar en snake_case)",
+                            example: 123,
+                        },
+                        id_metodo: {
+                            type: "integer",
+                            description: "ID de método de estudio asociado opcional (enviar en snake_case)",
+                            example: 456,
+                        },
+                        id_album: {
+                            type: "integer",
+                            description: "ID de álbum de música asociado opcional (enviar en snake_case)",
+                            example: 789,
+                        },
+                    },
+                    description: "DTO para crear una nueva sesión de concentración. IMPORTANTE: El cuerpo de la solicitud DEBE usar nombres de campos en snake_case (ej. 'event_id', 'id_metodo', 'id_album') ya que se convierten automáticamente a camelCase internamente.",
+                },
+                UpdateSessionDto: {
+                    type: "object",
+                    properties: {
+                        title: {
+                            type: "string",
+                            description: "Título actualizado para la sesión",
+                            example: "Sesión de estudio actualizada",
+                        },
+                        description: {
+                            type: "string",
+                            description: "Descripción actualizada de la sesión",
+                            example: "Enfoque revisado en matemáticas",
+                        },
+                        id_metodo: {
+                            type: "integer",
+                            description: "ID de método de estudio asociado actualizado (enviar en snake_case)",
+                            example: 457,
+                        },
+                        id_album: {
+                            type: "integer",
+                            description: "ID de álbum de música asociado actualizado (enviar en snake_case)",
+                            example: 790,
+                        },
+                    },
+                    description: "DTO para actualizar metadatos de sesión. Solo se pueden actualizar título, descripción, id_metodo e id_album. IMPORTANTE: El cuerpo de la solicitud DEBE usar nombres de campos en snake_case.",
+                },
+                SessionResponseDto: {
+                    type: "object",
+                    properties: {
+                        sessionId: {
+                            type: "integer",
+                            description: "Identificador único de la sesión",
+                            example: 1,
+                        },
+                        userId: {
+                            type: "integer",
+                            description: "ID del usuario propietario de la sesión",
+                            example: 123,
+                        },
+                        title: {
+                            type: "string",
+                            nullable: true,
+                            description: "Título de la sesión",
+                            example: "Sesión de estudio matutina",
+                        },
+                        description: {
+                            type: "string",
+                            nullable: true,
+                            description: "Descripción de la sesión",
+                            example: "Enfocándose en el capítulo 5 de matemáticas",
+                        },
+                        type: {
+                            type: "string",
+                            enum: ["rapid", "scheduled"],
+                            description: "Tipo de sesión de concentración",
+                            example: "rapid",
+                        },
+                        status: {
+                            type: "string",
+                            enum: ["pending", "completed"],
+                            description: "Estado actual de la sesión",
+                            example: "pending",
+                        },
+                        eventId: {
+                            type: "integer",
+                            nullable: true,
+                            description: "ID de evento asociado",
+                            example: 123,
+                        },
+                        methodId: {
+                            type: "integer",
+                            nullable: true,
+                            description: "ID de método de estudio asociado",
+                            example: 456,
+                        },
+                        albumId: {
+                            type: "integer",
+                            nullable: true,
+                            description: "ID de álbum de música asociado",
+                            example: 789,
+                        },
+                        elapsedInterval: {
+                            type: "string",
+                            description: "Tiempo transcurrido en formato HH:MM:SS",
+                            example: "01:30:45",
+                        },
+                        elapsedMs: {
+                            type: "integer",
+                            description: "Tiempo transcurrido en milisegundos",
+                            example: 5445000,
+                        },
+                        createdAt: {
+                            type: "string",
+                            format: "date-time",
+                            description: "Timestamp de creación de la sesión (sin conversión de zona horaria)",
+                            example: "2024-01-15T08:30:00.000Z",
+                        },
+                        updatedAt: {
+                            type: "string",
+                            format: "date-time",
+                            description: "Timestamp de última actualización (sin conversión de zona horaria)",
+                            example: "2024-01-15T09:15:30.000Z",
+                        },
+                        lastInteractionAt: {
+                            type: "string",
+                            format: "date-time",
+                            description: "Timestamp de última interacción (sin conversión de zona horaria)",
+                            example: "2024-01-15T09:15:30.000Z",
+                        },
+                    },
+                    description: "Respuesta completa de sesión con todos los datos de sesión e información de seguimiento de tiempo.",
+                },
+                SessionListResponse: {
+                    type: "object",
+                    properties: {
+                        sessions: {
+                            type: "array",
+                            items: {
+                                $ref: "#/components/schemas/SessionResponseDto",
+                            },
+                            description: "Arreglo de objetos de sesión",
+                        },
+                        total: {
+                            type: "integer",
+                            description: "Número total de sesiones que coinciden con los criterios",
+                            example: 25,
+                        },
+                        page: {
+                            type: "integer",
+                            description: "Número de página actual",
+                            example: 1,
+                        },
+                        perPage: {
+                            type: "integer",
+                            description: "Número de sesiones por página",
+                            example: 10,
+                        },
+                        totalPages: {
+                            type: "integer",
+                            description: "Número total de páginas",
+                            example: 3,
+                        },
+                    },
+                    description: "Respuesta paginada para listado de sesiones con metadatos.",
+                },
+                PendingSessionsResponse: {
+                    type: "array",
+                    items: {
+                        type: "object",
+                        properties: {
+                            idSesion: {
+                                type: "integer",
+                                description: "ID de la sesión",
+                                example: 1,
+                            },
+                            idUsuario: {
+                                type: "integer",
+                                description: "ID del usuario",
+                                example: 123,
+                            },
+                            titulo: {
+                                type: "string",
+                                nullable: true,
+                                description: "Título de la sesión",
+                                example: "Sesión de estudio matutina",
+                            },
+                            fechaCreacion: {
+                                type: "string",
+                                format: "date-time",
+                                description: "Fecha de creación",
+                                example: "2024-01-08T08:30:00.000Z",
+                            },
+                        },
+                    },
+                    description: "Arreglo de sesiones pendientes más antiguas que los días especificados, utilizado por trabajos cron.",
+                },
+                ApiResponse: {
+                    type: "object",
+                    required: ["success", "message", "timestamp"],
+                    properties: {
+                        success: {
+                            type: "boolean",
+                            description: "Indicates if the operation was successful",
+                            example: true,
+                        },
+                        message: {
+                            type: "string",
+                            description: "Response message",
+                            example: "Operation completed successfully",
+                        },
+                        data: {
+                            description: "Response data (varies by endpoint)",
+                        },
+                        timestamp: {
+                            type: "string",
+                            format: "date-time",
+                            description: "Response timestamp",
+                            example: "2024-01-15T09:15:30.000Z",
+                        },
+                    },
+                    description: "Standard API response wrapper for all endpoints.",
+                },
             },
         },
         tags: [
@@ -206,6 +446,10 @@ const swaggerOptions = {
             {
                 name: "MetodosEstudio",
                 description: "Endpoints de gestión de métodos de estudio",
+            },
+            {
+                name: "Sessions",
+                description: "Endpoints de gestión de sesiones de concentración",
             },
             {
                 name: "Reports",

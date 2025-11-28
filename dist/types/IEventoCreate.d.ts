@@ -1,12 +1,21 @@
 export interface IEventoCreate {
-    fechaEvento: Date;
-    horaEvento: string;
     nombreEvento: string;
-    descripcionEvento: string;
+    fechaEvento: string;
+    horaEvento: string;
+    descripcionEvento?: string;
+    tipoEvento?: string;
+    idUsuario: number;
+    idMetodo?: number;
+    idAlbum?: number;
+    estado?: 'pending' | 'completed' | null;
 }
 export interface IEventoUpdate {
-    fechaEvento?: Date;
-    horaEvento?: string;
     nombreEvento?: string;
+    fechaEvento?: string;
+    horaEvento?: string;
     descripcionEvento?: string;
+    tipoEvento?: string;
+    idMetodo?: number;
+    idAlbum?: number;
+    estado?: 'pending' | 'completed' | null;
 }

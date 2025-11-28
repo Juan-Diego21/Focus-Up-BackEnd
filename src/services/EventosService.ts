@@ -55,20 +55,43 @@ export const EventoService = {
             const eventos = await findEventosByUsuario(userId);
 
             // Mapear respuesta para incluir IDs de método y álbum en el nivel superior
-            // Esto asegura consistencia en el formato de respuesta
-            const eventosMapeados = eventos.map(evento => ({
-                idEvento: evento.idEvento,
-                nombreEvento: evento.nombreEvento,
-                fechaEvento: evento.fechaEvento, // Ya es string YYYY-MM-DD
-                horaEvento: evento.horaEvento,
-                descripcionEvento: evento.descripcionEvento,
-                estado: evento.estado,
-                idUsuario: evento.usuario?.idUsuario,
-                idMetodo: evento.metodoEstudio?.idMetodo,
-                idAlbum: evento.album?.idAlbum,
-                fechaCreacion: evento.fechaCreacion,
-                fechaActualizacion: evento.fechaActualizacion
-            }));
+            // Para eventos de concentración, incluir información completa del método y álbum
+            const eventosMapeados = eventos.map(evento => {
+                const baseResponse = {
+                    idEvento: evento.idEvento,
+                    nombreEvento: evento.nombreEvento,
+                    fechaEvento: evento.fechaEvento, // Ya es string YYYY-MM-DD
+                    horaEvento: evento.horaEvento,
+                    descripcionEvento: evento.descripcionEvento,
+                    tipoEvento: evento.tipoEvento,
+                    estado: evento.estado,
+                    idUsuario: evento.usuario?.idUsuario,
+                    idMetodo: evento.metodoEstudio?.idMetodo,
+                    idAlbum: evento.album?.idAlbum,
+                    fechaCreacion: evento.fechaCreacion,
+                    fechaActualizacion: evento.fechaActualizacion
+                };
+
+                // Para eventos de concentración, incluir información completa del método y álbum
+                if (evento.tipoEvento === 'concentracion') {
+                    return {
+                        ...baseResponse,
+                        metodo: evento.metodoEstudio ? {
+                            idMetodo: evento.metodoEstudio.idMetodo,
+                            nombreMetodo: evento.metodoEstudio.nombreMetodo,
+                            descripcion: evento.metodoEstudio.descripcion
+                        } : null,
+                        album: evento.album ? {
+                            idAlbum: evento.album.idAlbum,
+                            nombreAlbum: evento.album.nombreAlbum,
+                            descripcion: evento.album.descripcion,
+                            genero: evento.album.genero
+                        } : null
+                    };
+                }
+
+                return baseResponse;
+            });
 
             return {
                 success: true,
@@ -166,6 +189,7 @@ export const EventoService = {
                 fechaEvento: data.fechaEvento, // Usar la fecha como string
                 horaEvento: data.horaEvento,
                 descripcionEvento: data.descripcionEvento,
+                tipoEvento: data.tipoEvento,
                 estado: data.estado || null, // Por defecto null
                 usuario: usuario,
                 metodoEstudio: metodoEntity,
@@ -223,16 +247,27 @@ export const EventoService = {
                     } else {
                         // Programar notificación automática
                         console.log(`✅ Programando notificación para evento ${eventoCompleto.idEvento} a las ${tiempoRecordatorio}`);
+
+                        // Para eventos de concentración, incluir enlace especial
+                        let mensaje = {
+                            nombreEvento: eventoCompleto.nombreEvento,
+                            fechaEvento: eventoCompleto.fechaEvento,
+                            horaEvento: eventoCompleto.horaEvento,
+                            descripcionEvento: eventoCompleto.descripcionEvento
+                        };
+
+                        if (eventoCompleto.tipoEvento === 'concentracion') {
+                            mensaje = {
+                                ...mensaje,
+                                link: `http://localhost:5173/start-session?eventId=${eventoCompleto.idEvento}`
+                            } as any;
+                        }
+
                         await NotificacionesProgramadasService.createScheduledNotification({
                             idUsuario: data.idUsuario,
                             tipo: "evento",
                             titulo: `Recordatorio: ${eventoCompleto.nombreEvento}`,
-                            mensaje: JSON.stringify({
-                                nombreEvento: eventoCompleto.nombreEvento,
-                                fechaEvento: eventoCompleto.fechaEvento,
-                                horaEvento: eventoCompleto.horaEvento,
-                                descripcionEvento: eventoCompleto.descripcionEvento
-                            }),
+                            mensaje: JSON.stringify(mensaje),
                             fechaProgramada: tiempoRecordatorio
                         });
                         console.log(`✅ Notificación programada exitosamente para evento ${eventoCompleto.idEvento}`);
@@ -243,13 +278,14 @@ export const EventoService = {
                 console.error('❌ Error al programar recordatorio automático para evento:', error);
             }
 
-            // Mapear respuesta para incluir IDs
-            const eventoMapeado = {
+            // Mapear respuesta para incluir IDs y objetos completos para eventos de concentración
+            const baseResponse = {
                 idEvento: eventoCompleto.idEvento,
                 nombreEvento: eventoCompleto.nombreEvento,
                 fechaEvento: eventoCompleto.fechaEvento, // Ya es string YYYY-MM-DD
                 horaEvento: eventoCompleto.horaEvento,
                 descripcionEvento: eventoCompleto.descripcionEvento,
+                tipoEvento: eventoCompleto.tipoEvento,
                 estado: eventoCompleto.estado,
                 idUsuario: eventoCompleto.usuario?.idUsuario,
                 idMetodo: eventoCompleto.metodoEstudio?.idMetodo,
@@ -257,6 +293,22 @@ export const EventoService = {
                 fechaCreacion: eventoCompleto.fechaCreacion,
                 fechaActualizacion: eventoCompleto.fechaActualizacion
             };
+
+            // Para eventos de concentración, incluir información completa del método y álbum
+            const eventoMapeado = eventoCompleto.tipoEvento === 'concentracion' ? {
+                ...baseResponse,
+                metodo: eventoCompleto.metodoEstudio ? {
+                    idMetodo: eventoCompleto.metodoEstudio.idMetodo,
+                    nombreMetodo: eventoCompleto.metodoEstudio.nombreMetodo,
+                    descripcion: eventoCompleto.metodoEstudio.descripcion
+                } : null,
+                album: eventoCompleto.album ? {
+                    idAlbum: eventoCompleto.album.idAlbum,
+                    nombreAlbum: eventoCompleto.album.nombreAlbum,
+                    descripcion: eventoCompleto.album.descripcion,
+                    genero: eventoCompleto.album.genero
+                } : null
+            } : baseResponse;
 
             return {
                 success: true,
@@ -355,6 +407,7 @@ export const EventoService = {
             }
             if (data.horaEvento !== undefined) updateData.horaEvento = data.horaEvento;
             if (data.descripcionEvento !== undefined) updateData.descripcionEvento = data.descripcionEvento;
+            if (data.tipoEvento !== undefined) updateData.tipoEvento = data.tipoEvento;
             if (data.estado !== undefined) {
                 if (!validarStatus(data.estado)) {
                     return {
@@ -407,13 +460,14 @@ export const EventoService = {
                 };
             }
 
-            // Mapear respuesta para incluir IDs
-            const eventoMapeado = {
+            // Mapear respuesta para incluir IDs y objetos completos para eventos de concentración
+            const baseResponse = {
                 idEvento: eventoActualizado.idEvento,
                 nombreEvento: eventoActualizado.nombreEvento,
                 fechaEvento: eventoActualizado.fechaEvento, // Ya es string YYYY-MM-DD
                 horaEvento: eventoActualizado.horaEvento,
                 descripcionEvento: eventoActualizado.descripcionEvento,
+                tipoEvento: eventoActualizado.tipoEvento,
                 estado: eventoActualizado.estado,
                 idUsuario: eventoActualizado.usuario?.idUsuario,
                 idMetodo: eventoActualizado.metodoEstudio?.idMetodo,
@@ -421,6 +475,22 @@ export const EventoService = {
                 fechaCreacion: eventoActualizado.fechaCreacion,
                 fechaActualizacion: eventoActualizado.fechaActualizacion
             };
+
+            // Para eventos de concentración, incluir información completa del método y álbum
+            const eventoMapeado = eventoActualizado.tipoEvento === 'concentracion' ? {
+                ...baseResponse,
+                metodo: eventoActualizado.metodoEstudio ? {
+                    idMetodo: eventoActualizado.metodoEstudio.idMetodo,
+                    nombreMetodo: eventoActualizado.metodoEstudio.nombreMetodo,
+                    descripcion: eventoActualizado.metodoEstudio.descripcion
+                } : null,
+                album: eventoActualizado.album ? {
+                    idAlbum: eventoActualizado.album.idAlbum,
+                    nombreAlbum: eventoActualizado.album.nombreAlbum,
+                    descripcion: eventoActualizado.album.descripcion,
+                    genero: eventoActualizado.album.genero
+                } : null
+            } : baseResponse;
 
             return {
                 success: true,

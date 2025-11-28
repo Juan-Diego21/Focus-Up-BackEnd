@@ -40,6 +40,9 @@ export class EventoEntity {
   @Column({ type: "text", name: "descripcion_evento", nullable: true })
   descripcionEvento?: string;
 
+  @Column({ type: "varchar", name: "tipo_evento", nullable: true })
+  tipoEvento?: string;
+
   @Column({ type: "varchar", name: "estado", nullable: true })
   estado?: 'pendiente' | 'completado' | null;
 

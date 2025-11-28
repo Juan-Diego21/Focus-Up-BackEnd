@@ -10,20 +10,20 @@ import { authenticateToken } from "../middleware/auth";
 const router = Router();
 const sessionController = new SessionController();
 
-// GET /api/v1/users - Obtener todos los usuarios
-router.get("/", authenticateToken, userController.getAllUsers.bind(userController));
+// GET /api/v1/users - Obtener perfil del usuario autenticado
+router.get("/", authenticateToken, userController.getProfile.bind(userController));
 
 /**
  * @swagger
  * /users:
  *   get:
- *     summary: Obtener todos los usuarios
+ *     summary: Obtener perfil del usuario autenticado
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: Lista de usuarios obtenida exitosamente
+ *         description: Perfil del usuario obtenido exitosamente
  *       401:
  *         description: No autorizado
  */
@@ -82,73 +82,16 @@ router.get("/email/:email", authenticateToken, userController.getUserByEmail.bin
  *         description: No autorizado
  */
 
-// POST /api/v1/users - Crear nuevo usuario
-router.post(
-  "/",
-  validateUserCreate,
-  userController.createUser.bind(userController)
-);
+// POST /api/v1/users - DISABLED: Use /api/v1/auth/register instead
+// Email verification is now required before user registration
+router.post("/", (req, res) => {
+  res.status(410).json({
+    success: false,
+    message: "This endpoint has been disabled. User registration now requires email verification. Use POST /api/v1/auth/register after verifying your email.",
+    timestamp: new Date(),
+  });
+});
 
-/**
- * @swagger
- * /users:
- *   post:
- *     summary: Crear un nuevo usuario
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - nombre_usuario
- *               - correo
- *               - contrasena
- *               - fecha_nacimiento
- *             properties:
- *               nombre_usuario:
- *                 type: string
- *                 example: "johndoe"
- *               correo:
- *                 type: string
- *                 format: email
- *                 example: "john@example.com"
- *               contrasena:
- *                 type: string
- *                 format: password
- *                 example: "SecurePassword123"
- *               fecha_nacimiento:
- *                 type: string
- *                 format: date
- *                 example: "1990-01-01"
- *               pais:
- *                 type: string
- *                 example: "Colombia"
- *               genero:
- *                 type: string
- *                 enum: [Masculino, Femenino, Otro, Prefiero no decir]
- *                 example: "Masculino"
- *               horario_fav:
- *                 type: string
- *                 format: time
- *                 example: "08:00"
- *               intereses:
- *                 type: array
- *                 items:
- *                   type: integer
- *                 example: [1, 2, 3]
- *               distracciones:
- *                 type: array
- *                 items:
- *                   type: integer
- *                 example: [1, 2]
- *     responses:
- *       201:
- *         description: Usuario creado exitosamente
- *       400:
- *         description: Datos inválidos o usuario/email ya existe
- */
 
 // PUT /api/v1/users/:id - Actualizar usuario por id
 router.put(
@@ -182,26 +125,44 @@ router.put(
  *             properties:
  *               nombre_usuario:
  *                 type: string
+ *                 description: "Username"
  *                 example: "johndoe"
- *               correo:
- *                 type: string
- *                 format: email
- *                 example: "john@example.com"
- *               contrasena:
- *                 type: string
- *                 format: password
- *                 example: "NewSecurePassword123"
  *               pais:
  *                 type: string
+ *                 description: "Country"
  *                 example: "Colombia"
  *               genero:
  *                 type: string
- *                 enum: [Masculino, Femenino, Otro, Prefiero no decir]
+ *                 description: "Gender"
+ *                 enum: [Masculino, Femenino, Otro, "Prefiero no decir"]
  *                 example: "Masculino"
+ *               fecha_nacimiento:
+ *                 type: string
+ *                 description: "Date of birth"
+ *                 format: date
+ *                 example: "2000-01-01"
  *               horario_fav:
  *                 type: string
+ *                 description: "Favorite time"
  *                 format: time
  *                 example: "08:00"
+ *               contrasena:
+ *                 type: string
+ *                 description: "Password"
+ *                 format: password
+ *                 example: "NewSecurePassword123"
+ *               intereses:
+ *                 type: array
+ *                 description: "Interests"
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *               distracciones:
+ *                 type: array
+ *                 description: "Distractions"
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2]
  *     responses:
  *       200:
  *         description: Usuario actualizado exitosamente

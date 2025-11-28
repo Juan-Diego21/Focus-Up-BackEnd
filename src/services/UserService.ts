@@ -6,7 +6,6 @@ import { UsuarioDistraccionesEntity } from "../models/UsuarioDistracciones.entit
 import { UserEntity } from "../models/User.entity";
 import logger from "../utils/logger";
 import { JwtUtils } from "../utils/jwt";
-import nodemailer from "nodemailer";
 
 /**
  * Servicio para la gestión completa de usuarios
@@ -238,99 +237,123 @@ export class UserService {
   }
 
   /**
-   * Actualiza la información de un usuario existente
-   * Incluye validaciones de unicidad para email y nombre de usuario
-   */
-  async updateUser(
-    id: number,
-    updateData: UserUpdateInput
-  ): Promise<{ success: boolean; user?: User; error?: string }> {
-    try {
-      // Si se actualiza la contraseña, hacer hash
-      if (updateData.contrasena) {
-        if (!ValidationUtils.isValidPassword(updateData.contrasena)) {
-          return {
-            success: false,
-            error:
-              "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número",
-          };
-        }
-        updateData.contrasena = await UserService.hashPassword(
-          updateData.contrasena
-        );
-      }
+    * Actualiza la información de un usuario existente
+    * Incluye validaciones de unicidad para email y nombre de usuario
+    */
+   async updateUser(
+     id: number,
+     updateData: UserUpdateInput
+   ): Promise<{ success: boolean; user?: User; error?: string }> {
+     const queryRunner = (
+       await import("../config/ormconfig")
+     ).AppDataSource.createQueryRunner();
+     await queryRunner.connect();
+     await queryRunner.startTransaction();
 
-      // Validaciones adicionales
-      if (
-        updateData.correo &&
-        !ValidationUtils.isValidEmail(updateData.correo)
-      ) {
-        return { success: false, error: "Formato de email inválido" };
-      }
+     try {
+       // Si se actualiza la contraseña, hacer hash
+       if (updateData.contrasena) {
+         if (!ValidationUtils.isValidPassword(updateData.contrasena)) {
+           return {
+             success: false,
+             error:
+               "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número",
+           };
+         }
+         updateData.contrasena = await UserService.hashPassword(
+           updateData.contrasena
+         );
+       }
 
-      if (
-        updateData.horario_fav &&
-        !ValidationUtils.isValidTime(updateData.horario_fav)
-      ) {
-        return {
-          success: false,
-          error: "Formato de hora inválido (use HH:MM)",
-        };
-      }
+       // Validaciones adicionales
+       if (
+         updateData.correo &&
+         !ValidationUtils.isValidEmail(updateData.correo)
+       ) {
+         return { success: false, error: "Formato de email inválido" };
+       }
 
-      // Sanitizar entradas
-      const sanitizedData: UserUpdateInput = { ...updateData };
-      if (sanitizedData.nombre_usuario) {
-        sanitizedData.nombre_usuario = ValidationUtils.sanitizeText(
-          sanitizedData.nombre_usuario
-        );
-      }
-      if (sanitizedData.pais) {
-        sanitizedData.pais = ValidationUtils.sanitizeText(sanitizedData.pais);
-      }
-      if (sanitizedData.correo) {
-        sanitizedData.correo = sanitizedData.correo.toLowerCase().trim();
-      }
+       if (
+         updateData.horario_fav &&
+         !ValidationUtils.isValidTime(updateData.horario_fav)
+       ) {
+         return {
+           success: false,
+           error: "Formato de hora inválido (use HH:MM)",
+         };
+       }
 
-      // Verificar unicidad si se actualiza email
-      if (sanitizedData.correo) {
-        const emailExists = await userRepository.emailExists(
-          sanitizedData.correo,
-          id
-        );
-        if (emailExists) {
-          return {
-            success: false,
-            error: "El correo electrónico ya está registrado",
-          };
-        }
-      }
+       // Sanitizar entradas
+       const sanitizedData: UserUpdateInput = { ...updateData };
+       if (sanitizedData.nombre_usuario) {
+         sanitizedData.nombre_usuario = ValidationUtils.sanitizeText(
+           sanitizedData.nombre_usuario
+         );
+       }
+       if (sanitizedData.pais) {
+         sanitizedData.pais = ValidationUtils.sanitizeText(sanitizedData.pais);
+       }
+       if (sanitizedData.correo) {
+         sanitizedData.correo = sanitizedData.correo.toLowerCase().trim();
+       }
 
-      // Verificar unicidad si se actualiza nombre de usuario
-      if (sanitizedData.nombre_usuario) {
-        const usernameExists = await userRepository.usernameExists(
-          sanitizedData.nombre_usuario,
-          id
-        );
-        if (usernameExists) {
-          return {
-            success: false,
-            error: "El nombre de usuario ya está en uso",
-          };
-        }
-      }
+       // Verificar unicidad si se actualiza email
+       if (sanitizedData.correo) {
+         const emailExists = await userRepository.emailExists(
+           sanitizedData.correo,
+           id
+         );
+         if (emailExists) {
+           return {
+             success: false,
+             error: "El correo electrónico ya está registrado",
+           };
+         }
+       }
 
-      const user = await userRepository.update(id, sanitizedData);
-      if (!user) {
-        return { success: false, error: "Usuario no encontrado" };
-      }
+       // Verificar unicidad si se actualiza nombre de usuario
+       if (sanitizedData.nombre_usuario) {
+         const usernameExists = await userRepository.usernameExists(
+           sanitizedData.nombre_usuario,
+           id
+         );
+         if (usernameExists) {
+           return {
+             success: false,
+             error: "El nombre de usuario ya está en uso",
+           };
+         }
+       }
 
-      return { success: true, user };
-    } catch (error) {
-      logger.error("Error en UserService.updateUser:", error);
-      return { success: false, error: "Error al actualizar usuario" };
-    }
-  }
+       // Actualizar usuario principal
+       const user = await userRepository.update(id, sanitizedData);
+       if (!user) {
+         return { success: false, error: "Usuario no encontrado" };
+       }
+
+       // Actualizar intereses si se proporcionaron
+       if (updateData.intereses !== undefined) {
+         await this.updateUserInterestsInTransaction(queryRunner, id, updateData.intereses);
+       }
+
+       // Actualizar distracciones si se proporcionaron
+       if (updateData.distracciones !== undefined) {
+         await this.updateUserDistractionsInTransaction(queryRunner, id, updateData.distracciones);
+       }
+
+       await queryRunner.commitTransaction();
+
+       // Obtener usuario actualizado con relaciones
+       const updatedUser = await userRepository.findById(id);
+       return { success: true, user: updatedUser || user };
+     } catch (error) {
+       await queryRunner.rollbackTransaction();
+       logger.error("Error en UserService.updateUser:", error);
+       return { success: false, error: "Error al actualizar usuario" };
+     } finally {
+       await queryRunner.release();
+     }
+   }
 
   /**
    * Verifica las credenciales de login de un usuario
@@ -464,23 +487,89 @@ export class UserService {
    * Inserta las distracciones del usuario dentro de una transacción de base de datos
    * Garantiza atomicidad en la creación de usuarios con distracciones asociadas
    */
-  private async insertUserDistractionsInTransaction(
-    queryRunner: any,
-    userId: number,
-    distractionIds: number[]
-  ): Promise<void> {
-    const inserts = distractionIds.map((distractionId) => ({
-      idUsuario: userId,
-      idDistraccion: distractionId,
-    }));
+   private async insertUserDistractionsInTransaction(
+     queryRunner: any,
+     userId: number,
+     distractionIds: number[]
+   ): Promise<void> {
+     const inserts = distractionIds.map((distractionId) => ({
+       idUsuario: userId,
+       idDistraccion: distractionId,
+     }));
 
-    await queryRunner.manager
-      .createQueryBuilder()
-      .insert()
-      .into("usuariodistracciones")
-      .values(inserts)
-      .execute();
-  }
+     await queryRunner.manager
+       .createQueryBuilder()
+       .insert()
+       .into("usuariodistracciones")
+       .values(inserts)
+       .execute();
+   }
+
+   /**
+    * Actualiza los intereses del usuario dentro de una transacción
+    * Elimina intereses existentes y agrega los nuevos
+    */
+   private async updateUserInterestsInTransaction(
+     queryRunner: any,
+     userId: number,
+     interestIds: number[]
+   ): Promise<void> {
+     // Eliminar intereses existentes
+     await queryRunner.manager
+       .createQueryBuilder()
+       .delete()
+       .from("usuariointereses")
+       .where("idUsuario = :userId", { userId })
+       .execute();
+
+     // Insertar nuevos intereses si hay
+     if (interestIds.length > 0) {
+       const inserts = interestIds.map((interestId) => ({
+         idUsuario: userId,
+         idInteres: interestId,
+       }));
+
+       await queryRunner.manager
+         .createQueryBuilder()
+         .insert()
+         .into("usuariointereses")
+         .values(inserts)
+         .execute();
+     }
+   }
+
+   /**
+    * Actualiza las distracciones del usuario dentro de una transacción
+    * Elimina distracciones existentes y agrega las nuevas
+    */
+   private async updateUserDistractionsInTransaction(
+     queryRunner: any,
+     userId: number,
+     distractionIds: number[]
+   ): Promise<void> {
+     // Eliminar distracciones existentes
+     await queryRunner.manager
+       .createQueryBuilder()
+       .delete()
+       .from("usuariodistracciones")
+       .where("idUsuario = :userId", { userId })
+       .execute();
+
+     // Insertar nuevas distracciones si hay
+     if (distractionIds.length > 0) {
+       const inserts = distractionIds.map((distractionId) => ({
+         idUsuario: userId,
+         idDistraccion: distractionId,
+       }));
+
+       await queryRunner.manager
+         .createQueryBuilder()
+         .insert()
+         .into("usuariodistracciones")
+         .values(inserts)
+         .execute();
+     }
+   }
 
   /**
    * Elimina un usuario del sistema por su ID
@@ -496,146 +585,6 @@ export class UserService {
     } catch (error) {
       console.error("Error en UserService.deleteUser:", error);
       return { success: false, error: "Error eliminando usuario" };
-    }
-  }
-  /**
-   * Envía un enlace de restablecimiento de contraseña al usuario
-   * Busca por email o nombre de usuario y envía código de verificación por email
-   */
-  async sendPasswordResetLink(emailOrUsername: string): Promise<{
-  success: boolean;
-  message: string;
-}> {
-  try {
-    // Buscar usuario por email o username
-    let user = await userRepository.findByEmail(emailOrUsername);
-
-    if (!user) {
-      user = await userRepository.findByUsername(emailOrUsername);
-    }
-
-    // Mensaje genérico por seguridad
-    if (!user) {
-      return {
-        success: true,
-        message: "Si el usuario existe, recibirás un enlace para restablecer tu contraseña."
-      };
-    }
-
-    // Generar token
-    const tokenPayload = {
-      userId: user.id_usuario!,
-      email: user.correo,
-      tokenVersion: 0, // Password reset tokens don't use version validation
-    };
-
-    const resetToken = JwtUtils.generateAccessToken(tokenPayload);
-
-    // Crear enlace
-    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
-
-    // Enviar email
-    await this.sendResetEmail(user.correo, resetLink, user.nombre_usuario);
-
-    return {
-      success: true,
-      message: "Se ha enviado un enlace de restablecimiento a tu email."
-    };
-
-  } catch (error) {
-    logger.error("Error en sendPasswordResetLink:", error);
-
-    // Por seguridad, siempre retornar éxito
-    return {
-      success: true,
-      message: "Si el usuario existe, recibirás un enlace para restablecer tu contraseña."
-    };
-  }
-}
-
-  /**
-   * Restablece la contraseña de un usuario usando un token JWT
-   * Valida el token y actualiza la contraseña hasheada en la base de datos
-   */
-  async resetPassword(token: string, newPassword: string): Promise<{
-    success: boolean;
-    message: string;
-  }> {
-    try {
-      // Verificar token
-      const decoded = JwtUtils.verifyAccessToken(token);
-
-      // Validar nueva contraseña
-      if (!ValidationUtils.isValidPassword(newPassword)) {
-        return {
-          success: false,
-          message: "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número"
-        };
-      }
-
-      // Hash nueva contraseña
-      const hashedPassword = await UserService.hashPassword(newPassword);
-
-      const update  = await userRepository.updatePassword(decoded.userId, hashedPassword);
-      
-      if (!update) {
-        return {
-          success: false,
-          message: "Usuario no encontrado"
-        };
-      }
-
-      return {
-        success: true,
-        message: "Contraseña restablecida exitosamente"
-      };
-
-    } catch (error) {
-      logger.error("Error en UserService.resetPassword:", error);
-      
-      return {
-        success: false,
-        message: "Token inválido o expirado"
-      };
-    }
-  }
-
-  /**
-   * Envía el email de restablecimiento de contraseña
-   * Utiliza el servicio de email configurado para enviar el enlace de recuperación
-   */
-  private async sendResetEmail(email: string, resetLink: string, username: string): Promise<void> {
-    try {
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.EMAIL_USER!,
-          pass: process.env.EMAIL_PASS!,
-        }
-      });
-
-      const mailOptions = {
-        from: process.env.EMAIL_USER!,
-        to: email,
-        subject: "Restablecer tu contraseña",
-        html: `
-          <h2>Hola ${username}</h2>
-          <p>Has solicitado restablecer tu contraseña.</p>
-          <p>Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
-          <a href="${resetLink}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-            Restablecer Contraseña
-          </a>
-          <p>Este enlace expirará en 15 minutos.</p>
-          <p>Si no solicitaste este cambio, ignora este email.</p>
-        `
-      };
-
-      await transporter.sendMail(mailOptions);
-      logger.info(`Email de restablecimiento enviado a: ${email}`);
-
-    } catch (error) {
-      logger.error("Error enviando email de restablecimiento:", error);
-      throw error;
     }
   }
 

@@ -4,6 +4,8 @@ export declare class ReportsController {
     getUserReports(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     updateMethodProgress(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     updateSessionProgress(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    getUserSessionReports(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    getUserMethodReports(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     deleteReport(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 }
 export declare const reportsController: ReportsController;

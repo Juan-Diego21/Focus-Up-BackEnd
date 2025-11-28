@@ -6,12 +6,30 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.reportsService = exports.ReportsService = void 0;
 const ormconfig_1 = require("../config/ormconfig");
 const MetodoRealizado_entity_1 = require("../models/MetodoRealizado.entity");
-const SesionConcentracionRealizada_entity_1 = require("../models/SesionConcentracionRealizada.entity");
+const SesionConcentracion_entity_1 = require("../models/SesionConcentracion.entity");
 const User_entity_1 = require("../models/User.entity");
 const MetodoEstudio_entity_1 = require("../models/MetodoEstudio.entity");
 const Musica_entity_1 = require("../models/Musica.entity");
+const NotificacionesProgramadasService_1 = require("./NotificacionesProgramadasService");
 const logger_1 = __importDefault(require("../utils/logger"));
 const { studyMethodRegistry, methodAliases } = require("../config/methods.config");
+function normalizeProgress(progress) {
+    if (typeof progress === 'number') {
+        return progress;
+    }
+    if (typeof progress === 'string') {
+        const trimmed = progress.trim();
+        const parsed = Number(trimmed);
+        if (isNaN(parsed)) {
+            throw new Error(`Progreso inválido: no se puede convertir "${progress}" a número`);
+        }
+        if (!Number.isInteger(parsed)) {
+            throw new Error(`Progreso inválido: debe ser un número entero, recibido ${parsed}`);
+        }
+        return parsed;
+    }
+    throw new Error(`Progreso inválido: tipo de dato no soportado ${typeof progress}`);
+}
 function normalizeText(text) {
     if (!text || typeof text !== 'string')
         return '';
@@ -30,7 +48,11 @@ function getMethodType(nombreMetodo) {
     if (studyMethodRegistry[normalized]) {
         return normalized;
     }
-    const methodSlug = methodAliases[normalized];
+    let methodSlug = methodAliases[nombreMetodo];
+    if (methodSlug && studyMethodRegistry[methodSlug]) {
+        return methodSlug;
+    }
+    methodSlug = methodAliases[normalized];
     if (methodSlug && studyMethodRegistry[methodSlug]) {
         return methodSlug;
     }
@@ -43,19 +65,50 @@ function getMethodConfig(methodType) {
         logger_1.default.error(`Configuración no encontrada para el método: ${methodType}. Métodos disponibles: ${Object.keys(studyMethodRegistry).join(', ')}`);
         throw new Error(`Configuración no encontrada para el método: ${methodType}`);
     }
+    logger_1.default.debug(`Registry config for ${methodType}: ${JSON.stringify({
+        validCreationProgress: config.validCreationProgress,
+        validUpdateProgress: config.validUpdateProgress,
+        validResumeProgress: config.validResumeProgress,
+        statusMap: config.statusMap
+    })}`);
     return config;
 }
 function isValidProgressForCreation(methodType, progress) {
     const config = getMethodConfig(methodType);
-    return config.validCreationProgress.includes(progress);
+    let normalizedProgress;
+    try {
+        normalizedProgress = normalizeProgress(progress);
+    }
+    catch (error) {
+        logger_1.default.warn(`Error normalizing progress for ${methodType} creation: ${error.message}`);
+        return false;
+    }
+    return config.validCreationProgress.includes(normalizedProgress);
 }
 function isValidProgressForUpdate(methodType, progress) {
     const config = getMethodConfig(methodType);
-    return config.validUpdateProgress.includes(progress);
+    let normalizedProgress;
+    try {
+        normalizedProgress = normalizeProgress(progress);
+    }
+    catch (error) {
+        logger_1.default.warn(`Error normalizing progress for ${methodType}: ${error.message}`);
+        return false;
+    }
+    logger_1.default.debug(`Progress validation for ${methodType}: received=${progress}, normalized=${normalizedProgress}, allowed=${JSON.stringify(config.validUpdateProgress)}, isValid=${config.validUpdateProgress.includes(normalizedProgress)}`);
+    return config.validUpdateProgress.includes(normalizedProgress);
 }
 function isValidProgressForResume(methodType, progress) {
     const config = getMethodConfig(methodType);
-    return config.validResumeProgress.includes(progress);
+    let normalizedProgress;
+    try {
+        normalizedProgress = normalizeProgress(progress);
+    }
+    catch (error) {
+        logger_1.default.warn(`Error normalizing progress for ${methodType} resume: ${error.message}`);
+        return false;
+    }
+    return config.validResumeProgress.includes(normalizedProgress);
 }
 function getStatusForProgress(methodType, progress) {
     const config = getMethodConfig(methodType);
@@ -132,13 +185,107 @@ function getResumeInfo(methodType, progress) {
 class ReportsService {
     constructor() {
         this.metodoRealizadoRepository = ormconfig_1.AppDataSource.getRepository(MetodoRealizado_entity_1.MetodoRealizadoEntity);
-        this.sesionRealizadaRepository = ormconfig_1.AppDataSource.getRepository(SesionConcentracionRealizada_entity_1.SesionConcentracionRealizadaEntity);
+        this.sesionRepository = ormconfig_1.AppDataSource.getRepository(SesionConcentracion_entity_1.SesionConcentracionEntity);
         this.userRepository = ormconfig_1.AppDataSource.getRepository(User_entity_1.UserEntity);
         this.metodoRepository = ormconfig_1.AppDataSource.getRepository(MetodoEstudio_entity_1.MetodoEstudioEntity);
         this.musicaRepository = ormconfig_1.AppDataSource.getRepository(Musica_entity_1.MusicaEntity);
     }
     getResumeInfo(methodType, progress) {
         return getResumeInfo(methodType, progress);
+    }
+    async getUserSessionReports(userId) {
+        try {
+            const numericUserId = Number(userId);
+            logger_1.default.info("Buscando reportes de sesiones para usuario ID:", numericUserId);
+            const user = await this.userRepository.findOne({
+                where: { idUsuario: numericUserId }
+            });
+            if (!user) {
+                return {
+                    success: false,
+                    error: "Usuario no encontrado"
+                };
+            }
+            const sesiones = await this.sesionRepository
+                .createQueryBuilder("sesion")
+                .leftJoinAndSelect("sesion.album", "album")
+                .leftJoinAndSelect("sesion.metodo", "metodo")
+                .where("sesion.idUsuario = :userId", { userId: numericUserId })
+                .orderBy("sesion.fechaCreacion", "DESC")
+                .getMany();
+            logger_1.default.info(`Encontradas ${sesiones.length} sesiones para usuario ${numericUserId}`);
+            const sessionsFormatted = sesiones.map(sesion => ({
+                id_reporte: sesion.idSesion,
+                id_sesion: sesion.idSesion,
+                id_usuario: sesion.idUsuario,
+                nombre_sesion: sesion.titulo || 'Sesión sin título',
+                descripcion: sesion.descripcion || '',
+                estado: sesion.estado,
+                tiempo_total: this.intervalToMs(sesion.tiempoTranscurrido),
+                metodo_asociado: sesion.metodo ? {
+                    id_metodo: sesion.metodo.idMetodo,
+                    nombre_metodo: sesion.metodo.nombreMetodo
+                } : null,
+                album_asociado: sesion.album ? {
+                    id_album: sesion.album.idAlbum,
+                    nombre_album: sesion.album.nombreAlbum
+                } : null,
+                fecha_creacion: sesion.fechaCreacion
+            }));
+            return {
+                success: true,
+                sessions: sessionsFormatted
+            };
+        }
+        catch (error) {
+            logger_1.default.error("Error en ReportsService.getUserSessionReports:", error);
+            return {
+                success: false,
+                error: "Error al obtener reportes de sesiones"
+            };
+        }
+    }
+    async getUserMethodReports(userId) {
+        try {
+            const numericUserId = Number(userId);
+            logger_1.default.info("Buscando reportes de métodos para usuario ID:", numericUserId);
+            const user = await this.userRepository.findOne({
+                where: { idUsuario: numericUserId }
+            });
+            if (!user) {
+                return {
+                    success: false,
+                    error: "Usuario no encontrado"
+                };
+            }
+            const metodosRealizados = await this.metodoRealizadoRepository
+                .createQueryBuilder("mr")
+                .leftJoinAndSelect("mr.metodo", "m")
+                .where("mr.idUsuario = :userId", { userId: numericUserId })
+                .orderBy("mr.fechaCreacion", "DESC")
+                .getMany();
+            logger_1.default.info(`Encontrados ${metodosRealizados.length} métodos realizados para usuario ${numericUserId}`);
+            const methodsFormatted = metodosRealizados.map(metodoRealizado => ({
+                id_reporte: metodoRealizado.idMetodoRealizado,
+                id_metodo: metodoRealizado.idMetodo,
+                id_usuario: metodoRealizado.idUsuario,
+                nombre_metodo: metodoRealizado.metodo?.nombreMetodo || 'Método desconocido',
+                progreso: metodoRealizado.progreso,
+                estado: metodoRealizado.estado,
+                fecha_creacion: metodoRealizado.fechaCreacion
+            }));
+            return {
+                success: true,
+                methods: methodsFormatted
+            };
+        }
+        catch (error) {
+            logger_1.default.error("Error en ReportsService.getUserMethodReports:", error);
+            return {
+                success: false,
+                error: "Error al obtener reportes de métodos"
+            };
+        }
     }
     async createActiveMethod(data) {
         try {
@@ -164,7 +311,13 @@ class ReportsService {
                 try {
                     const type = getMethodType(metodo.nombreMetodo);
                     if (!isValidProgressForCreation(type, data.progreso)) {
-                        logger_1.default.warn(`Progreso inválido para creación: ${data.progreso}. Valores válidos para ${type}: ${getMethodConfig(type).validCreationProgress.join(', ')}`);
+                        const validProgressValues = getMethodConfig(type).validCreationProgress;
+                        logger_1.default.warn(JSON.stringify({
+                            event: "invalid_progress_creation",
+                            method: type,
+                            receivedProgress: data.progreso,
+                            allowed: validProgressValues
+                        }));
                         return {
                             success: false,
                             message: "Progreso inválido para creación de este método"
@@ -202,14 +355,49 @@ class ReportsService {
                     error: error.message
                 };
             }
+            let progresoNormalizado = MetodoRealizado_entity_1.MetodoProgreso.INICIADO;
+            if (data.progreso !== undefined) {
+                try {
+                    progresoNormalizado = normalizeProgress(data.progreso);
+                }
+                catch (error) {
+                    return {
+                        success: false,
+                        error: `Error al normalizar progreso: ${error.message}`
+                    };
+                }
+            }
             const metodoRealizado = this.metodoRealizadoRepository.create({
                 idUsuario: data.idUsuario,
                 idMetodo: data.idMetodo,
-                progreso: data.progreso !== undefined ? data.progreso : MetodoRealizado_entity_1.MetodoProgreso.INICIADO,
+                progreso: progresoNormalizado,
                 estado: estadoNormalizado,
                 fechaInicio: new Date(),
             });
             const savedMetodo = await this.metodoRealizadoRepository.save(metodoRealizado);
+            if (savedMetodo.progreso < MetodoRealizado_entity_1.MetodoProgreso.COMPLETADO) {
+                try {
+                    const fechaRecordatorio = new Date(savedMetodo.fechaCreacion);
+                    fechaRecordatorio.setDate(fechaRecordatorio.getDate() + 7);
+                    const ahora = new Date();
+                    if (fechaRecordatorio <= ahora) {
+                        logger_1.default.warn(`Fecha de recordatorio calculada ${fechaRecordatorio} no está en el futuro para método ${savedMetodo.idMetodoRealizado}`);
+                    }
+                    else {
+                        await NotificacionesProgramadasService_1.NotificacionesProgramadasService.createScheduledNotification({
+                            idUsuario: data.idUsuario,
+                            tipo: "metodo_pendiente",
+                            titulo: "Recordatorio de método pendiente",
+                            mensaje: `Aún tienes un método sin finalizar: ${savedMetodo.metodo?.nombreMetodo || 'Método de estudio'}. ¡Continúa con tu aprendizaje!`,
+                            fechaProgramada: fechaRecordatorio
+                        });
+                        logger_1.default.info(`Recordatorio programado para método ${savedMetodo.idMetodoRealizado} del usuario ${data.idUsuario} en ${fechaRecordatorio}`);
+                    }
+                }
+                catch (error) {
+                    logger_1.default.error('Error al programar recordatorio automático para método:', error);
+                }
+            }
             return {
                 success: true,
                 metodoRealizado: savedMetodo,
@@ -244,11 +432,10 @@ class ReportsService {
                 .orderBy("mr.fechaCreacion", "DESC")
                 .getMany();
             logger_1.default.info(`Encontrados ${metodosRealizados.length} métodos realizados para usuario ${numericUserId}`);
-            const sesionesRealizadas = await this.sesionRealizadaRepository
+            const sesiones = await this.sesionRepository
                 .createQueryBuilder("sesion")
-                .leftJoinAndSelect("sesion.musica", "musica")
-                .leftJoin("sesion.metodoRealizado", "metodoRealizado")
-                .where("sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId", { userId: numericUserId })
+                .leftJoinAndSelect("sesion.album", "album")
+                .where("sesion.idUsuario = :userId", { userId: numericUserId })
                 .orderBy("sesion.fechaCreacion", "DESC")
                 .getMany();
             const metodos = metodosRealizados.map(metodoRealizado => ({
@@ -264,20 +451,21 @@ class ReportsService {
                 fechaFin: metodoRealizado.fechaFin,
                 fechaCreacion: metodoRealizado.fechaCreacion,
             }));
-            const sesiones = sesionesRealizadas.map(sesionRealizada => ({
-                id: sesionRealizada.idSesionRealizada,
-                musica: sesionRealizada.musica ? {
-                    id: sesionRealizada.musica.idCancion,
-                    nombre: sesionRealizada.musica.nombreCancion,
-                    artista: sesionRealizada.musica.artistaCancion,
-                    genero: sesionRealizada.musica.generoCancion,
+            const sesionesFormateadas = sesiones.map(sesion => ({
+                id: sesion.idSesion,
+                album: sesion.album ? {
+                    id: sesion.album.idAlbum,
+                    nombre: sesion.album.nombreAlbum,
+                    genero: sesion.album.genero,
                 } : null,
-                duracion: null,
-                fechaProgramada: sesionRealizada.fechaProgramada,
-                estado: sesionRealizada.estado,
-                fechaInicio: null,
-                fechaFin: null,
-                fechaCreacion: sesionRealizada.fechaCreacion,
+                titulo: sesion.titulo,
+                descripcion: sesion.descripcion,
+                tipo: sesion.tipo,
+                estado: sesion.estado,
+                tiempoTranscurrido: sesion.tiempoTranscurrido,
+                fechaCreacion: sesion.fechaCreacion,
+                fechaActualizacion: sesion.fechaActualizacion,
+                ultimaInteraccion: sesion.ultimaInteraccion,
             }));
             const combined = [
                 ...metodos.map(metodo => ({
@@ -288,10 +476,10 @@ class ReportsService {
                     estado: metodo.estado,
                     fecha_creacion: metodo.fechaCreacion,
                 })),
-                ...sesiones.map(sesion => ({
+                ...sesionesFormateadas.map(sesion => ({
                     id_reporte: sesion.id,
                     id_usuario: numericUserId,
-                    nombre_metodo: sesion.musica ? `Sesión: ${sesion.musica.nombre}` : 'Sesión de concentración',
+                    nombre_metodo: sesion.titulo ? `Sesión: ${sesion.titulo}` : 'Sesión de concentración',
                     progreso: undefined,
                     estado: sesion.estado,
                     fecha_creacion: sesion.fechaCreacion,
@@ -301,7 +489,7 @@ class ReportsService {
                 success: true,
                 reports: {
                     metodos,
-                    sesiones,
+                    sesiones: sesionesFormateadas,
                     combined
                 }
             };
@@ -344,13 +532,18 @@ class ReportsService {
                 try {
                     const type = getMethodType(metodo.nombreMetodo);
                     logger_1.default.info(`Method type detected: "${metodo.nombreMetodo}" -> "${type}"`);
-                    const validProgressValues = getMethodConfig(type).validUpdateProgress;
-                    logger_1.default.info(`Validation check: progress=${data.progreso}, validValues=[${validProgressValues.join(', ')}]`);
                     if (!isValidProgressForUpdate(type, data.progreso)) {
-                        logger_1.default.warn(`Progreso inválido para actualización: received=${data.progreso}, allowed=[${validProgressValues.join(', ')}], method=${type}, methodId=${numericMethodId}`);
+                        const validProgressValues = getMethodConfig(type).validUpdateProgress;
+                        logger_1.default.warn(JSON.stringify({
+                            event: "invalid_progress_update",
+                            method: type,
+                            receivedProgress: data.progreso,
+                            allowed: validProgressValues,
+                            methodId: numericMethodId
+                        }));
                         return {
                             success: false,
-                            message: `Progreso inválido para actualización: received=${data.progreso}, allowed=[${validProgressValues.join(', ')}], method=${type}`
+                            message: `Progreso inválido para actualización: received=${data.progreso}, allowed=${validProgressValues.join(', ')}, method=${type}`
                         };
                     }
                 }
@@ -361,7 +554,15 @@ class ReportsService {
                         error: error.message
                     };
                 }
-                metodoRealizado.progreso = data.progreso;
+                try {
+                    metodoRealizado.progreso = normalizeProgress(data.progreso);
+                }
+                catch (error) {
+                    return {
+                        success: false,
+                        error: `Error al normalizar progreso: ${error.message}`
+                    };
+                }
                 try {
                     const type = getMethodType(metodo.nombreMetodo);
                     metodoRealizado.estado = getStatusForProgress(type, data.progreso);
@@ -394,61 +595,91 @@ class ReportsService {
         try {
             const numericSessionId = Number(sessionId);
             const numericUserId = Number(userId);
-            const sesionRealizada = await this.sesionRealizadaRepository
-                .createQueryBuilder("sesion")
-                .leftJoinAndSelect("sesion.metodoRealizado", "metodoRealizado")
-                .leftJoinAndSelect("metodoRealizado.metodo", "metodo")
-                .where("sesion.idSesionRealizada = :sessionId", { sessionId: numericSessionId })
-                .andWhere("(sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId)", { userId: numericUserId })
-                .getOne();
-            if (!sesionRealizada) {
-                return {
-                    success: false,
-                    error: "Sesión realizada no encontrada"
-                };
-            }
-            if (data.estado !== undefined) {
-                const metodoRealizado = sesionRealizada.metodoRealizado;
-                if (!metodoRealizado || !metodoRealizado.metodo) {
-                    return {
-                        success: false,
-                        error: "Método de estudio no encontrado para la sesión"
-                    };
+            logger_1.default.info(`Actualizando progreso de sesión ${numericSessionId} para usuario ${numericUserId}`, data);
+            const result = await ormconfig_1.AppDataSource.transaction(async (transactionalEntityManager) => {
+                const session = await transactionalEntityManager
+                    .getRepository(SesionConcentracion_entity_1.SesionConcentracionEntity)
+                    .findOne({
+                    where: { idSesion: numericSessionId, idUsuario: numericUserId },
+                    relations: ["evento"]
+                });
+                if (!session) {
+                    throw new Error("Sesión no encontrada o no pertenece al usuario");
                 }
-                try {
-                    const type = getMethodType(metodoRealizado.metodo.nombreMetodo);
-                    const validStatuses = getValidStatusMethods(type);
-                    const normalizedStatus = normalizeText(data.estado);
-                    if (!validStatuses.some(status => normalizeText(status) === normalizedStatus)) {
-                        logger_1.default.warn(`Estado inválido para sesión ${numericSessionId}: "${data.estado}". Estados válidos para ${type}: ${validStatuses.join(', ')}`);
-                        return {
-                            success: false,
-                            message: "Estado inválido para este tipo de método"
-                        };
+                if (data.elapsedMs !== undefined) {
+                    const hours = Math.floor(data.elapsedMs / 3600000);
+                    const minutes = Math.floor((data.elapsedMs % 3600000) / 60000);
+                    const seconds = Math.floor((data.elapsedMs % 60000) / 1000);
+                    session.tiempoTranscurrido = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+                if (data.status === "completed") {
+                    session.estado = "completada";
+                    session.ultimaInteraccion = new Date();
+                    if (session.evento) {
+                        session.evento.estado = "completado";
+                        await transactionalEntityManager.save(session.evento);
+                        logger_1.default.info(`Evento ${session.evento.idEvento} marcado como completado`);
                     }
-                    sesionRealizada.estado = data.estado;
                 }
-                catch (error) {
-                    return {
-                        success: false,
-                        error: error.message
-                    };
+                else if (data.status === "pending") {
+                    session.estado = "pendiente";
+                    session.ultimaInteraccion = new Date();
                 }
-            }
-            const updatedSesion = await this.sesionRealizadaRepository.save(sesionRealizada);
+                const updatedSession = await transactionalEntityManager.save(session);
+                logger_1.default.info(`Sesión ${numericSessionId} actualizada exitosamente`, {
+                    status: session.estado,
+                    elapsedMs: data.elapsedMs,
+                    notes: data.notes
+                });
+                return updatedSession;
+            });
+            const sessionDto = {
+                sessionId: result.idSesion,
+                userId: result.idUsuario,
+                title: result.titulo,
+                description: result.descripcion,
+                type: result.tipo,
+                status: result.estado,
+                eventId: result.idEvento,
+                methodId: result.idMetodo,
+                albumId: result.idAlbum,
+                elapsedInterval: result.tiempoTranscurrido,
+                elapsedMs: this.intervalToMs(result.tiempoTranscurrido),
+                createdAt: result.fechaCreacion.toISOString(),
+                updatedAt: result.fechaActualizacion.toISOString(),
+                lastInteractionAt: result.ultimaInteraccion.toISOString(),
+            };
             return {
                 success: true,
-                sesionRealizada: updatedSesion,
-                message: "Sesión retomada correctamente"
+                session: sessionDto,
+                message: data.status === "completed" ? "Sesión completada exitosamente" : "Sesión actualizada exitosamente"
             };
         }
         catch (error) {
             logger_1.default.error("Error en ReportsService.updateSessionProgress:", error);
             return {
                 success: false,
-                error: "Error al actualizar progreso de la sesión"
+                error: error.message || "Error al actualizar progreso de la sesión"
             };
         }
+    }
+    intervalToMs(intervalValue) {
+        if (typeof intervalValue === 'string') {
+            const parts = intervalValue.split(':');
+            const hours = parseInt(parts[0]) || 0;
+            const minutes = parseInt(parts[1]) || 0;
+            const seconds = parseInt(parts[2]) || 0;
+            return (hours * 3600 + minutes * 60 + seconds) * 1000;
+        }
+        if (typeof intervalValue === 'object' && intervalValue !== null) {
+            const hours = intervalValue.hours || 0;
+            const minutes = intervalValue.minutes || 0;
+            const seconds = intervalValue.seconds || 0;
+            const milliseconds = intervalValue.milliseconds || 0;
+            return (hours * 3600 + minutes * 60 + seconds) * 1000 + milliseconds;
+        }
+        logger_1.default.warn('No se pudo parsear el intervalo, usando 0', { intervalValue });
+        return 0;
     }
     async getMethodById(methodId, userId) {
         try {
@@ -483,22 +714,21 @@ class ReportsService {
         try {
             const numericSessionId = Number(sessionId);
             const numericUserId = Number(userId);
-            const sesionRealizada = await this.sesionRealizadaRepository
+            const session = await this.sesionRepository
                 .createQueryBuilder("sesion")
-                .leftJoinAndSelect("sesion.musica", "musica")
-                .leftJoin("sesion.metodoRealizado", "metodoRealizado")
-                .where("sesion.idSesionRealizada = :sessionId", { sessionId: numericSessionId })
-                .andWhere("(sesion.idUsuario = :userId OR metodoRealizado.idUsuario = :userId)", { userId: numericUserId })
+                .leftJoinAndSelect("sesion.album", "album")
+                .where("sesion.idSesion = :sessionId", { sessionId: numericSessionId })
+                .andWhere("sesion.idUsuario = :userId", { userId: numericUserId })
                 .getOne();
-            if (!sesionRealizada) {
+            if (!session) {
                 return {
                     success: false,
-                    error: "Sesión realizada no encontrada"
+                    error: "Sesión no encontrada"
                 };
             }
             return {
                 success: true,
-                sesionRealizada
+                session
             };
         }
         catch (error) {
@@ -514,24 +744,38 @@ class ReportsService {
             const numericReportId = Number(reportId);
             const numericUserId = Number(userId);
             logger_1.default.info("Buscando reporte con ID:", numericReportId, "para usuario:", numericUserId);
-            const report = await this.metodoRealizadoRepository
+            const methodReport = await this.metodoRealizadoRepository
                 .createQueryBuilder("mr")
                 .where("mr.idMetodoRealizado = :reportId", { reportId: numericReportId })
                 .andWhere("mr.idUsuario = :userId", { userId: numericUserId })
                 .getOne();
-            if (!report) {
-                logger_1.default.warn(`Reporte ${numericReportId} no encontrado para usuario ${numericUserId}`);
+            if (methodReport) {
+                logger_1.default.info(`Eliminando reporte de método ${numericReportId} del usuario ${numericUserId}`);
+                await this.metodoRealizadoRepository.remove(methodReport);
+                logger_1.default.info(`Reporte de método ${numericReportId} eliminado correctamente`);
                 return {
-                    success: false,
-                    error: "Reporte no encontrado o no autorizado"
+                    success: true,
+                    message: "Reporte de método eliminado correctamente"
                 };
             }
-            logger_1.default.info(`Eliminando reporte ${numericReportId} del usuario ${numericUserId}`);
-            await this.metodoRealizadoRepository.remove(report);
-            logger_1.default.info(`Reporte ${numericReportId} eliminado correctamente`);
+            const sessionReport = await this.sesionRepository
+                .createQueryBuilder("sesion")
+                .where("sesion.idSesion = :reportId", { reportId: numericReportId })
+                .andWhere("sesion.idUsuario = :userId", { userId: numericUserId })
+                .getOne();
+            if (sessionReport) {
+                logger_1.default.info(`Eliminando reporte de sesión ${numericReportId} del usuario ${numericUserId}`);
+                await this.sesionRepository.remove(sessionReport);
+                logger_1.default.info(`Reporte de sesión ${numericReportId} eliminado correctamente`);
+                return {
+                    success: true,
+                    message: "Reporte de sesión eliminado correctamente"
+                };
+            }
+            logger_1.default.warn(`Reporte ${numericReportId} no encontrado para usuario ${numericUserId} (ni método ni sesión)`);
             return {
-                success: true,
-                message: "Reporte eliminado correctamente"
+                success: false,
+                error: "Reporte no encontrado o no autorizado"
             };
         }
         catch (error) {

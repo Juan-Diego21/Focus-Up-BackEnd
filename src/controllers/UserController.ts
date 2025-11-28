@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { userService } from "../services/UserService";
 import { ApiResponse } from "../types/ApiResponse";
 import { JwtUtils, JwtPayload, TokenBlacklistService } from "../utils/jwt";
+import { ResponseBuilder } from "../utils/responseBuilder";
 import logger from "../utils/logger";
 
 /**
@@ -20,34 +21,14 @@ export class UserController {
       const result = await userService.createUser(userData);
 
       if (!result.success) {
-        const response: ApiResponse = {
-          success: false,
-          message: result.message || "Error al crear usuario",
-          error: result.error,
-          timestamp: new Date(),
-        };
-        return res.status(400).json(response);
+        return res.status(400).json(ResponseBuilder.error(result.message || "Error al crear usuario", result.error));
       }
 
-      const response: ApiResponse = {
-        success: true,
-        message: "Usuario creado exitosamente",
-        data: result.user,
-        timestamp: new Date(),
-      };
-
-      res.status(201).json(response);
+      res.status(201).json(ResponseBuilder.success("Usuario creado exitosamente", result.user));
     } catch (error) {
       logger.error("Error en UserController.createUser:", error);
 
-      const response: ApiResponse = {
-        success: false,
-        message: "Error interno del servidor",
-        error: "Ocurrió un error inesperado",
-        timestamp: new Date(),
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(ResponseBuilder.serverError());
     }
   }
 

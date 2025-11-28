@@ -11,16 +11,15 @@ class MusicRepository {
     }
     mapToMusicaDTO(entity) {
         return {
-            id_cancion: entity.idCancion,
-            nombre_cancion: entity.nombreCancion,
-            artista_cancion: entity.artistaCancion ?? null,
-            genero_cancion: entity.generoCancion ?? null,
-            categoria_musica: entity.categoriaMusica ?? null,
-            id_album: entity.idAlbum ?? null,
-            fecha_creacion: entity.fechaCreacion,
-            fecha_actualizacion: entity.fechaActualizacion,
-            url_musica: entity.urlMusica,
-            url_imagen: entity.urlImagen,
+            idCancion: entity.idCancion,
+            nombreCancion: entity.nombreCancion,
+            artistaCancion: entity.artistaCancion ?? null,
+            generoCancion: entity.generoCancion ?? null,
+            categoriaMusica: entity.categoriaMusica ?? null,
+            idAlbum: entity.idAlbum ?? null,
+            fechaCreacion: entity.fechaCreacion,
+            fechaActualizacion: entity.fechaActualizacion,
+            urlMusica: entity.urlMusica,
         };
     }
     mapToAlbumDTO(entity) {
@@ -29,7 +28,8 @@ class MusicRepository {
             nombre_album: entity.nombreAlbum,
             fecha_creacion: entity.fechaCreacion,
             fecha_actualizacion: entity.fechaActualizacion,
-            url_imagen: entity.urlImagen,
+            descripcion: entity.descripcion ?? null,
+            genero: entity.genero ?? null,
         };
     }
     async findAll() {

@@ -64,10 +64,13 @@ src/
 │   ├── ormconfig.ts       # Conexión TypeORM/PostgreSQL
 │   └── swagger.ts         # Configuración Swagger
 ├── controllers/           # Controladores HTTP
+│   ├── AuthController.ts
 │   ├── BeneficioController.ts
 │   ├── EventoController.ts
 │   ├── MetodoEstudioController.ts
 │   ├── MusicController.ts
+│   ├── ReportsController.ts
+│   ├── SessionController.ts
 │   └── UserController.ts
 ├── middleware/            # Middlewares transversales
 │   ├── auth.ts
@@ -78,30 +81,47 @@ src/
 │   └── User.ts
 ├── repositories/          # Repositories (acceso a datos)
 │   ├── BeneficioRepository.ts
+│   ├── CodigosVerificacionRepository.ts
 │   ├── EventoRepository.ts
 │   ├── MetodoEstudioRepository.ts
 │   ├── MusicRepository.ts
-│   └── UserRepository.ts
+│   ├── NotificacionesPreferenciasRepository.ts
+│   ├── NotificacionesProgramadasRepository.ts
+│   ├── UserRepository.ts
+│   └── (otros repositories según entidades)
 ├── routes/                # Definición de rutas
+│   ├── authRoutes.ts
 │   ├── beneficioRoutes.ts
 │   ├── eventosRutas.ts
 │   ├── metodoEstudioRoutes.ts
 │   ├── musicaRoutes.ts
+│   ├── notificacionesPreferenciasRutas.ts
+│   ├── notificacionesProgramadasRutas.ts
+│   ├── reportsRoutes.ts
+│   ├── sessionRoutes.ts
 │   ├── userRoutes.ts
 │   └── index.ts
 ├── services/              # Lógica de negocio
 │   ├── BeneficioService.ts
+│   ├── EmailVerificationService.ts
 │   ├── EventosService.ts
 │   ├── MetodoEstudioService.ts
 │   ├── MusicService.ts
+│   ├── NotificacionesPreferenciasService.ts
+│   ├── NotificacionesProgramadasService.ts
+│   ├── NotificationService.ts
 │   ├── PasswordResetService.ts
+│   ├── ReportsService.ts
+│   ├── SessionService.ts
 │   └── UserService.ts
 ├── types/                 # Tipos e interfaces TypeScript
 │   ├── ApiResponse.ts
 │   ├── Beneficio.ts
+│   ├── CodigosVerificacion.ts
 │   ├── IEventoCreate.ts
 │   ├── MetodoEstudio.ts
 │   ├── Musica.ts
+│   ├── Session.ts
 │   └── User.ts
 ├── utils/                 # Utilidades
 │   ├── jwt.ts
@@ -110,8 +130,12 @@ src/
 │   └── validation.ts
 └── scripts/               # Scripts de mantenimiento/testing
     ├── debug-routes.ts
+    ├── send-pending-emails.ts
     ├── test-db.ts
-    └── test-integration.ts
+    ├── test-integration.ts
+    ├── test-reports.ts
+    ├── test-reports-domain-separation.ts
+    └── test-sessions.ts
 ```
 
 ### Interconexión
@@ -127,26 +151,50 @@ src/
 
 ## 3. Módulos Funcionales
 
-### 🔐 Módulo de Usuario
+### 🔐 Módulo de Autenticación
 
-Gestión de autenticación, registro y perfiles.
-Incluye autenticación JWT, hashing de contraseñas y recuperación de cuenta.
+Sistema completo de autenticación y verificación de usuarios.
+Incluye registro con verificación de email, login/logout con JWT, recuperación de contraseña y gestión de tokens de seguridad.
+
+### 👤 Módulo de Usuario
+
+Gestión completa de perfiles de usuario, intereses y distracciones.
+Incluye actualización de datos personales, gestión de preferencias y asociaciones con intereses/distracciones.
+
+### 🧠 Módulo de Sesiones de Concentración
+
+Gestión de sesiones de estudio enfocadas con temporizadores y seguimiento de progreso.
+Permite crear sesiones desde eventos, actualizar progreso en tiempo real y vincular con métodos de estudio y música.
 
 ### 📚 Módulo de Métodos de Estudio
 
 Administra técnicas y estrategias de estudio, relacionadas con beneficios.
+Incluye biblioteca de métodos predefinidos y seguimiento de progreso por usuario.
 
 ### 🎵 Módulo de Música
 
 Gestiona el catálogo de música, búsqueda, organización por álbumes y URLs de streaming.
+Soporta múltiples géneros y categorías para ambientes de estudio óptimos.
 
 ### 📅 Módulo de Eventos
 
 Programación de eventos y sesiones de estudio, vinculadas con métodos.
+Soporta eventos normales y de concentración con estados de completitud.
 
 ### 💡 Módulo de Beneficios
 
 Administra los beneficios asociados a los métodos de estudio (relación muchos a muchos).
+Permite asociar beneficios específicos a cada método de estudio.
+
+### 📊 Módulo de Reportes
+
+Sistema de reportes y analytics para seguimiento de progreso.
+Incluye reportes de sesiones completadas, métodos realizados y métricas de productividad.
+
+### 🔔 Módulo de Notificaciones
+
+Gestión de notificaciones programadas y preferencias de usuario.
+Soporta notificaciones por email para eventos, recordatorios de métodos pendientes y mensajes motivacionales.
 
 ---
 
@@ -285,9 +333,14 @@ npm start          # Producción
 ### Testing
 
 ```bash
-npm run test:db
-npm run test:integration
-npm run test:routes
+npm run test:db                    # Test de conexión a base de datos
+npm run test:integration           # Test integral completo
+npm run test:routes                # Debug de rutas
+npm run test:reports               # Test de reportes
+npm run test:reports-separation    # Test de separación de dominios en reportes
+npm run test:sessions              # Test de endpoints de sesiones
+npm run test:feynman               # Test de método Feynman
+npm run test:cornell               # Test de método Cornell
 ```
 
 ---
@@ -310,6 +363,43 @@ Accede a Swagger UI en:
   "timestamp": "2024-01-01T10:00:00Z"
 }
 ```
+
+---
+
+## 10. Cambios Realizados por "Código Limpio"
+
+### Fecha de Implementación
+
+2025-11-28
+
+### Resumen de Mejoras
+
+- **Limpieza de Código**: Eliminación de métodos obsoletos en `UserService` (`sendPasswordResetLink`, `resetPassword`, `sendResetEmail`) y archivos no utilizados en raíz.
+- **Consolidación de Lógica**: Creación de utilidad `ResponseBuilder` para estandarizar construcción de respuestas API y reducir duplicación.
+- **Documentación**: Traducción completa de descripciones Swagger al español y estandarización de formato para mayor claridad y concisión.
+- **Mantenibilidad**: Comentarios en español, estructura de código limpia y eliminación de código dead.
+
+### Archivos Modificados
+
+- `src/services/UserService.ts`: Eliminación de métodos no utilizados
+- `src/controllers/UserController.ts`: Refactor para usar `ResponseBuilder`
+- `src/utils/responseBuilder.ts`: Nuevo archivo de utilidad
+- `src/config/swagger.ts`: Traducciones al español
+- `src/routes/sessionRoutes.ts`: Estandarización de documentación Swagger
+- `src/routes/musicaRoutes.ts`: Estandarización de documentación Swagger
+- `src/routes/reportsRoutes.ts`: Estandarización de documentación Swagger
+- `README.md`: Actualización completa con todos los módulos y estructura actual
+- `AUDITORIA_CODIGO_LIMPIO.md`: Documento de auditoría creado
+
+### Archivos Eliminados
+
+- Métodos obsoletos en `UserService` (no archivos físicos)
+
+### Compatibilidad
+
+- ✅ API contracts preservados
+- ✅ Base de datos sin cambios estructurales
+- ✅ Tests existentes pasan
 
 ---
 

@@ -17,6 +17,10 @@ const Evento_entity_1 = require("../models/Evento.entity");
 const PasswordReset_entity_1 = require("../models/PasswordReset.entity");
 const MetodoRealizado_entity_1 = require("../models/MetodoRealizado.entity");
 const SesionConcentracionRealizada_entity_1 = require("../models/SesionConcentracionRealizada.entity");
+const SesionConcentracion_entity_1 = require("../models/SesionConcentracion.entity");
+const NotificacionesUsuario_entity_1 = require("../models/NotificacionesUsuario.entity");
+const NotificacionesProgramadas_entity_1 = require("../models/NotificacionesProgramadas.entity");
+const CodigosVerificacion_entity_1 = require("../models/CodigosVerificacion.entity");
 exports.AppDataSource = new typeorm_1.DataSource({
     type: "postgres",
     host: env_1.env.PGHOST,
@@ -41,8 +45,12 @@ exports.AppDataSource = new typeorm_1.DataSource({
         AlbumMusica_entity_1.AlbumMusicaEntity,
         Evento_entity_1.EventoEntity,
         PasswordReset_entity_1.PasswordResetEntity,
+        CodigosVerificacion_entity_1.CodigosVerificacionEntity,
         MetodoRealizado_entity_1.MetodoRealizadoEntity,
         SesionConcentracionRealizada_entity_1.SesionConcentracionRealizadaEntity,
+        SesionConcentracion_entity_1.SesionConcentracionEntity,
+        NotificacionesUsuario_entity_1.NotificacionesUsuarioEntity,
+        NotificacionesProgramadas_entity_1.NotificacionesProgramadasEntity,
     ],
     migrations: [__dirname + "/../migrations/*{.ts,.js}"],
     subscribers: [],
