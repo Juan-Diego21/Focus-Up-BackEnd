@@ -52,37 +52,33 @@ export declare const EventoService: {
         message?: undefined;
         data?: undefined;
     } | {
-        metodo: {
-            idMetodo: number;
-            nombreMetodo: string;
-            descripcion: string;
-        } | null;
-        album: {
-            idAlbum: number;
-            nombreAlbum: string;
-            descripcion: string;
-            genero: string;
-        } | null;
-        idEvento: number;
-        nombreEvento: string;
-        fechaEvento: string;
-        horaEvento: string;
-        descripcionEvento: string | undefined;
-        tipoEvento: string | undefined;
-        estado: "pendiente" | "completado" | null | undefined;
-        idUsuario: number;
-        idMetodo: number;
-        idAlbum: number | undefined;
-        fechaCreacion: Date;
-        fechaActualizacion: Date;
-        success?: undefined;
-        error?: undefined;
-        message?: undefined;
-        data?: undefined;
-    } | {
         success: boolean;
         message: string;
         data: {
+            idEvento: number;
+            nombreEvento: string;
+            fechaEvento: string;
+            horaEvento: string;
+            descripcionEvento: string | undefined;
+            tipoEvento: string | undefined;
+            estado: "pendiente" | "completado" | null | undefined;
+            idUsuario: number;
+            idMetodo: number;
+            idAlbum: number | undefined;
+            fechaCreacion: Date;
+            fechaActualizacion: Date;
+        } | {
+            metodo: {
+                idMetodo: number;
+                nombreMetodo: string;
+                descripcion: string;
+            } | null;
+            album: {
+                idAlbum: number;
+                nombreAlbum: string;
+                descripcion: string;
+                genero: string;
+            } | null;
             idEvento: number;
             nombreEvento: string;
             fechaEvento: string;
@@ -113,37 +109,33 @@ export declare const EventoService: {
         message?: undefined;
         data?: undefined;
     } | {
-        metodo: {
-            idMetodo: number;
-            nombreMetodo: string;
-            descripcion: string;
-        } | null;
-        album: {
-            idAlbum: number;
-            nombreAlbum: string;
-            descripcion: string;
-            genero: string;
-        } | null;
-        idEvento: number;
-        nombreEvento: string;
-        fechaEvento: string;
-        horaEvento: string;
-        descripcionEvento: string | undefined;
-        tipoEvento: string | undefined;
-        estado: "pendiente" | "completado" | null | undefined;
-        idUsuario: number;
-        idMetodo: number;
-        idAlbum: number | undefined;
-        fechaCreacion: Date;
-        fechaActualizacion: Date;
-        success?: undefined;
-        error?: undefined;
-        message?: undefined;
-        data?: undefined;
-    } | {
         success: boolean;
         message: string;
         data: {
+            idEvento: number;
+            nombreEvento: string;
+            fechaEvento: string;
+            horaEvento: string;
+            descripcionEvento: string | undefined;
+            tipoEvento: string | undefined;
+            estado: "pendiente" | "completado" | null | undefined;
+            idUsuario: number;
+            idMetodo: number;
+            idAlbum: number | undefined;
+            fechaCreacion: Date;
+            fechaActualizacion: Date;
+        } | {
+            metodo: {
+                idMetodo: number;
+                nombreMetodo: string;
+                descripcion: string;
+            } | null;
+            album: {
+                idAlbum: number;
+                nombreAlbum: string;
+                descripcion: string;
+                genero: string;
+            } | null;
             idEvento: number;
             nombreEvento: string;
             fechaEvento: string;

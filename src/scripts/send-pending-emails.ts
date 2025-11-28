@@ -15,7 +15,7 @@
  * 2. Obtiene las notificaciones pendientes
  * 3. Envía correos electrónicos usando NodeMailer
  * 4. Marca las notificaciones como enviadas
- * 5. Se ejecuta cada minuto vía cron
+ * 5. Se ejecuta cada 10 segundos vía cron para mayor precisión
  */
 
 import * as cron from 'node-cron';
@@ -24,6 +24,7 @@ import { getPendingNotifications, markAsSent } from '../repositories/Notificacio
 import { getWeeklyMotivationalMessage } from '../config/motivationalMessages';
 import { SessionService } from '../services/SessionService';
 import { NotificationService } from '../services/NotificationService';
+import { EmailVerificationService } from '../services/EmailVerificationService';
 import logger from '../utils/logger';
 import nodemailer from 'nodemailer';
 
@@ -771,6 +772,27 @@ async function processSessionNotifications(): Promise<void> {
 }
 
 /**
+ * Limpia códigos de verificación expirados de la base de datos
+ *
+ * Esta función elimina automáticamente los códigos de verificación que han
+ * expirado para mantener la base de datos limpia y prevenir acumulación
+ * de datos innecesarios.
+ */
+async function cleanupExpiredVerificationCodes(): Promise<void> {
+  try {
+    logger.info('🧹 Starting cleanup of expired verification codes...');
+
+    const emailVerificationService = new EmailVerificationService();
+    const deletedCount = await emailVerificationService.cleanupExpiredCodes();
+
+    logger.info(`🧹 Cleanup completed: ${deletedCount} expired verification codes removed`);
+
+  } catch (error) {
+    logger.error('❌ Error during verification codes cleanup:', error);
+  }
+}
+
+/**
  * Procesa todas las notificaciones pendientes y envía correos electrónicos
  *
  * Esta función se ejecuta cada minuto para procesar todas las notificaciones
@@ -920,17 +942,22 @@ async function initialize(): Promise<void> {
     await transporter.verify();
     logger.info('✅ Email transporter verified successfully');
 
-    // Start cron job - runs every minute for email sending
-    cron.schedule('* * * * *', processPendingEmails);
-    logger.info('🚀 Automated email delivery system started - running every minute');
+    // Start cron job - runs every 10 seconds for email sending (improved timing)
+    cron.schedule('*/10 * * * * *', processPendingEmails);
+    logger.info('🚀 Automated email delivery system started - running every 10 seconds');
 
     // Start daily cron job for session notifications - runs daily at 2 AM
     cron.schedule('0 2 * * *', processSessionNotifications);
     logger.info('🚀 Session notification system started - running daily at 2 AM');
 
+    // Start daily cron job for cleanup of expired verification codes - runs daily at 3 AM
+    cron.schedule('0 3 * * *', cleanupExpiredVerificationCodes);
+    logger.info('🚀 Verification codes cleanup system started - running daily at 3 AM');
+
     // Run initial checks
     await processPendingEmails();
     await processSessionNotifications();
+    await cleanupExpiredVerificationCodes();
 
   } catch (error) {
     logger.error('❌ Failed to initialize email delivery system:', error);

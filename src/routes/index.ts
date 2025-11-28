@@ -1,5 +1,6 @@
 import { Router } from "express";
 import userRoutes from "./userRoutes";
+import authRoutes from "./authRoutes";
 import musicaRoutes from "./musicaRoutes";
 import beneficioRoutes from "./beneficioRoutes";
 import metodoEstudioRoutes from "./metodoEstudioRoutes";
@@ -49,6 +50,9 @@ router.get("/health", (req, res) => {
     environment: env.NODE_ENV,
   });
 });
+
+// Rutas de autenticación
+router.use("/auth", authRoutes);
 
 // Rutas de usuarios
 router.use("/users", userRoutes);

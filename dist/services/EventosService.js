@@ -215,23 +215,20 @@ exports.EventoService = {
                 fechaCreacion: eventoCompleto.fechaCreacion,
                 fechaActualizacion: eventoCompleto.fechaActualizacion
             };
-            if (eventoCompleto.tipoEvento === 'concentracion') {
-                return {
-                    ...baseResponse,
-                    metodo: eventoCompleto.metodoEstudio ? {
-                        idMetodo: eventoCompleto.metodoEstudio.idMetodo,
-                        nombreMetodo: eventoCompleto.metodoEstudio.nombreMetodo,
-                        descripcion: eventoCompleto.metodoEstudio.descripcion
-                    } : null,
-                    album: eventoCompleto.album ? {
-                        idAlbum: eventoCompleto.album.idAlbum,
-                        nombreAlbum: eventoCompleto.album.nombreAlbum,
-                        descripcion: eventoCompleto.album.descripcion,
-                        genero: eventoCompleto.album.genero
-                    } : null
-                };
-            }
-            const eventoMapeado = baseResponse;
+            const eventoMapeado = eventoCompleto.tipoEvento === 'concentracion' ? {
+                ...baseResponse,
+                metodo: eventoCompleto.metodoEstudio ? {
+                    idMetodo: eventoCompleto.metodoEstudio.idMetodo,
+                    nombreMetodo: eventoCompleto.metodoEstudio.nombreMetodo,
+                    descripcion: eventoCompleto.metodoEstudio.descripcion
+                } : null,
+                album: eventoCompleto.album ? {
+                    idAlbum: eventoCompleto.album.idAlbum,
+                    nombreAlbum: eventoCompleto.album.nombreAlbum,
+                    descripcion: eventoCompleto.album.descripcion,
+                    genero: eventoCompleto.album.genero
+                } : null
+            } : baseResponse;
             return {
                 success: true,
                 message: "Evento creado correctamente",
@@ -373,23 +370,20 @@ exports.EventoService = {
                 fechaCreacion: eventoActualizado.fechaCreacion,
                 fechaActualizacion: eventoActualizado.fechaActualizacion
             };
-            if (eventoActualizado.tipoEvento === 'concentracion') {
-                return {
-                    ...baseResponse,
-                    metodo: eventoActualizado.metodoEstudio ? {
-                        idMetodo: eventoActualizado.metodoEstudio.idMetodo,
-                        nombreMetodo: eventoActualizado.metodoEstudio.nombreMetodo,
-                        descripcion: eventoActualizado.metodoEstudio.descripcion
-                    } : null,
-                    album: eventoActualizado.album ? {
-                        idAlbum: eventoActualizado.album.idAlbum,
-                        nombreAlbum: eventoActualizado.album.nombreAlbum,
-                        descripcion: eventoActualizado.album.descripcion,
-                        genero: eventoActualizado.album.genero
-                    } : null
-                };
-            }
-            const eventoMapeado = baseResponse;
+            const eventoMapeado = eventoActualizado.tipoEvento === 'concentracion' ? {
+                ...baseResponse,
+                metodo: eventoActualizado.metodoEstudio ? {
+                    idMetodo: eventoActualizado.metodoEstudio.idMetodo,
+                    nombreMetodo: eventoActualizado.metodoEstudio.nombreMetodo,
+                    descripcion: eventoActualizado.metodoEstudio.descripcion
+                } : null,
+                album: eventoActualizado.album ? {
+                    idAlbum: eventoActualizado.album.idAlbum,
+                    nombreAlbum: eventoActualizado.album.nombreAlbum,
+                    descripcion: eventoActualizado.album.descripcion,
+                    genero: eventoActualizado.album.genero
+                } : null
+            } : baseResponse;
             return {
                 success: true,
                 message: "Evento actualizado correctamente",

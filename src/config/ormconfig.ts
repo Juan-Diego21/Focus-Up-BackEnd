@@ -24,6 +24,7 @@ import { SesionConcentracionRealizadaEntity } from "../models/SesionConcentracio
 import { SesionConcentracionEntity } from "../models/SesionConcentracion.entity";
 import { NotificacionesUsuarioEntity } from "../models/NotificacionesUsuario.entity";
 import { NotificacionesProgramadasEntity } from "../models/NotificacionesProgramadas.entity";
+import { CodigosVerificacionEntity } from "../models/CodigosVerificacion.entity";
 
 /**
  * Instancia principal de DataSource para TypeORM
@@ -62,6 +63,7 @@ export const AppDataSource = new DataSource({
 
     // Entidades de recuperación de contraseña
     PasswordResetEntity,
+    CodigosVerificacionEntity,
 
     // Entidades de reportes
     MetodoRealizadoEntity,

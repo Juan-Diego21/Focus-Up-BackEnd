@@ -14,11 +14,13 @@ const createScheduledNotification = async (data) => {
 };
 exports.createScheduledNotification = createScheduledNotification;
 const getPendingNotifications = async () => {
+    const now = new Date();
+    const bufferTime = new Date(now.getTime() + 10000);
     return await exports.NotificacionesProgramadasRepository
         .createQueryBuilder("notificacion")
         .leftJoinAndSelect("notificacion.usuario", "usuario")
         .where("notificacion.enviada = :enviada", { enviada: false })
-        .andWhere("notificacion.fechaProgramada <= :now", { now: new Date() })
+        .andWhere("notificacion.fechaProgramada <= :bufferTime", { bufferTime })
         .orderBy("notificacion.fechaProgramada", "ASC")
         .getMany();
 };

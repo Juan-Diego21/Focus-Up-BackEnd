@@ -82,72 +82,27 @@ router.get("/email/:email", authenticateToken, userController.getUserByEmail.bin
  *         description: No autorizado
  */
 
-// POST /api/v1/users - Crear nuevo usuario
-router.post(
-  "/",
-  validateUserCreate,
-  userController.createUser.bind(userController)
-);
+// POST /api/v1/users - DISABLED: Use /api/v1/auth/register instead
+// Email verification is now required before user registration
+router.post("/", (req, res) => {
+  res.status(410).json({
+    success: false,
+    message: "This endpoint has been disabled. User registration now requires email verification. Use POST /api/v1/auth/register after verifying your email.",
+    timestamp: new Date(),
+  });
+});
 
 /**
  * @swagger
  * /users:
  *   post:
- *     summary: Crear un nuevo usuario
+ *     summary: ❌ DISABLED - Use /auth/register instead
+ *     description: This endpoint has been disabled. User registration now requires email verification. Use POST /auth/register after verifying your email.
  *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - nombre_usuario
- *               - correo
- *               - contrasena
- *               - fecha_nacimiento
- *             properties:
- *               nombre_usuario:
- *                 type: string
- *                 example: "johndoe"
- *               correo:
- *                 type: string
- *                 format: email
- *                 example: "john@example.com"
- *               contrasena:
- *                 type: string
- *                 format: password
- *                 example: "SecurePassword123"
- *               fecha_nacimiento:
- *                 type: string
- *                 format: date
- *                 example: "1990-01-01"
- *               pais:
- *                 type: string
- *                 example: "Colombia"
- *               genero:
- *                 type: string
- *                 enum: [Masculino, Femenino, Otro, Prefiero no decir]
- *                 example: "Masculino"
- *               horario_fav:
- *                 type: string
- *                 format: time
- *                 example: "08:00"
- *               intereses:
- *                 type: array
- *                 items:
- *                   type: integer
- *                 example: [1, 2, 3]
- *               distracciones:
- *                 type: array
- *                 items:
- *                   type: integer
- *                 example: [1, 2]
+ *     deprecated: true
  *     responses:
- *       201:
- *         description: Usuario creado exitosamente
- *       400:
- *         description: Datos inválidos o usuario/email ya existe
+ *       410:
+ *         description: Endpoint disabled - use email verification workflow
  */
 
 // PUT /api/v1/users/:id - Actualizar usuario por id

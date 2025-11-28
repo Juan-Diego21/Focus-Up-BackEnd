@@ -28,19 +28,22 @@ export const createScheduledNotification = async (data: Partial<NotificacionesPr
 
 /**
  * Obtiene todas las notificaciones pendientes de envío
- * Consulta notificaciones donde 'enviada = false' y 'fecha_programada <= NOW()'
+ * Consulta notificaciones donde 'enviada = false' y 'fecha_programada <= NOW() + 10s' (buffer para mayor precisión)
  * Ordena por fecha programada para procesar en orden cronológico
  * Incluye relación con usuario para obtener datos de contacto
  */
 export const getPendingNotifications = async () => {
   // Consulta SQL equivalente: SELECT * FROM notificaciones_programadas
-  // WHERE enviada = false AND fecha_programada <= NOW()
+  // WHERE enviada = false AND fecha_programada <= NOW() + 10 segundos (buffer para mayor precisión)
   // ORDER BY fecha_programada ASC
+  const now = new Date();
+  const bufferTime = new Date(now.getTime() + 10000); // Add 10 second buffer
+
   return await NotificacionesProgramadasRepository
     .createQueryBuilder("notificacion")
     .leftJoinAndSelect("notificacion.usuario", "usuario")
     .where("notificacion.enviada = :enviada", { enviada: false })
-    .andWhere("notificacion.fechaProgramada <= :now", { now: new Date() })
+    .andWhere("notificacion.fechaProgramada <= :bufferTime", { bufferTime })
     .orderBy("notificacion.fechaProgramada", "ASC")
     .getMany();
 };

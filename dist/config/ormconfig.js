@@ -20,6 +20,7 @@ const SesionConcentracionRealizada_entity_1 = require("../models/SesionConcentra
 const SesionConcentracion_entity_1 = require("../models/SesionConcentracion.entity");
 const NotificacionesUsuario_entity_1 = require("../models/NotificacionesUsuario.entity");
 const NotificacionesProgramadas_entity_1 = require("../models/NotificacionesProgramadas.entity");
+const CodigosVerificacion_entity_1 = require("../models/CodigosVerificacion.entity");
 exports.AppDataSource = new typeorm_1.DataSource({
     type: "postgres",
     host: env_1.env.PGHOST,
@@ -44,6 +45,7 @@ exports.AppDataSource = new typeorm_1.DataSource({
         AlbumMusica_entity_1.AlbumMusicaEntity,
         Evento_entity_1.EventoEntity,
         PasswordReset_entity_1.PasswordResetEntity,
+        CodigosVerificacion_entity_1.CodigosVerificacionEntity,
         MetodoRealizado_entity_1.MetodoRealizadoEntity,
         SesionConcentracionRealizada_entity_1.SesionConcentracionRealizadaEntity,
         SesionConcentracion_entity_1.SesionConcentracionEntity,
