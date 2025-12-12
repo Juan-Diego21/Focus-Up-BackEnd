@@ -572,6 +572,61 @@ export class UserService {
    }
 
   /**
+   * Cambia la contraseña de un usuario verificando la contraseña actual
+   * Requiere autenticación y validación de la contraseña actual
+   */
+  async changePassword(
+    userId: number,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      // Obtener usuario
+      const userResult = await this.getUserById(userId);
+      if (!userResult.success || !userResult.user) {
+        return { success: false, error: "Usuario no encontrado" };
+      }
+
+      const user = userResult.user;
+
+      // Verificar contraseña actual
+      const isCurrentPasswordValid = await UserService.verifyPassword(
+        currentPassword,
+        user.contrasena
+      );
+
+      if (!isCurrentPasswordValid) {
+        return { success: false, error: "La contraseña actual es incorrecta" };
+      }
+
+      // Validar nueva contraseña
+      if (!ValidationUtils.isValidPassword(newPassword)) {
+        return {
+          success: false,
+          error: "La nueva contraseña debe tener al menos 8 caracteres, una mayúscula y un número",
+        };
+      }
+
+      // Hash de la nueva contraseña
+      const hashedNewPassword = await UserService.hashPassword(newPassword);
+
+      // Actualizar contraseña
+      const updateResult = await userRepository.update(userId, {
+        contrasena: hashedNewPassword,
+      });
+
+      if (!updateResult) {
+        return { success: false, error: "Error al actualizar la contraseña" };
+      }
+
+      return { success: true, message: "Contraseña cambiada exitosamente" };
+    } catch (error) {
+      logger.error("Error en UserService.changePassword:", error);
+      return { success: false, error: "Error interno del servidor" };
+    }
+  }
+
+  /**
    * Elimina un usuario del sistema por su ID
    * Operación destructiva que requiere validación previa
    */

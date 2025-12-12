@@ -11,5 +11,6 @@ export declare class UserController {
     deleteUser(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     requestPasswordReset(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     resetPasswordWithCode(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    changePassword(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 }
 export declare const userController: UserController;

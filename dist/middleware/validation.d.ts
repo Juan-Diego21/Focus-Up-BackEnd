@@ -5,3 +5,4 @@ export declare const validationEventCreate: (req: Request, res: Response, next: 
 export declare const validateRequestVerificationCode: (req: Request, res: Response, next: NextFunction) => Response<any, Record<string, any>> | undefined;
 export declare const validateVerifyCode: (req: Request, res: Response, next: NextFunction) => Response<any, Record<string, any>> | undefined;
 export declare const validateRegister: (req: Request, res: Response, next: NextFunction) => Response<any, Record<string, any>> | undefined;
+export declare const validatePasswordChange: (req: Request, res: Response, next: NextFunction) => Response<any, Record<string, any>> | undefined;

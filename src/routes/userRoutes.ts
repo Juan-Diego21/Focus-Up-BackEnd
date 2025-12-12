@@ -4,6 +4,7 @@ import { SessionController } from "../controllers/SessionController";
 import {
   validateUserCreate,
   validateUserUpdate,
+  validatePasswordChange,
 } from "../middleware/validation";
 import { authenticateToken } from "../middleware/auth";
 
@@ -168,6 +169,62 @@ router.put(
  *         description: Usuario actualizado exitosamente
  *       400:
  *         description: Error en la solicitud
+ *       404:
+ *         description: Usuario no encontrado
+ *       401:
+ *         description: No autorizado
+ */
+
+// PATCH /api/v1/users/:id/password - Cambiar contraseña
+router.patch(
+  "/:id/password",
+  authenticateToken,
+  validatePasswordChange,
+  userController.changePassword.bind(userController)
+);
+
+/**
+ * @swagger
+ * /users/{id}/password:
+ *   patch:
+ *     summary: Cambiar contraseña del usuario
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 description: "Contraseña actual"
+ *                 format: password
+ *                 example: "CurrentPassword123"
+ *               newPassword:
+ *                 type: string
+ *                 description: "Nueva contraseña"
+ *                 format: password
+ *                 example: "NewSecurePassword123"
+ *     responses:
+ *       200:
+ *         description: Contraseña cambiada exitosamente
+ *       400:
+ *         description: Error en la solicitud (contraseña actual incorrecta o nueva inválida)
+ *       403:
+ *         description: No autorizado para cambiar la contraseña de este usuario
  *       404:
  *         description: Usuario no encontrado
  *       401:
