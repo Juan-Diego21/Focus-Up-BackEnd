@@ -18,6 +18,7 @@ router.post("/", (req, res) => {
     });
 });
 router.put("/:id", auth_1.authenticateToken, validation_1.validateUserUpdate, UserController_1.userController.updateUser.bind(UserController_1.userController));
+router.patch("/:id/password", auth_1.authenticateToken, validation_1.validatePasswordChange, UserController_1.userController.changePassword.bind(UserController_1.userController));
 router.post("/login", UserController_1.userController.login.bind(UserController_1.userController));
 router.post("/logout", auth_1.authenticateToken, UserController_1.userController.logout.bind(UserController_1.userController));
 router.delete("/:id", auth_1.authenticateToken, UserController_1.userController.deleteUser.bind(UserController_1.userController));

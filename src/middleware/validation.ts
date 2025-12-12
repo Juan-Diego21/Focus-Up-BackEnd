@@ -217,3 +217,38 @@ export const validateRegister = (
 
   next();
 };
+
+/**
+ * Middleware de validación para cambio de contraseña
+ * Valida que la contraseña actual y nueva estén presentes y la nueva sea válida
+ */
+export const validatePasswordChange = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { currentPassword, newPassword } = req.body;
+
+  const errors: string[] = [];
+
+  if (!currentPassword) {
+    errors.push("La contraseña actual es requerida");
+  }
+
+  if (!newPassword) {
+    errors.push("La nueva contraseña es requerida");
+  } else if (!ValidationUtils.isValidPassword(newPassword)) {
+    errors.push("La nueva contraseña debe tener al menos 8 caracteres, una mayúscula y un número");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Datos de entrada inválidos",
+      errors,
+      timestamp: new Date(),
+    });
+  }
+
+  next();
+};

@@ -384,6 +384,37 @@ class UserService {
                 .execute();
         }
     }
+    async changePassword(userId, currentPassword, newPassword) {
+        try {
+            const userResult = await this.getUserById(userId);
+            if (!userResult.success || !userResult.user) {
+                return { success: false, error: "Usuario no encontrado" };
+            }
+            const user = userResult.user;
+            const isCurrentPasswordValid = await UserService.verifyPassword(currentPassword, user.contrasena);
+            if (!isCurrentPasswordValid) {
+                return { success: false, error: "La contraseña actual es incorrecta" };
+            }
+            if (!validation_1.ValidationUtils.isValidPassword(newPassword)) {
+                return {
+                    success: false,
+                    error: "La nueva contraseña debe tener al menos 8 caracteres, una mayúscula y un número",
+                };
+            }
+            const hashedNewPassword = await UserService.hashPassword(newPassword);
+            const updateResult = await UserRepository_1.userRepository.update(userId, {
+                contrasena: hashedNewPassword,
+            });
+            if (!updateResult) {
+                return { success: false, error: "Error al actualizar la contraseña" };
+            }
+            return { success: true, message: "Contraseña cambiada exitosamente" };
+        }
+        catch (error) {
+            logger_1.default.error("Error en UserService.changePassword:", error);
+            return { success: false, error: "Error interno del servidor" };
+        }
+    }
     async deleteUser(id) {
         try {
             const deleted = await UserRepository_1.userRepository.delete(id);

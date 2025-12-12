@@ -509,6 +509,66 @@ export class UserController {
       res.status(500).json(response);
     }
   }
+
+  /**
+   * Cambiar contraseña del usuario autenticado
+   * Verifica la contraseña actual antes de actualizar
+   */
+  async changePassword(req: Request, res: Response) {
+    try {
+      const userId = parseInt(req.params.id);
+      const { currentPassword, newPassword } = req.body;
+      const userPayload = (req as any).user as JwtPayload;
+
+      if (isNaN(userId)) {
+        const response: ApiResponse = {
+          success: false,
+          message: "ID de usuario inválido",
+          timestamp: new Date(),
+        };
+        return res.status(400).json(response);
+      }
+
+      // Verificar que el usuario solo pueda cambiar su propia contraseña
+      if (userPayload.userId !== userId) {
+        const response: ApiResponse = {
+          success: false,
+          message: "No autorizado para cambiar la contraseña de este usuario",
+          timestamp: new Date(),
+        };
+        return res.status(403).json(response);
+      }
+
+      if (!currentPassword || !newPassword) {
+        const response: ApiResponse = {
+          success: false,
+          message: "La contraseña actual y la nueva contraseña son requeridas",
+          timestamp: new Date(),
+        };
+        return res.status(400).json(response);
+      }
+
+      const result = await userService.changePassword(userId, currentPassword, newPassword);
+
+      const response: ApiResponse = {
+        success: result.success,
+        message: result.success ? result.message! : result.error!,
+        timestamp: new Date(),
+      };
+
+      res.status(result.success ? 200 : 400).json(response);
+    } catch (error) {
+      logger.error("Error en UserController.changePassword:", error);
+
+      const response: ApiResponse = {
+        success: false,
+        message: "Error interno del servidor",
+        timestamp: new Date(),
+      };
+
+      res.status(500).json(response);
+    }
+  }
 }
 
 export const userController = new UserController();

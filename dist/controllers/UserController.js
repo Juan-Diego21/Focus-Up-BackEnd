@@ -408,6 +408,53 @@ class UserController {
             res.status(500).json(response);
         }
     }
+    async changePassword(req, res) {
+        try {
+            const userId = parseInt(req.params.id);
+            const { currentPassword, newPassword } = req.body;
+            const userPayload = req.user;
+            if (isNaN(userId)) {
+                const response = {
+                    success: false,
+                    message: "ID de usuario inválido",
+                    timestamp: new Date(),
+                };
+                return res.status(400).json(response);
+            }
+            if (userPayload.userId !== userId) {
+                const response = {
+                    success: false,
+                    message: "No autorizado para cambiar la contraseña de este usuario",
+                    timestamp: new Date(),
+                };
+                return res.status(403).json(response);
+            }
+            if (!currentPassword || !newPassword) {
+                const response = {
+                    success: false,
+                    message: "La contraseña actual y la nueva contraseña son requeridas",
+                    timestamp: new Date(),
+                };
+                return res.status(400).json(response);
+            }
+            const result = await UserService_1.userService.changePassword(userId, currentPassword, newPassword);
+            const response = {
+                success: result.success,
+                message: result.success ? result.message : result.error,
+                timestamp: new Date(),
+            };
+            res.status(result.success ? 200 : 400).json(response);
+        }
+        catch (error) {
+            logger_1.default.error("Error en UserController.changePassword:", error);
+            const response = {
+                success: false,
+                message: "Error interno del servidor",
+                timestamp: new Date(),
+            };
+            res.status(500).json(response);
+        }
+    }
 }
 exports.UserController = UserController;
 exports.userController = new UserController();

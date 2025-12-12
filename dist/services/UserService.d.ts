@@ -40,6 +40,11 @@ export declare class UserService {
     private insertUserDistractionsInTransaction;
     private updateUserInterestsInTransaction;
     private updateUserDistractionsInTransaction;
+    changePassword(userId: number, currentPassword: string, newPassword: string): Promise<{
+        success: boolean;
+        message?: string;
+        error?: string;
+    }>;
     deleteUser(id: number): Promise<{
         success: boolean;
         error?: string;
