@@ -86,7 +86,7 @@ export const authenticateToken = async (
       logger.warn('Could not decode token for expiration logging');
     }
 
-    (req as any).user = decoded; // Adjuntar información del usuario al request
+    req.user = decoded; // Adjuntar información del usuario al request
     next();
   } catch (error: any) {
     let reason = "desconocido";
@@ -131,7 +131,7 @@ export const optionalAuth = (
   if (token) {
     try {
       const decoded = JwtUtils.verifyAccessToken(token);
-      (req as any).user = decoded;
+      req.user = decoded;
     } catch (error) {
       // Si el token es inválido, continuamos sin autenticación
       logger.warn("Token opcional inválido:", error);

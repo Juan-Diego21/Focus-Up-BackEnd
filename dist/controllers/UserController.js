@@ -272,6 +272,39 @@ class UserController {
             res.status(500).json(response);
         }
     }
+    async updateProfile(req, res) {
+        try {
+            const userPayload = req.user;
+            const updateData = req.body;
+            const result = await UserService_1.userService.updateUser(userPayload.userId, updateData);
+            if (!result.success) {
+                const response = {
+                    success: false,
+                    message: "Error al actualizar perfil",
+                    error: result.error,
+                    timestamp: new Date(),
+                };
+                return res.status(400).json(response);
+            }
+            const response = {
+                success: true,
+                message: "Perfil actualizado exitosamente",
+                data: result.user,
+                timestamp: new Date(),
+            };
+            res.status(200).json(response);
+        }
+        catch (error) {
+            logger_1.default.error("Error en UserController.updateProfile:", error);
+            const response = {
+                success: false,
+                message: "Error interno del servidor",
+                error: "Ocurrió un error inesperado",
+                timestamp: new Date(),
+            };
+            res.status(500).json(response);
+        }
+    }
     async logout(req, res) {
         try {
             const authHeader = req.headers["authorization"];
@@ -330,23 +363,35 @@ class UserController {
         }
     }
     async deleteUser(req, res) {
-        const id = parseInt(req.params.id);
-        if (isNaN(id)) {
-            return res.status(400).json({
-                success: false,
-                message: "ID inválido",
+        try {
+            const id = parseInt(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "ID inválido",
+                    timestamp: new Date(),
+                });
+            }
+            const result = await UserService_1.userService.deleteUser(id);
+            const response = {
+                success: result.success,
+                message: result.success
+                    ? "Usuario eliminado correctamente"
+                    : result.error || "Error eliminando usuario",
                 timestamp: new Date(),
-            });
+            };
+            res.status(result.success ? 200 : 404).json(response);
         }
-        const result = await UserService_1.userService.deleteUser(id);
-        const response = {
-            success: result.success,
-            message: result.success
-                ? "Usuario eliminado correctamente"
-                : result.error || "Error eliminando usuario",
-            timestamp: new Date(),
-        };
-        res.status(result.success ? 200 : 404).json(response);
+        catch (error) {
+            logger_1.default.error("Error en UserController.deleteUser:", error);
+            const response = {
+                success: false,
+                message: "Error interno del servidor",
+                error: "Ocurrió un error inesperado",
+                timestamp: new Date(),
+            };
+            res.status(500).json(response);
+        }
     }
     async requestPasswordReset(req, res) {
         try {

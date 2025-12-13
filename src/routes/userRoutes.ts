@@ -5,6 +5,9 @@ import {
   validateUserCreate,
   validateUserUpdate,
   validatePasswordChange,
+  validateLogin,
+  validateRequestPasswordReset,
+  validateResetPasswordWithCode,
 } from "../middleware/validation";
 import { authenticateToken } from "../middleware/auth";
 
@@ -29,94 +32,17 @@ router.get("/", authenticateToken, userController.getProfile.bind(userController
  *         description: No autorizado
  */
 
-// GET /api/v1/users/:id - Obtener usuario por ID
-router.get("/:id", authenticateToken, userController.getUserById.bind(userController));
+// PUT /api/v1/users - Actualizar perfil del usuario autenticado
+router.put("/", authenticateToken, validateUserUpdate, userController.updateProfile.bind(userController));
 
 /**
  * @swagger
- * /users/{id}:
- *   get:
- *     summary: Obtener usuario por ID
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID del usuario
- *     responses:
- *       200:
- *         description: Usuario encontrado
- *       404:
- *         description: Usuario no encontrado
- *       401:
- *         description: No autorizado
- */
-
-// GET /api/v1/users/email/:email - Obtener usuario por email
-router.get("/email/:email", authenticateToken, userController.getUserByEmail.bind(userController));
-
-/**
- * @swagger
- * /users/email/{email}:
- *   get:
- *     summary: Obtener un usuario por email
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: email
- *         required: true
- *         schema:
- *           type: string
- *         description: Email del usuario
- *     responses:
- *       200:
- *         description: Usuario encontrado
- *       404:
- *         description: Usuario no encontrado
- *       401:
- *         description: No autorizado
- */
-
-// POST /api/v1/users - DISABLED: Use /api/v1/auth/register instead
-// Email verification is now required before user registration
-router.post("/", (req, res) => {
-  res.status(410).json({
-    success: false,
-    message: "This endpoint has been disabled. User registration now requires email verification. Use POST /api/v1/auth/register after verifying your email.",
-    timestamp: new Date(),
-  });
-});
-
-
-// PUT /api/v1/users/:id - Actualizar usuario por id
-router.put(
-  "/:id",
-  authenticateToken,
-  validateUserUpdate,
-  userController.updateUser.bind(userController)
-);
-
-/**
- * @swagger
- * /users/{id}:
+ * /users:
  *   put:
- *     summary: Actualizar un usuario por ID
+ *     summary: Actualizar perfil del usuario autenticado
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID del usuario
  *     requestBody:
  *       required: true
  *       content:
@@ -147,11 +73,6 @@ router.put(
  *                 description: "Favorite time"
  *                 format: time
  *                 example: "08:00"
- *               contrasena:
- *                 type: string
- *                 description: "Password"
- *                 format: password
- *                 example: "NewSecurePassword123"
  *               intereses:
  *                 type: array
  *                 description: "Interests"
@@ -166,14 +87,26 @@ router.put(
  *                 example: [1, 2]
  *     responses:
  *       200:
- *         description: Usuario actualizado exitosamente
+ *         description: Perfil actualizado exitosamente
  *       400:
  *         description: Error en la solicitud
- *       404:
- *         description: Usuario no encontrado
  *       401:
  *         description: No autorizado
  */
+
+
+
+// POST /api/v1/users - DISABLED: Use /api/v1/auth/register instead
+// Email verification is now required before user registration
+router.post("/", (req, res) => {
+  res.status(410).json({
+    success: false,
+    message: "This endpoint has been disabled. User registration now requires email verification. Use POST /api/v1/auth/register after verifying your email.",
+    timestamp: new Date(),
+  });
+});
+
+
 
 // PATCH /api/v1/users/:id/password - Cambiar contraseña
 router.patch(
@@ -231,93 +164,11 @@ router.patch(
  *         description: No autorizado
  */
 
-// POST /api/v1/users/login - Login de usuario
-router.post("/login", userController.login.bind(userController));
+// Auth routes moved to /auth prefix in auth.routes.ts
 
-/**
- * @swagger
- * /users/login:
- *   post:
- *     summary: Iniciar sesión de usuario
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - contrasena
- *             properties:
- *               correo:
- *                 type: string
- *                 format: email
- *                 description: "Email del usuario"
- *                 example: "john@example.com"
- *               nombre_usuario:
- *                 type: string
- *                 description: "Nombre de usuario (alternativo al correo)"
- *                 example: "johndoe"
- *               contrasena:
- *                 type: string
- *                 format: password
- *                 example: "SecurePassword123"
- *     responses:
- *       200:
- *         description: Autenticación exitosa
- *       401:
- *         description: Credenciales inválidas
- */
-
- // ✅ Cierre correcto del bloque Swagger de login (antes estaba faltando)
-
-// POST /api/v1/users/logout - Logout de usuario
-router.post("/logout", authenticateToken, userController.logout.bind(userController));
-
-/**
- * @swagger
- * /users/logout:
- *   post:
- *     summary: Cerrar sesión del usuario
- *     tags: [Auth]
- *     security:
- *       - BearerAuth: []
- *     responses:
- *       200:
- *         description: Sesión cerrada exitosamente
- *       401:
- *         description: No autorizado
- */
-
-// DELETE /api/v1/users/:id - eliminar usuario
-router.delete("/:id", authenticateToken, userController.deleteUser.bind(userController));
-
-/**
- * @swagger
- * /users/{id}:
- *   delete:
- *     summary: Eliminar usuario por ID
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID del usuario a eliminar
- *     responses:
- *       200:
- *         description: Usuario eliminado correctamente
- *       404:
- *         description: Usuario no encontrado
- *       401:
- *         description: No autorizado
- */
 
 // POST /api/v1/users/request-password-reset - Solicitar código de verificación
-router.post('/request-password-reset', userController.requestPasswordReset.bind(userController));
+router.post('/request-password-reset', validateRequestPasswordReset, userController.requestPasswordReset.bind(userController));
 
 /**
  * @swagger
@@ -347,7 +198,7 @@ router.post('/request-password-reset', userController.requestPasswordReset.bind(
  */
 
 // POST /api/v1/users/reset-password-with-code - Restablecer contraseña
-router.post('/reset-password-with-code', userController.resetPasswordWithCode.bind(userController));
+router.post('/reset-password-with-code', validateResetPasswordWithCode, userController.resetPasswordWithCode.bind(userController));
 
 // GET /api/v1/users/:userId/sessions - Listar sesiones de un usuario
 router.get('/:userId/sessions', authenticateToken, sessionController.listUserSessions.bind(sessionController));

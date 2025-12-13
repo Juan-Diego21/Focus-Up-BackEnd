@@ -12,7 +12,7 @@ const MetodoEstudio_entity_1 = require("../models/MetodoEstudio.entity");
 const Musica_entity_1 = require("../models/Musica.entity");
 const NotificacionesProgramadasService_1 = require("./NotificacionesProgramadasService");
 const logger_1 = __importDefault(require("../utils/logger"));
-const { studyMethodRegistry, methodAliases } = require("../config/methods.config");
+const methods_config_1 = require("../config/methods.config");
 function normalizeProgress(progress) {
     if (typeof progress === 'number') {
         return progress;
@@ -45,24 +45,24 @@ function normalizeText(text) {
 }
 function getMethodType(nombreMetodo) {
     const normalized = normalizeText(nombreMetodo);
-    if (studyMethodRegistry[normalized]) {
+    if (methods_config_1.studyMethodRegistry[normalized]) {
         return normalized;
     }
-    let methodSlug = methodAliases[nombreMetodo];
-    if (methodSlug && studyMethodRegistry[methodSlug]) {
+    let methodSlug = methods_config_1.methodAliases[nombreMetodo];
+    if (methodSlug && methods_config_1.studyMethodRegistry[methodSlug]) {
         return methodSlug;
     }
-    methodSlug = methodAliases[normalized];
-    if (methodSlug && studyMethodRegistry[methodSlug]) {
+    methodSlug = methods_config_1.methodAliases[normalized];
+    if (methodSlug && methods_config_1.studyMethodRegistry[methodSlug]) {
         return methodSlug;
     }
-    logger_1.default.warn(`Tipo de método no reconocido: "${nombreMetodo}" (normalizado: "${normalized}"). Métodos disponibles: ${Object.keys(studyMethodRegistry).join(', ')}`);
+    logger_1.default.warn(`Tipo de método no reconocido: "${nombreMetodo}" (normalizado: "${normalized}"). Métodos disponibles: ${Object.keys(methods_config_1.studyMethodRegistry).join(', ')}`);
     throw new Error(`Tipo de método no reconocido: ${nombreMetodo}`);
 }
 function getMethodConfig(methodType) {
-    const config = studyMethodRegistry[methodType];
+    const config = methods_config_1.studyMethodRegistry[methodType];
     if (!config) {
-        logger_1.default.error(`Configuración no encontrada para el método: ${methodType}. Métodos disponibles: ${Object.keys(studyMethodRegistry).join(', ')}`);
+        logger_1.default.error(`Configuración no encontrada para el método: ${methodType}. Métodos disponibles: ${Object.keys(methods_config_1.studyMethodRegistry).join(', ')}`);
         throw new Error(`Configuración no encontrada para el método: ${methodType}`);
     }
     logger_1.default.debug(`Registry config for ${methodType}: ${JSON.stringify({

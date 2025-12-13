@@ -8,9 +8,7 @@ import { EventoEntity } from "../models/Evento.entity";
 import { MusicaEntity } from "../models/Musica.entity";
 import { NotificacionesProgramadasService } from "./NotificacionesProgramadasService";
 import logger from "../utils/logger";
-
-// Load method configurations from external file
-const { studyMethodRegistry, methodAliases } = require("../config/methods.config");
+import { studyMethodRegistry, methodAliases } from "../config/methods.config";
 
 // Extended interface for methods with additional properties (like Feynman)
 interface StudyMethodConfig {
