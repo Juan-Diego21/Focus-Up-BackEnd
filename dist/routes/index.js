@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const userRoutes_1 = __importDefault(require("./userRoutes"));
-const authRoutes_1 = __importDefault(require("./authRoutes"));
+const auth_routes_1 = __importDefault(require("./auth.routes"));
 const musicaRoutes_1 = __importDefault(require("./musicaRoutes"));
 const beneficioRoutes_1 = __importDefault(require("./beneficioRoutes"));
 const metodoEstudioRoutes_1 = __importDefault(require("./metodoEstudioRoutes"));
@@ -24,7 +24,7 @@ router.get("/health", (req, res) => {
         environment: env_1.env.NODE_ENV,
     });
 });
-router.use("/auth", authRoutes_1.default);
+router.use("/auth", auth_routes_1.default);
 router.use("/users", userRoutes_1.default);
 router.use("/beneficios", beneficioRoutes_1.default);
 router.use("/metodos-estudio", metodoEstudioRoutes_1.default);
@@ -34,7 +34,7 @@ router.use("/reports", reportsRoutes_1.default);
 router.use("/notificaciones", notificacionesPreferenciasRutas_1.default);
 router.use("/notificaciones", notificacionesProgramadasRutas_1.default);
 router.use("/sessions", sessionRoutes_1.default);
-router.use("*", (req, res) => {
+router.use((req, res) => {
     res.status(404).json({
         success: false,
         message: `Route not found: ${req.originalUrl}`,

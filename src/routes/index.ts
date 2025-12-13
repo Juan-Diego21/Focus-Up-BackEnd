@@ -1,6 +1,6 @@
 import { Router } from "express";
 import userRoutes from "./userRoutes";
-import authRoutes from "./authRoutes";
+import authRoutes from "./auth.routes";
 import musicaRoutes from "./musicaRoutes";
 import beneficioRoutes from "./beneficioRoutes";
 import metodoEstudioRoutes from "./metodoEstudioRoutes";
@@ -83,7 +83,7 @@ router.use("/sessions", sessionRoutes);
 
 
 // Ruta por defecto para manejar endpoints no encontrados
-router.use("*", (req, res) => {
+router.use((req, res) => {
   res.status(404).json({
     success: false,
     message: `Route not found: ${req.originalUrl}`,

@@ -287,7 +287,7 @@ export class UserController {
     */
    async getProfile(req: Request, res: Response) {
      try {
-       const userPayload = (req as any).user as JwtPayload;
+       const userPayload = req.user as JwtPayload;
 
        const result = await userService.getUserById(userPayload.userId);
 
@@ -324,6 +324,49 @@ export class UserController {
    }
 
    /**
+    * Actualizar el perfil del usuario actualmente autenticado
+    * Utiliza el token JWT para identificar al usuario y asegurar que solo actualice su propio perfil
+    */
+   async updateProfile(req: Request, res: Response) {
+     try {
+       const userPayload = req.user as JwtPayload;
+       const updateData = req.body;
+
+       const result = await userService.updateUser(userPayload.userId, updateData);
+
+       if (!result.success) {
+         const response: ApiResponse = {
+           success: false,
+           message: "Error al actualizar perfil",
+           error: result.error,
+           timestamp: new Date(),
+         };
+         return res.status(400).json(response);
+       }
+
+       const response: ApiResponse = {
+         success: true,
+         message: "Perfil actualizado exitosamente",
+         data: result.user,
+         timestamp: new Date(),
+       };
+
+       res.status(200).json(response);
+     } catch (error) {
+       logger.error("Error en UserController.updateProfile:", error);
+
+       const response: ApiResponse = {
+         success: false,
+         message: "Error interno del servidor",
+         error: "Ocurrió un error inesperado",
+         timestamp: new Date(),
+       };
+
+       res.status(500).json(response);
+     }
+   }
+
+   /**
     * Cerrar sesión del usuario actual
     * Revoca inmediatamente el token actual agregándolo a la lista negra
     * El token permanece inválido hasta su expiración natural (24 horas)
@@ -337,7 +380,7 @@ export class UserController {
          // Agregar el token a la lista negra para invalidarlo inmediatamente
          // El token se mantiene revocado hasta su expiración natural
          TokenBlacklistService.addToBlacklist(token);
-         logger.info(`Token revocado exitosamente para logout del usuario: ${(req as any).user?.userId}`);
+         logger.info(`Token revocado exitosamente para logout del usuario: ${req.user?.userId}`);
        }
 
        const response: ApiResponse = {
@@ -406,26 +449,37 @@ export class UserController {
    * Operación destructiva que requiere validación del ID
    */
   async deleteUser(req: Request, res: Response) {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "ID inválido",
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: "ID inválido",
+          timestamp: new Date(),
+        });
+      }
+
+      const result = await userService.deleteUser(id);
+
+      const response: ApiResponse = {
+        success: result.success,
+        message: result.success
+          ? "Usuario eliminado correctamente"
+          : result.error || "Error eliminando usuario",
         timestamp: new Date(),
-      });
+      };
+
+      res.status(result.success ? 200 : 404).json(response);
+    } catch (error) {
+      logger.error("Error en UserController.deleteUser:", error);
+      const response: ApiResponse = {
+        success: false,
+        message: "Error interno del servidor",
+        error: "Ocurrió un error inesperado",
+        timestamp: new Date(),
+      };
+      res.status(500).json(response);
     }
-
-    const result = await userService.deleteUser(id);
-
-    const response: ApiResponse = {
-      success: result.success,
-      message: result.success
-        ? "Usuario eliminado correctamente"
-        : result.error || "Error eliminando usuario",
-      timestamp: new Date(),
-    };
-
-    res.status(result.success ? 200 : 404).json(response);
   }
 
   /**
@@ -518,7 +572,7 @@ export class UserController {
     try {
       const userId = parseInt(req.params.id);
       const { currentPassword, newPassword } = req.body;
-      const userPayload = (req as any).user as JwtPayload;
+      const userPayload = req.user as JwtPayload;
 
       if (isNaN(userId)) {
         const response: ApiResponse = {

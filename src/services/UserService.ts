@@ -377,17 +377,11 @@ export class UserService {
         return { success: false, error: "Credenciales inválidas" };
       }
 
-      // Verificar contraseña
-      let isValidPassword: boolean;
-      try {
-        isValidPassword = await UserService.verifyPassword(
-          password,
-          user.contrasena
-        );
-      } catch (error) {
-        // Si bcrypt falla (posiblemente contraseña no hasheada), comparar directamente
-        isValidPassword = password === user.contrasena;
-      }
+      // Verificar contraseña - Eliminado fallback inseguro - solo bcrypt.compare
+      const isValidPassword = await UserService.verifyPassword(
+        password,
+        user.contrasena
+      );
       if (!isValidPassword) {
         return { success: false, error: "Credenciales inválidas" };
       }

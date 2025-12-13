@@ -7,6 +7,11 @@ class MakeFechaNacimientoNullable003 {
     }
     async up(queryRunner) {
         await queryRunner.query(`
+      UPDATE usuario
+      SET fecha_nacimiento = NULL
+      WHERE fecha_nacimiento = '0002-02-02' OR fecha_nacimiento < '1900-01-01';
+    `);
+        await queryRunner.query(`
       ALTER TABLE usuario
       ALTER COLUMN fecha_nacimiento DROP NOT NULL;
     `);

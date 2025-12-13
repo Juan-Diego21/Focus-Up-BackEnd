@@ -34,127 +34,70 @@ async function sendResetEmail(to, name, code) {
           <title>Código de Verificación - Focus-Up</title>
           <style>
             body {
-              font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
               line-height: 1.6;
-              color: #ffffff;
+              color: #333333;
               max-width: 600px;
               margin: 0 auto;
               padding: 20px;
-              background: linear-gradient(135deg, #171717 0%, #1a1a1a 100%);
-              min-height: 100vh;
+              background-color: #f8f9fa;
             }
             .container {
-              background: linear-gradient(135deg, rgba(35, 35, 35, 0.95) 0%, rgba(26, 26, 26, 0.95) 100%);
-              backdrop-filter: blur(16px);
-              padding: 40px;
-              border-radius: 24px;
-              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-              border: 1px solid rgba(6, 144, 207, 0.2);
-              position: relative;
-              overflow: hidden;
-            }
-            .container::before {
-              content: '';
-              position: absolute;
-              top: 0;
-              left: 0;
-              right: 0;
-              height: 4px;
-              background: linear-gradient(90deg, #0690cf 0%, #00d4ff 50%, #0690cf 100%);
+              background-color: #ffffff;
+              padding: 30px;
+              border-radius: 12px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              border: 1px solid #e9ecef;
             }
             .header {
               text-align: center;
-              margin-bottom: 40px;
-            }
-            .logo-container {
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: 16px;
-              margin-bottom: 20px;
-            }
-            .logo {
-              width: 48px;
-              height: 48px;
-              border-radius: 12px;
-              background: linear-gradient(135deg, rgba(6, 144, 207, 0.2) 0%, rgba(0, 212, 255, 0.2) 100%);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              border: 1px solid rgba(6, 144, 207, 0.3);
-            }
-            .logo img {
-              width: 32px;
-              height: 32px;
-              object-fit: contain;
+              margin-bottom: 30px;
+              padding-bottom: 20px;
+              border-bottom: 2px solid #007bff;
             }
             .brand-text {
-              font-size: 28px;
+              font-size: 32px;
               font-weight: 700;
-              background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
-              background-clip: text;
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
+              color: #007bff;
               margin: 0;
+              letter-spacing: -0.5px;
             }
             .subtitle {
-              font-size: 18px;
-              font-weight: 500;
-              color: #e0f2fe;
+              font-size: 16px;
+              color: #6c757d;
               margin: 8px 0 0 0;
+              font-weight: 500;
             }
             .content {
-              color: #ffffff;
-              margin-bottom: 30px;
+              color: #333333;
+              margin-bottom: 25px;
             }
             .code-container {
-              background: linear-gradient(135deg, rgba(26, 26, 26, 0.8) 0%, rgba(35, 35, 35, 0.8) 100%);
-              border: 2px dashed rgba(6, 144, 207, 0.5);
-              border-radius: 16px;
+              background-color: #f8f9fa;
+              border: 2px dashed #007bff;
+              border-radius: 8px;
               padding: 30px;
               text-align: center;
-              margin: 30px 0;
-              position: relative;
-            }
-            .code-container::before {
-              content: '';
-              position: absolute;
-              top: -2px;
-              left: -2px;
-              right: -2px;
-              bottom: -2px;
-              background: linear-gradient(45deg, rgba(6, 144, 207, 0.1), rgba(0, 212, 255, 0.1));
-              border-radius: 18px;
-              z-index: -1;
+              margin: 25px 0;
             }
             .code {
               font-size: 36px;
               font-weight: 700;
               font-family: 'Courier New', monospace;
-              background: linear-gradient(135deg, #0690cf 0%, #00d4ff 100%);
-              background-clip: text;
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
+              color: #007bff;
               letter-spacing: 6px;
               margin: 0;
-              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             }
             .warning {
-              background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);
-              border: 1px solid rgba(245, 158, 11, 0.3);
-              color: #fbbf24;
+              background-color: #fff3cd;
+              border: 1px solid #ffeaa7;
+              color: #856404;
               padding: 20px;
-              border-radius: 12px;
-              margin: 30px 0;
-              position: relative;
-            }
-            .warning::before {
-              content: '⚠️';
-              font-size: 20px;
-              margin-right: 8px;
+              border-radius: 8px;
+              margin: 25px 0;
             }
             .warning strong {
-              color: #fbbf24;
+              color: #856404;
               display: block;
               margin-bottom: 12px;
               font-weight: 600;
@@ -165,46 +108,45 @@ async function sendResetEmail(to, name, code) {
             }
             .warning li {
               margin-bottom: 6px;
-              color: #fcd34d;
+              color: #856404;
             }
             .footer {
-              margin-top: 40px;
-              padding-top: 30px;
-              border-top: 1px solid rgba(255, 255, 255, 0.1);
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #dee2e6;
               font-size: 14px;
-              color: #9ca3af;
+              color: #6c757d;
               text-align: center;
             }
-            .footer p {
-              margin: 8px 0;
-            }
-            .accent-text {
-              color: #e0f2fe;
-            }
             .highlight {
-              background: linear-gradient(135deg, rgba(6, 144, 207, 0.2) 0%, rgba(0, 212, 255, 0.2) 100%);
+              background-color: #e7f3ff;
               padding: 2px 6px;
               border-radius: 4px;
               font-weight: 600;
+              color: #0056b3;
+            }
+            @media (max-width: 480px) {
+              body {
+                padding: 10px;
+              }
+              .container {
+                padding: 20px;
+              }
+              .brand-text {
+                font-size: 28px;
+              }
             }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <div class="logo-container">
-                <div class="logo">
-                  <img src="https://wqoeufdsiwftfeifduul.supabase.co/storage/v1/object/public/imagenes%20proyecto/Logo.png" alt="Focus-Up Logo" />
-                </div>
-                <div>
-                  <h1 class="brand-text">Focus-Up</h1>
-                  <p class="subtitle">Restablecimiento de Contraseña</p>
-                </div>
-              </div>
+              <h1 class="brand-text">Focus-Up</h1>
+              <p class="subtitle">🔐 Restablecimiento de Contraseña</p>
             </div>
 
             <div class="content">
-              <p>Hola <span class="accent-text"><strong>${name}</strong></span>,</p>
+              <p>Hola <strong>${name}</strong>,</p>
 
               <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta. Para continuar con el proceso, utiliza el siguiente código de verificación:</p>
 
@@ -227,8 +169,7 @@ async function sendResetEmail(to, name, code) {
             </div>
 
             <div class="footer">
-              <p>Este es un mensaje automático, por favor no respondas a este correo.</p>
-              <p>&copy; 2024 Focus-Up. Todos los derechos reservados.</p>
+              <p>Este es un mensaje automático de Focus-Up.</p>
             </div>
           </div>
         </body>
