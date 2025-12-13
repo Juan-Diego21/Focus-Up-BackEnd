@@ -1,4 +1,10 @@
 ---
+title: "🔒 Focus Up Backend API — Documentación Técnica y Seguridad"
+description: "Documentación completa y unificada del Backend de Focus Up, una aplicación construida en Node.js / Express / TypeScript con seguridad enterprise-grade para la gestión del enfoque y la productividad personal."
+features: "OWASP Top 10 compliance, rate limiting, CORS restrictivo, validación de entrada con Zod, logging estructurado y arquitectura segura"
+includes: "arquitectura segura, estructura de carpetas, módulos funcionales, principios de diseño, patrones, buenas prácticas de seguridad y configuración de desarrollo"
+---
+
 # 🔒 Focus Up Backend API — Documentación Técnica y Seguridad
 
 Documentación completa y unificada del **Backend de Focus Up**, una aplicación construida en **Node.js / Express / TypeScript** con **seguridad enterprise-grade** para la gestión del enfoque y la productividad personal.
@@ -6,7 +12,6 @@ Documentación completa y unificada del **Backend de Focus Up**, una aplicación
 **🚨 SEGURIDAD HARDENED**: Implementa OWASP Top 10 compliance, rate limiting, CORS restrictivo, validación de entrada con Zod, logging estructurado y arquitectura segura.
 
 Incluye detalles de **arquitectura segura, estructura de carpetas, módulos funcionales, principios de diseño, patrones, buenas prácticas de seguridad** y **configuración de desarrollo**.
----
 
 ## 📘 Tabla de Contenido
 
