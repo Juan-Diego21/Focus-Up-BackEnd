@@ -17,7 +17,7 @@ export class ValidationUtils {
 
   // Validar formato de hora (HH:MM)
   static isValidTime(time: string): boolean {
-    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    const timeRegex = /^([01]?\d|2[0-3]):[0-5]\d$/;
     return timeRegex.test(time);
   }
 
@@ -29,10 +29,11 @@ export class ValidationUtils {
 
   // Sanitizar entrada de texto (prevención básica de XSS)
   static sanitizeText(text: string): string {
+    /*Correccion con ALL*/
     return text
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/'/g, "&#x27;")
-      .replace(/"/g, "&quot;");
+    .replace("<", "&lt;")
+    .replace(">", "&gt;")
+    .replace("'", "&#x27;")
+    .replace('"', "&quot;");
   }
 }

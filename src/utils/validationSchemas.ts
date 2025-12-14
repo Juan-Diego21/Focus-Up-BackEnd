@@ -6,15 +6,14 @@ import { z } from "zod";
  * Proporciona validación robusta y mensajes de error detallados
  */
 
-// Esquema para creación de usuario - valida todos los campos requeridos para registro
+// Esquema para creación de usuario
 export const userCreateSchema = z.object({
   nombre_usuario: z.string()
     .min(3, "El nombre de usuario debe tener al menos 3 caracteres")
     .max(50, "El nombre de usuario no puede exceder 50 caracteres")
     .regex(/^[a-zA-Z0-9_-]+$/, "El nombre de usuario solo puede contener letras, números, guiones bajos (_) y guiones (-), sin espacios"),
 
-  correo: z.string()
-    .email("Formato de email inválido")
+  correo: z.email("Formato de email inválido")
     .max(255, "El email no puede exceder 255 caracteres"),
 
   contrasena: z.string()
@@ -29,7 +28,7 @@ export const userCreateSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido (YYYY-MM-DD)")
     .refine((date) => {
       const d = new Date(date);
-      return d instanceof Date && !isNaN(d.getTime()) && date !== '0002-02-02';
+      return d instanceof Date && !Number.isNaN(d.getTime()) && date !== '0002-02-02';
     }, "Fecha de nacimiento inválida")
     .optional(),
 
@@ -44,7 +43,7 @@ export const userCreateSchema = z.object({
 
 // Esquema para login
 export const loginSchema = z.object({
-  correo: z.string().email("Formato de email inválido").optional(),
+  correo: z.email("Formato de email inválido").optional(),
   nombre_usuario: z.string().min(1, "Nombre de usuario requerido").optional(),
   contrasena: z.string().min(1, "Contraseña requerida"),
 }).refine((data) => data.correo || data.nombre_usuario, {
@@ -60,8 +59,7 @@ export const userUpdateSchema = z.object({
     .regex(/^[a-zA-Z0-9_-]+$/, "El nombre de usuario solo puede contener letras, números, guiones bajos (_) y guiones (-), sin espacios")
     .optional(),
 
-  correo: z.string()
-    .email("Formato de email inválido")
+  correo: z.email("Formato de email inválido")
     .max(255, "El email no puede exceder 255 caracteres")
     .optional(),
 
@@ -78,7 +76,7 @@ export const userUpdateSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido (YYYY-MM-DD)")
     .refine((date) => {
       const d = new Date(date);
-      return d instanceof Date && !isNaN(d.getTime()) && date !== '0002-02-02';
+      return d instanceof Date && !Number.isNaN(d.getTime()) && date !== '0002-02-02';
     }, "Fecha de nacimiento inválida")
     .optional(),
 
@@ -101,18 +99,18 @@ export const changePasswordSchema = z.object({
 
 // Esquema para solicitud de verificación de código
 export const requestVerificationCodeSchema = z.object({
-  email: z.string().email("Formato de email inválido"),
+  email: z.email("Formato de email inválido"),
 });
 
 // Esquema para verificación de código
 export const verifyCodeSchema = z.object({
-  email: z.string().email("Formato de email inválido"),
+  email: z.email("Formato de email inválido"),
   codigo: z.string().length(6, "El código debe tener 6 dígitos").regex(/^\d{6}$/, "El código debe contener solo números"),
 });
 
 // Esquema para registro de usuario
 export const registerSchema = z.object({
-  email: z.string().email("Formato de email inválido"),
+  email: z.email("Formato de email inválido"),
   username: z.string()
     .min(3, "El nombre de usuario debe tener al menos 3 caracteres")
     .max(50, "El nombre de usuario no puede exceder 50 caracteres")
@@ -129,7 +127,7 @@ export const requestPasswordResetSchema = z.object({
 
 // Esquema para reset de contraseña con código
 export const resetPasswordWithCodeSchema = z.object({
-  email: z.string().email("Formato de email inválido"),
+  email: z.email("Formato de email inválido"),
   code: z.string().length(6, "El código debe tener 6 dígitos").regex(/^\d{6}$/, "El código debe contener solo números"),
   newPassword: z.string()
     .min(8, "La nueva contraseña debe tener al menos 8 caracteres")
@@ -152,7 +150,7 @@ export const validateWithZod = (schema: z.ZodSchema) => {
         return res.status(400).json({
           success: false,
           message: "Datos de entrada inválidos",
-          errors: error.issues.map((err: z.ZodIssue) => ({
+          errors: error.issues.map((err) => ({
             field: err.path.join('.'),
             message: err.message,
           })),

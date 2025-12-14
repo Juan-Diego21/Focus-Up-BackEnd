@@ -58,9 +58,9 @@ app.use(
       }
 
       // Para desarrollo, permitir cualquier localhost origin
-      if (origin.match(/^http:\/\/localhost:\d+$/) || origin.match(/^http:\/\/127\.0\.0\.1:\d+$/)) {
-        return callback(null, true);
-      }
+      if (new RegExp(/^http:\/\/localhost:\d+$/).exec(origin) || new RegExp(/^http:\/\/127\.0\.0\.1:\d+$/).exec(origin)) {
+  return callback(null, true);
+}
 
       return callback(new Error("Not allowed by CORS"));
     },
