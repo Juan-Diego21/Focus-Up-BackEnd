@@ -1,12 +1,12 @@
 import { SesionConcentracionEntity } from "../models/SesionConcentracion.entity";
 import { CreateSessionDto, UpdateSessionDto, SessionResponseDto, SessionFilters, SessionListResponse } from "../types/Session";
 export declare class SessionService {
-    private sessionRepository;
-    private userRepository;
-    private eventoRepository;
-    private metodoRepository;
-    private albumRepository;
-    private metodoRealizadoRepository;
+    private readonly sessionRepository;
+    private readonly userRepository;
+    private readonly eventoRepository;
+    private readonly metodoRepository;
+    private readonly albumRepository;
+    private readonly metodoRealizadoRepository;
     private intervalToMs;
     private msToInterval;
     private entityToDto;

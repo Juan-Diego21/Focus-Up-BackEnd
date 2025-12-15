@@ -1,12 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ormconfig_1 = require("../config/ormconfig");
-const ormconfig_2 = require("../config/ormconfig");
 const UserRepository_1 = require("../repositories/UserRepository");
 const debugRoutes = async () => {
     console.log('🔍 DEBUG: Verificando rutas y base de datos');
     try {
-        await (0, ormconfig_2.initializeDatabase)();
+        await (0, ormconfig_1.initializeDatabase)();
         console.log('✅ Base de datos conectada');
         const users = await UserRepository_1.userRepository.findAll();
         console.log(`✅ Repository funciona - Usuarios encontrados: ${users.length}`);

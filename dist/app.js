@@ -46,7 +46,7 @@ app.use((0, cors_1.default)({
         if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
-        if (origin.match(/^http:\/\/localhost:\d+$/) || origin.match(/^http:\/\/127\.0\.0\.1:\d+$/)) {
+        if (new RegExp(/^http:\/\/localhost:\d+$/).exec(origin) || new RegExp(/^http:\/\/127\.0\.0\.1:\d+$/).exec(origin)) {
             return callback(null, true);
         }
         return callback(new Error("Not allowed by CORS"));

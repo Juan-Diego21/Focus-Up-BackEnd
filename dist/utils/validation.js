@@ -11,7 +11,7 @@ class ValidationUtils {
         return passwordRegex.test(password);
     }
     static isValidTime(time) {
-        const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        const timeRegex = /^([01]?\d|2[0-3]):[0-5]\d$/;
         return timeRegex.test(time);
     }
     static isValidUsername(username) {
@@ -20,10 +20,10 @@ class ValidationUtils {
     }
     static sanitizeText(text) {
         return text
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/'/g, "&#x27;")
-            .replace(/"/g, "&quot;");
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("'", "&#x27;")
+            .replace('"', "&quot;");
     }
 }
 exports.ValidationUtils = ValidationUtils;

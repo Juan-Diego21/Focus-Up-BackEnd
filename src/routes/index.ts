@@ -45,7 +45,7 @@ const router = Router();
 router.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
-    message: "Focus Up API is running successfully",
+    message: "La API de Focus Up está funcionando correctamente",
     timestamp: new Date().toISOString(),
     environment: env.NODE_ENV,
   });

@@ -47,7 +47,7 @@ const logger_1 = __importDefault(require("../utils/logger"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const transporter = nodemailer_1.default.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.SMTP_PORT || "587"),
+    port: Number.parseInt(process.env.SMTP_PORT || "587"),
     secure: process.env.SMTP_SECURE === "true",
     auth: {
         user: process.env.EMAIL_USER,

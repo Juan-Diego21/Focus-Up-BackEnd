@@ -1,113 +1,11 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
-import { NotificacionesProgramadasService } from '../services/NotificacionesProgramadasService';
+import { NotificacionesProgramadasController } from '../controllers/NotificacionesProgramadasController';
 
 const router = Router();
 
-// Controlador para las rutas de notificaciones programadas
-const notificacionesProgramadasController = {
-  /**
-   * Crea una nueva notificación programada
-   * Valida datos de entrada y registra la notificación para envío futuro
-   */
-  async createScheduledNotification(req: any, res: any) {
-    try {
-      const { idUsuario, tipo, titulo, mensaje, fechaProgramada } = req.body;
-
-      // Validar que el usuario autenticado pueda crear notificaciones para sí mismo
-      if (req.user.userId !== idUsuario) {
-        return res.status(403).json({
-          success: false,
-          error: 'No tienes permisos para crear notificaciones para este usuario'
-        });
-      }
-
-      // Validar fecha programada
-      const fechaProgramadaDate = new Date(fechaProgramada);
-      if (isNaN(fechaProgramadaDate.getTime())) {
-        return res.status(400).json({
-          success: false,
-          error: 'Fecha programada inválida'
-        });
-      }
-
-      const result = await NotificacionesProgramadasService.createScheduledNotification({
-        idUsuario,
-        tipo,
-        titulo,
-        mensaje,
-        fechaProgramada: fechaProgramadaDate
-      });
-
-      if (!result.success) {
-        return res.status(400).json(result);
-      }
-
-      res.status(201).json(result);
-    } catch (error) {
-      console.error('Error en createScheduledNotification:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Error interno del servidor'
-      });
-    }
-  },
-
-  /**
-    * Obtiene todas las notificaciones programadas
-    * Retorna lista completa de notificaciones con información detallada
-    */
-  async getScheduledNotifications(req: any, res: any) {
-    try {
-      const userId = req.user.userId;
-      const result = await NotificacionesProgramadasService.getUpcomingEventsWithNotifications(userId);
-
-      if (!result.success) {
-        return res.status(500).json(result);
-      }
-
-      res.status(200).json(result);
-    } catch (error) {
-      console.error('Error en getScheduledNotifications:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Error interno del servidor'
-      });
-    }
-  },
-
-  /**
-   * Marca una notificación específica como enviada
-   * Actualiza el estado de la notificación después del envío exitoso del email
-   */
-  async markAsSent(req: any, res: any) {
-    try {
-      const { id } = req.params;
-      const idNotificacion = parseInt(id, 10);
-
-      if (isNaN(idNotificacion)) {
-        return res.status(400).json({
-          success: false,
-          error: 'ID de notificación inválido'
-        });
-      }
-
-      const result = await NotificacionesProgramadasService.markAsSent(idNotificacion);
-
-      if (!result.success) {
-        return res.status(400).json(result);
-      }
-
-      res.status(200).json(result);
-    } catch (error) {
-      console.error('Error en markAsSent:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Error interno del servidor'
-      });
-    }
-  }
-};
+// Instancia del controlador para manejar las rutas de notificaciones programadas
+const notificacionesProgramadasController = new NotificacionesProgramadasController();
 
 // Crear notificación programada
 router.post('/programadas', authenticateToken, notificacionesProgramadasController.createScheduledNotification.bind(notificacionesProgramadasController));

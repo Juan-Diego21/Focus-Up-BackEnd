@@ -3,6 +3,5 @@ declare const swaggerSpec: object;
 declare const swaggerUiOptions: {
     customCss: string;
     customSiteTitle: string;
-    customfavIcon: string;
 };
 export { swaggerSpec, swaggerUi, swaggerUiOptions };

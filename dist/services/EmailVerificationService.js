@@ -157,7 +157,7 @@ class EmailVerificationService {
                 return { success: false, error: "El nombre de usuario ya está en uso" };
             }
             const bcrypt = await Promise.resolve().then(() => __importStar(require("bcryptjs")));
-            const hashedPassword = await bcrypt.hash(password, parseInt(process.env.BCRYPT_SALT_ROUNDS || "12"));
+            const hashedPassword = await bcrypt.hash(password, Number.parseInt(process.env.BCRYPT_SALT_ROUNDS || "12"));
             const newUser = await UserRepository_1.userRepository.create({
                 nombre_usuario: validation_1.ValidationUtils.sanitizeText(username),
                 correo: email.toLowerCase().trim(),

@@ -24,6 +24,9 @@ export declare class UserService {
         user?: User;
         error?: string;
     }>;
+    private validateUpdateInput;
+    private sanitizeUpdateInput;
+    private checkUpdateUniqueness;
     verifyCredentials(identifier: string, password: string): Promise<{
         success: boolean;
         user?: User;

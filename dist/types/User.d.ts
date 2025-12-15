@@ -1,8 +1,9 @@
+export type Genero = "Masculino" | "Femenino" | "Otro" | "Prefiero no decir";
 export interface User {
     id_usuario?: number;
     nombre_usuario: string;
     pais?: string;
-    genero?: "Masculino" | "Femenino" | "Otro" | "Prefiero no decir";
+    genero?: Genero;
     fecha_nacimiento?: Date;
     horario_fav?: string;
     correo: string;
