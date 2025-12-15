@@ -4,13 +4,15 @@ import { ValidationUtils } from "../utils/validation";
 import { UsuarioInteresesEntity } from "../models/UsuarioIntereses.entity";
 import { UsuarioDistraccionesEntity } from "../models/UsuarioDistracciones.entity";
 import { UserEntity } from "../models/User.entity";
+import { IUserService } from "../interfaces/domain/services/IUserService";
 import logger from "../utils/logger";
 
 /**
  * Servicio para la gestión completa de usuarios
  * Maneja autenticación, registro, actualización y recuperación de contraseña
+ * Implementa la interfaz IUserService para garantizar el contrato
  */
-export class UserService {
+export class UserService implements IUserService {
   private static readonly SALT_ROUNDS = Number.parseInt(
     process.env.BCRYPT_SALT_ROUNDS || "12"
   );

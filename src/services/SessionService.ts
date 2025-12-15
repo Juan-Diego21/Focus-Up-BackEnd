@@ -6,13 +6,15 @@ import { MetodoEstudioEntity } from "../models/MetodoEstudio.entity";
 import { AlbumMusicaEntity } from "../models/AlbumMusica.entity";
 import { MetodoRealizadoEntity } from "../models/MetodoRealizado.entity";
 import { CreateSessionDto, UpdateSessionDto, SessionResponseDto, SessionFilters, SessionListResponse } from "../types/Session";
+import { ISessionService } from "../interfaces/domain/services/ISessionService";
 import logger from "../utils/logger";
 
 /**
  * Servicio para la gestión de sesiones de concentración
  * Maneja operaciones CRUD, temporizadores y lógica de negocio de sesiones
+ * Implementa la interfaz ISessionService para garantizar el contrato
  */
-export class SessionService {
+export class SessionService implements ISessionService {
   private readonly sessionRepository = AppDataSource.getRepository(SesionConcentracionEntity);
   private readonly userRepository = AppDataSource.getRepository(UserEntity);
   private readonly eventoRepository = AppDataSource.getRepository(EventoEntity);

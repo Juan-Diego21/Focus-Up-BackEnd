@@ -1,6 +1,7 @@
 import { SesionConcentracionEntity } from "../models/SesionConcentracion.entity";
 import { CreateSessionDto, UpdateSessionDto, SessionResponseDto, SessionFilters, SessionListResponse } from "../types/Session";
-export declare class SessionService {
+import { ISessionService } from "../interfaces/domain/services/ISessionService";
+export declare class SessionService implements ISessionService {
     private readonly sessionRepository;
     private readonly userRepository;
     private readonly eventoRepository;

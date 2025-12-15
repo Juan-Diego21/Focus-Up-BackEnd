@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { SessionService } from "../services/SessionService";
 import { NotificationService } from "../services/NotificationService";
 import { CreateSessionDto, UpdateSessionDto, SessionFilters } from "../types/Session";
-import { ApiResponse } from "../types/ApiResponse";
+import { IApiResponse } from "../interfaces/shared/IApiResponse";
 import logger from "../utils/logger";
 
 /**
@@ -19,14 +19,14 @@ export class SessionController {
    */
   async createSession(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user!.userId;
       const dto: CreateSessionDto = req.body;
 
       logger.info(`Creando sesión para usuario ${userId}`, { dto });
 
       // Validar campos requeridos
       if (!dto.type || !["rapid", "scheduled"].includes(dto.type)) {
-        const response: ApiResponse = {
+        const response: IApiResponse = {
           success: false,
           message: "Tipo de sesión inválido. Debe ser 'rapid' o 'scheduled'",
           timestamp: new Date(),
@@ -37,7 +37,7 @@ export class SessionController {
 
       const session = await this.sessionService.createSession(dto, userId);
 
-      const response: ApiResponse = {
+      const response: IApiResponse = {
         success: true,
         message: "Sesión creada exitosamente",
         data: session,
@@ -48,7 +48,7 @@ export class SessionController {
     } catch (error: any) {
       logger.error("Error creando sesión:", error);
 
-      const response: ApiResponse = {
+      const response: IApiResponse = {
         success: false,
         message: error.message || "Error interno del servidor",
         timestamp: new Date(),
@@ -64,11 +64,11 @@ export class SessionController {
    */
   async getSession(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user!.userId;
       const sessionId = parseInt(req.params.sessionId);
 
       if (isNaN(sessionId)) {
-        const response: ApiResponse = {
+        const response: IApiResponse = {
           success: false,
           message: "ID de sesión inválido",
           timestamp: new Date(),
@@ -79,7 +79,7 @@ export class SessionController {
 
       const session = await this.sessionService.getSession(sessionId, userId);
 
-      const response: ApiResponse = {
+      const response: IApiResponse = {
         success: true,
         message: "Sesión obtenida exitosamente",
         data: session,
@@ -97,7 +97,7 @@ export class SessionController {
         statusCode = 403;
       }
 
-      const response: ApiResponse = {
+      const response: IApiResponse = {
         success: false,
         message: error.message || "Error interno del servidor",
         timestamp: new Date(),
@@ -113,12 +113,12 @@ export class SessionController {
   */
   async listUserSessions(req: Request, res: Response): Promise<void> {
     try {
-      const tokenUserId = (req as any).user.userId;
+      const tokenUserId = req.user!.userId;
       const requestedUserId = parseInt(req.params.userId);
 
       // Verificar que el usuario autenticado es el propietario
       if (tokenUserId !== requestedUserId) {
-        const response: ApiResponse = {
+        const response: IApiResponse = {
           success: false,
           message: "No tienes permisos para ver las sesiones de este usuario",
           timestamp: new Date(),
@@ -133,7 +133,7 @@ export class SessionController {
 
       // Validar parámetros de paginación
       if (page < 1 || perPage < 1 || perPage > 100) {
-        const response: ApiResponse = {
+        const response: IApiResponse = {
           success: false,
           message: "Parámetros de paginación inválidos",
           timestamp: new Date(),
@@ -144,7 +144,7 @@ export class SessionController {
 
       const result = await this.sessionService.listUserSessionsPaginated(requestedUserId, page, perPage);
 
-      const response: ApiResponse = {
+      const response: IApiResponse = {
         success: true,
         message: "Sesiones obtenidas exitosamente",
         data: result,
@@ -155,7 +155,7 @@ export class SessionController {
     } catch (error: any) {
       logger.error(`Error listando sesiones para usuario ${req.params.userId}:`, error);
 
-      const response: ApiResponse = {
+      const response: IApiResponse = {
         success: false,
         message: error.message || "Error interno del servidor",
         timestamp: new Date(),
@@ -171,12 +171,12 @@ export class SessionController {
    */
   async updateSession(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user!.userId;
       const sessionId = parseInt(req.params.sessionId);
       const dto: UpdateSessionDto = req.body;
 
       if (isNaN(sessionId)) {
-        const response: ApiResponse = {
+        const response: IApiResponse = {
           success: false,
           message: "ID de sesión inválido",
           timestamp: new Date(),
@@ -189,7 +189,7 @@ export class SessionController {
 
       const session = await this.sessionService.updateSession(sessionId, dto, userId);
 
-      const response: ApiResponse = {
+      const response: IApiResponse = {
         success: true,
         message: "Sesión actualizada exitosamente",
         data: session,
@@ -207,7 +207,7 @@ export class SessionController {
         statusCode = 403;
       }
 
-      const response: ApiResponse = {
+      const response: IApiResponse = {
         success: false,
         message: error.message || "Error interno del servidor",
         timestamp: new Date(),
@@ -231,7 +231,7 @@ export class SessionController {
       const days = req.query.days ? parseInt(req.query.days as string) : 7;
 
       if (isNaN(days) || days <= 0) {
-        const response: ApiResponse = {
+        const response: IApiResponse = {
           success: false,
           message: "Parámetro 'days' inválido",
           timestamp: new Date(),
@@ -244,7 +244,7 @@ export class SessionController {
 
       const sessions = await this.sessionService.getPendingSessionsOlderThan(days);
 
-      const response: ApiResponse = {
+      const response: IApiResponse = {
         success: true,
         message: "Sesiones pendientes obtenidas exitosamente",
         data: sessions,
@@ -255,7 +255,7 @@ export class SessionController {
     } catch (error: any) {
       logger.error("Error obteniendo sesiones pendientes antiguas:", error);
 
-      const response: ApiResponse = {
+      const response: IApiResponse = {
         success: false,
         message: error.message || "Error interno del servidor",
         timestamp: new Date(),
@@ -271,11 +271,11 @@ export class SessionController {
    */
   async createSessionFromEvent(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user!.userId;
       const eventId = parseInt(req.params.eventId);
 
       if (isNaN(eventId)) {
-        const response: ApiResponse = {
+        const response: IApiResponse = {
           success: false,
           message: "ID de evento inválido",
           timestamp: new Date(),
@@ -288,7 +288,7 @@ export class SessionController {
 
       const session = await this.sessionService.createSessionFromEvent(eventId, userId);
 
-      const response: ApiResponse = {
+      const response: IApiResponse = {
         success: true,
         message: "Sesión creada exitosamente desde el evento",
         data: session,
@@ -308,7 +308,7 @@ export class SessionController {
         statusCode = 400;
       }
 
-      const response: ApiResponse = {
+      const response: IApiResponse = {
         success: false,
         message: error.message || "Error interno del servidor",
         timestamp: new Date(),

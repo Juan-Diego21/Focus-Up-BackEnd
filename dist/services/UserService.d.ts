@@ -1,5 +1,6 @@
 import { UserCreateInput, UserUpdateInput, User } from "../types/User";
-export declare class UserService {
+import { IUserService } from "../interfaces/domain/services/IUserService";
+export declare class UserService implements IUserService {
     private static readonly SALT_ROUNDS;
     private static hashPassword;
     private static verifyPassword;
