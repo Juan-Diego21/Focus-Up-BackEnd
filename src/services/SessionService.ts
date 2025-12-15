@@ -6,32 +6,34 @@ import { MetodoEstudioEntity } from "../models/MetodoEstudio.entity";
 import { AlbumMusicaEntity } from "../models/AlbumMusica.entity";
 import { MetodoRealizadoEntity } from "../models/MetodoRealizado.entity";
 import { CreateSessionDto, UpdateSessionDto, SessionResponseDto, SessionFilters, SessionListResponse } from "../types/Session";
+import { ISessionService } from "../interfaces/domain/services/ISessionService";
 import logger from "../utils/logger";
 
 /**
  * Servicio para la gestión de sesiones de concentración
  * Maneja operaciones CRUD, temporizadores y lógica de negocio de sesiones
+ * Implementa la interfaz ISessionService para garantizar el contrato
  */
-export class SessionService {
-  private sessionRepository = AppDataSource.getRepository(SesionConcentracionEntity);
-  private userRepository = AppDataSource.getRepository(UserEntity);
-  private eventoRepository = AppDataSource.getRepository(EventoEntity);
-  private metodoRepository = AppDataSource.getRepository(MetodoEstudioEntity);
-  private albumRepository = AppDataSource.getRepository(AlbumMusicaEntity);
-  private metodoRealizadoRepository = AppDataSource.getRepository(MetodoRealizadoEntity);
+export class SessionService implements ISessionService {
+  private readonly sessionRepository = AppDataSource.getRepository(SesionConcentracionEntity);
+  private readonly userRepository = AppDataSource.getRepository(UserEntity);
+  private readonly eventoRepository = AppDataSource.getRepository(EventoEntity);
+  private readonly metodoRepository = AppDataSource.getRepository(MetodoEstudioEntity);
+  private readonly albumRepository = AppDataSource.getRepository(AlbumMusicaEntity);
+  private readonly metodoRealizadoRepository = AppDataSource.getRepository(MetodoRealizadoEntity);
 
   /**
    * Convierte intervalo de PostgreSQL a milisegundos
    * @param intervalValue - String del intervalo (ej: "01:30:45") o objeto Interval de PostgreSQL
    * @returns Milisegundos
    */
-  private intervalToMs(intervalValue: string | any): number {
+  private intervalToMs(intervalValue: any): number {
     // Si es un string, parsearlo como HH:MM:SS
     if (typeof intervalValue === 'string') {
       const parts = intervalValue.split(':');
-      const hours = parseInt(parts[0]) || 0;
-      const minutes = parseInt(parts[1]) || 0;
-      const seconds = parseInt(parts[2]) || 0;
+      const hours = Number.parseInt(parts[0]) || 0;
+      const minutes = Number.parseInt(parts[1]) || 0;
+      const seconds = Number.parseInt(parts[2]) || 0;
       return (hours * 3600 + minutes * 60 + seconds) * 1000;
     }
 
@@ -91,8 +93,8 @@ export class SessionService {
       userId: session.idUsuario,
       title: session.titulo,
       description: session.descripcion,
-      type: session.tipo as "rapid" | "scheduled",
-      status: session.estado as "pendiente" | "completada",
+      type: session.tipo,
+      status: session.estado,
       eventId: session.idEvento,
       methodId: session.idMetodo,
       albumId: session.idAlbum,

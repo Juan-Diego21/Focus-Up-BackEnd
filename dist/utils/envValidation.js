@@ -15,7 +15,7 @@ const envVars = [
         name: "PORT",
         required: true,
         default: "3000",
-        validate: (value) => !isNaN(Number(value)) && Number(value) > 0,
+        validate: (value) => !Number.isNaN(Number(value)) && Number(value) > 0,
     },
     {
         name: "API_PREFIX",
@@ -42,7 +42,7 @@ const envVars = [
         name: "PGPORT",
         required: false,
         default: "5432",
-        validate: (value) => !isNaN(Number(value)) && Number(value) > 0,
+        validate: (value) => !Number.isNaN(Number(value)) && Number(value) > 0,
     },
     {
         name: "JWT_SECRET",
@@ -57,7 +57,7 @@ const envVars = [
         name: "BCRYPT_SALT_ROUNDS",
         required: false,
         default: "12",
-        validate: (value) => !isNaN(Number(value)) && Number(value) >= 8,
+        validate: (value) => !Number.isNaN(Number(value)) && Number(value) >= 8,
     },
     {
         name: "LOG_LEVEL",
@@ -106,8 +106,8 @@ function getEnvVar(name, defaultValue) {
 function getEnvNumber(name, defaultValue) {
     const value = getEnvVar(name, defaultValue?.toString());
     const num = Number(value);
-    if (isNaN(num)) {
-        throw new Error(`Variable de entorno ${name} debe ser un número válido`);
+    if (Number.isNaN(num)) {
+        throw new TypeError(`Variable de entorno ${name} debe ser un número válido`);
     }
     return num;
 }

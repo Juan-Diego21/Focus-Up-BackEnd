@@ -87,7 +87,7 @@ export class MetodoEstudioRepository implements IMetodoEstudioRepository {
     const existing = await this.metodoBeneficiosRepository.findOne({
       where: { idMetodo, idBeneficio },
     });
-    if (existing) return true; // already associated
+    if (existing) return true; 
 
     const association = this.metodoBeneficiosRepository.create({
       idMetodo,

@@ -4,15 +4,16 @@ import { ValidationUtils } from "../utils/validation";
 import { UsuarioInteresesEntity } from "../models/UsuarioIntereses.entity";
 import { UsuarioDistraccionesEntity } from "../models/UsuarioDistracciones.entity";
 import { UserEntity } from "../models/User.entity";
+import { IUserService } from "../interfaces/domain/services/IUserService";
 import logger from "../utils/logger";
-import { JwtUtils } from "../utils/jwt";
 
 /**
  * Servicio para la gestión completa de usuarios
  * Maneja autenticación, registro, actualización y recuperación de contraseña
+ * Implementa la interfaz IUserService para garantizar el contrato
  */
-export class UserService {
-  private static readonly SALT_ROUNDS = parseInt(
+export class UserService implements IUserService {
+  private static readonly SALT_ROUNDS = Number.parseInt(
     process.env.BCRYPT_SALT_ROUNDS || "12"
   );
 
@@ -236,124 +237,102 @@ export class UserService {
     }
   }
 
-  /**
-    * Actualiza la información de un usuario existente
-    * Incluye validaciones de unicidad para email y nombre de usuario
-    */
-   async updateUser(
-     id: number,
-     updateData: UserUpdateInput
-   ): Promise<{ success: boolean; user?: User; error?: string }> {
-     const queryRunner = (
-       await import("../config/ormconfig")
-     ).AppDataSource.createQueryRunner();
-     await queryRunner.connect();
-     await queryRunner.startTransaction();
+/**
+ * Actualiza la información de un usuario existente
+ * Incluye validaciones de unicidad para email y nombre de usuario
+ */
+async updateUser(
+  id: number,
+  updateData: UserUpdateInput
+): Promise<{ success: boolean; user?: User; error?: string }> {
+  const { AppDataSource } = await import("../config/ormconfig");
+  const queryRunner = AppDataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
 
-     try {
-       // Si se actualiza la contraseña, hacer hash
-       if (updateData.contrasena) {
-         if (!ValidationUtils.isValidPassword(updateData.contrasena)) {
-           return {
-             success: false,
-             error:
-               "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número",
-           };
-         }
-         updateData.contrasena = await UserService.hashPassword(
-           updateData.contrasena
-         );
-       }
+  try {
+    const validationError = await this.validateUpdateInput(updateData);
+    if (validationError) return { success: false, error: validationError };
 
-       // Validaciones adicionales
-       if (
-         updateData.correo &&
-         !ValidationUtils.isValidEmail(updateData.correo)
-       ) {
-         return { success: false, error: "Formato de email inválido" };
-       }
+    const sanitizedData = this.sanitizeUpdateInput(updateData);
 
-       if (
-         updateData.horario_fav &&
-         !ValidationUtils.isValidTime(updateData.horario_fav)
-       ) {
-         return {
-           success: false,
-           error: "Formato de hora inválido (use HH:MM)",
-         };
-       }
+    const uniquenessError = await this.checkUpdateUniqueness(id, sanitizedData);
+    if (uniquenessError) return { success: false, error: uniquenessError };
 
-       // Sanitizar entradas
-       const sanitizedData: UserUpdateInput = { ...updateData };
-       if (sanitizedData.nombre_usuario) {
-         sanitizedData.nombre_usuario = ValidationUtils.sanitizeText(
-           sanitizedData.nombre_usuario
-         );
-       }
-       if (sanitizedData.pais) {
-         sanitizedData.pais = ValidationUtils.sanitizeText(sanitizedData.pais);
-       }
-       if (sanitizedData.correo) {
-         sanitizedData.correo = sanitizedData.correo.toLowerCase().trim();
-       }
+    const user = await userRepository.update(id, sanitizedData);
+    if (!user) return { success: false, error: "Usuario no encontrado" };
 
-       // Verificar unicidad si se actualiza email
-       if (sanitizedData.correo) {
-         const emailExists = await userRepository.emailExists(
-           sanitizedData.correo,
-           id
-         );
-         if (emailExists) {
-           return {
-             success: false,
-             error: "El correo electrónico ya está registrado",
-           };
-         }
-       }
+    if (updateData.intereses !== undefined) {
+      await this.updateUserInterestsInTransaction(queryRunner, id, updateData.intereses);
+    }
 
-       // Verificar unicidad si se actualiza nombre de usuario
-       if (sanitizedData.nombre_usuario) {
-         const usernameExists = await userRepository.usernameExists(
-           sanitizedData.nombre_usuario,
-           id
-         );
-         if (usernameExists) {
-           return {
-             success: false,
-             error: "El nombre de usuario ya está en uso",
-           };
-         }
-       }
+    if (updateData.distracciones !== undefined) {
+      await this.updateUserDistractionsInTransaction(queryRunner, id, updateData.distracciones);
+    }
 
-       // Actualizar usuario principal
-       const user = await userRepository.update(id, sanitizedData);
-       if (!user) {
-         return { success: false, error: "Usuario no encontrado" };
-       }
+    await queryRunner.commitTransaction();
 
-       // Actualizar intereses si se proporcionaron
-       if (updateData.intereses !== undefined) {
-         await this.updateUserInterestsInTransaction(queryRunner, id, updateData.intereses);
-       }
+    const updatedUser = await userRepository.findById(id);
+    return { success: true, user: updatedUser || user };
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    logger.error("Error en UserService.updateUser:", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return { success: false, error: "Error al actualizar usuario" };
+  } finally {
+    await queryRunner.release();
+  }
+}
 
-       // Actualizar distracciones si se proporcionaron
-       if (updateData.distracciones !== undefined) {
-         await this.updateUserDistractionsInTransaction(queryRunner, id, updateData.distracciones);
-       }
+// ===== Métodos privados extraídos =====
 
-       await queryRunner.commitTransaction();
+private async validateUpdateInput(updateData: UserUpdateInput): Promise<string | null> {
+  if (updateData.contrasena) {
+    if (!ValidationUtils.isValidPassword(updateData.contrasena)) {
+      return "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número";
+    }
+    updateData.contrasena = await UserService.hashPassword(updateData.contrasena);
+  }
 
-       // Obtener usuario actualizado con relaciones
-       const updatedUser = await userRepository.findById(id);
-       return { success: true, user: updatedUser || user };
-     } catch (error) {
-       await queryRunner.rollbackTransaction();
-       logger.error("Error en UserService.updateUser:", error);
-       return { success: false, error: "Error al actualizar usuario" };
-     } finally {
-       await queryRunner.release();
-     }
-   }
+  if (updateData.correo && !ValidationUtils.isValidEmail(updateData.correo)) {
+    return "Formato de email inválido";
+  }
+
+  if (updateData.horario_fav && !ValidationUtils.isValidTime(updateData.horario_fav)) {
+    return "Formato de hora inválido (use HH:MM)";
+  }
+
+  return null;
+}
+
+private sanitizeUpdateInput(updateData: UserUpdateInput): UserUpdateInput {
+  const sanitized: UserUpdateInput = { ...updateData };
+  if (sanitized.nombre_usuario) {
+    sanitized.nombre_usuario = ValidationUtils.sanitizeText(sanitized.nombre_usuario);
+  }
+  if (sanitized.pais) {
+    sanitized.pais = ValidationUtils.sanitizeText(sanitized.pais);
+  }
+  if (sanitized.correo) {
+    sanitized.correo = sanitized.correo.toLowerCase().trim();
+  }
+  return sanitized;
+}
+
+private async checkUpdateUniqueness(id: number, sanitizedData: UserUpdateInput): Promise<string | null> {
+  if (sanitizedData.correo) {
+    const emailExists = await userRepository.emailExists(sanitizedData.correo, id);
+    if (emailExists) return "El correo electrónico ya está registrado";
+  }
+
+  if (sanitizedData.nombre_usuario) {
+    const usernameExists = await userRepository.usernameExists(sanitizedData.nombre_usuario, id);
+    if (usernameExists) return "El nombre de usuario ya está en uso";
+  }
+
+  return null;
+}
 
   /**
    * Verifica las credenciales de login de un usuario
@@ -367,11 +346,7 @@ export class UserService {
     try {
       // Intentar encontrar por email primero
       let user = await userRepository.findByEmail(identifier);
-
-      // Si no se encuentra por email, intentar por username
-      if (!user) {
-        user = await userRepository.findByUsername(identifier);
-      }
+user ??= await userRepository.findByUsername(identifier);
 
       if (!user) {
         return { success: false, error: "Credenciales inválidas" };
@@ -481,89 +456,89 @@ export class UserService {
    * Inserta las distracciones del usuario dentro de una transacción de base de datos
    * Garantiza atomicidad en la creación de usuarios con distracciones asociadas
    */
-   private async insertUserDistractionsInTransaction(
-     queryRunner: any,
-     userId: number,
-     distractionIds: number[]
-   ): Promise<void> {
-     const inserts = distractionIds.map((distractionId) => ({
-       idUsuario: userId,
-       idDistraccion: distractionId,
-     }));
+    private async insertUserDistractionsInTransaction(
+      queryRunner: any,
+      userId: number,
+      distractionIds: number[]
+    ): Promise<void> {
+      const inserts = distractionIds.map((distractionId) => ({
+        idUsuario: userId,
+        idDistraccion: distractionId,
+      }));
 
-     await queryRunner.manager
-       .createQueryBuilder()
-       .insert()
-       .into("usuariodistracciones")
-       .values(inserts)
-       .execute();
-   }
+      await queryRunner.manager
+        .createQueryBuilder()
+        .insert()
+        .into("usuariodistracciones")
+        .values(inserts)
+        .execute();
+    }
 
-   /**
+    /**
     * Actualiza los intereses del usuario dentro de una transacción
     * Elimina intereses existentes y agrega los nuevos
     */
-   private async updateUserInterestsInTransaction(
-     queryRunner: any,
-     userId: number,
-     interestIds: number[]
-   ): Promise<void> {
+    private async updateUserInterestsInTransaction(
+      queryRunner: any,
+      userId: number,
+      interestIds: number[]
+    ): Promise<void> {
      // Eliminar intereses existentes
-     await queryRunner.manager
-       .createQueryBuilder()
-       .delete()
-       .from("usuariointereses")
-       .where("idUsuario = :userId", { userId })
-       .execute();
+      await queryRunner.manager
+        .createQueryBuilder()
+        .delete()
+        .from("usuariointereses")
+        .where("idUsuario = :userId", { userId })
+        .execute();
 
      // Insertar nuevos intereses si hay
-     if (interestIds.length > 0) {
-       const inserts = interestIds.map((interestId) => ({
-         idUsuario: userId,
-         idInteres: interestId,
-       }));
+      if (interestIds.length > 0) {
+        const inserts = interestIds.map((interestId) => ({
+          idUsuario: userId,
+          idInteres: interestId,
+        }));
 
-       await queryRunner.manager
-         .createQueryBuilder()
-         .insert()
-         .into("usuariointereses")
-         .values(inserts)
-         .execute();
-     }
-   }
+        await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into("usuariointereses")
+          .values(inserts)
+          .execute();
+      }
+    }
 
-   /**
+    /**
     * Actualiza las distracciones del usuario dentro de una transacción
     * Elimina distracciones existentes y agrega las nuevas
     */
-   private async updateUserDistractionsInTransaction(
-     queryRunner: any,
-     userId: number,
-     distractionIds: number[]
-   ): Promise<void> {
-     // Eliminar distracciones existentes
-     await queryRunner.manager
-       .createQueryBuilder()
-       .delete()
-       .from("usuariodistracciones")
-       .where("idUsuario = :userId", { userId })
-       .execute();
+    private async updateUserDistractionsInTransaction(
+      queryRunner: any,
+      userId: number,
+      distractionIds: number[]
+    ): Promise<void> {
+      // Eliminar distracciones existentes
+      await queryRunner.manager
+        .createQueryBuilder()
+        .delete()
+        .from("usuariodistracciones")
+        .where("idUsuario = :userId", { userId })
+        .execute();
 
-     // Insertar nuevas distracciones si hay
-     if (distractionIds.length > 0) {
-       const inserts = distractionIds.map((distractionId) => ({
-         idUsuario: userId,
-         idDistraccion: distractionId,
-       }));
+      // Insertar nuevas distracciones si hay
+      if (distractionIds.length > 0) {
+        const inserts = distractionIds.map((distractionId) => ({
+          idUsuario: userId,
+          idDistraccion: distractionId,
+        }));
 
-       await queryRunner.manager
-         .createQueryBuilder()
-         .insert()
-         .into("usuariodistracciones")
-         .values(inserts)
-         .execute();
-     }
-   }
+        await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into("usuariodistracciones")
+          .values(inserts)
+          .execute();
+      }
+    }
 
   /**
    * Cambia la contraseña de un usuario verificando la contraseña actual

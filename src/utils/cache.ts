@@ -33,7 +33,7 @@ export class CacheService {
    * @returns true si se almacenó correctamente
    */
   static set<T>(key: string, value: T, ttl?: number): boolean {
-    return ttl !== undefined ? cache.set(key, value, ttl) : cache.set(key, value);
+    return ttl === undefined ? cache.set(key, value) : cache.set(key, value, ttl);
   }
 
   /**
@@ -63,12 +63,13 @@ export class CacheService {
     return cache.mget<T>(keys);
   }
 
-  /**
-   * Limpia todo el caché
-   */
-  static flushAll(): void {
-    cache.flushAll();
-  }
+/**
+ * Limpia completamente el caché
+ */
+static flushAll(): void {
+  cache.flushAll();
+}
+
 
   /**
    * Obtiene estadísticas del caché

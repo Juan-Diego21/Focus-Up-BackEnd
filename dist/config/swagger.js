@@ -13,7 +13,7 @@ const swaggerOptions = {
         openapi: "3.0.0",
         info: {
             title: "Focus Up API",
-            version: "1.0.0",
+            version: "1.0.2",
             description: "API RESTful para la aplicación Focus Up - Sistema de gestión de enfoque y productividad",
             contact: {
                 name: "Equipo de Desarrollo",
@@ -468,6 +468,5 @@ exports.swaggerSpec = swaggerSpec;
 const swaggerUiOptions = {
     customCss: ".swagger-ui .topbar { display: none }",
     customSiteTitle: "Focus Up API Documentation",
-    customfavIcon: "/assets/favicon.ico",
 };
 exports.swaggerUiOptions = swaggerUiOptions;

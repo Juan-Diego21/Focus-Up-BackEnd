@@ -11,7 +11,7 @@ const router = Router();
  *   description: Gestión de métodos de estudio
  */
 
-// GET /api/v1/metodos-estudio - List all study methods
+// GET /api/v1/metodos-estudio - Listar todos los métodos de estudio
 router.get("/", authenticateToken, metodoEstudioController.getAllMetodosEstudio.bind(metodoEstudioController));
 
 /**
@@ -65,7 +65,7 @@ router.get("/", authenticateToken, metodoEstudioController.getAllMetodosEstudio.
  *         description: Error interno del servidor
  */
 
-// GET /api/v1/metodos-estudio/:id - Get study method by ID
+// GET /api/v1/metodos-estudio/:id - Obtener un método de estudio por ID
 router.get("/:id", authenticateToken, metodoEstudioController.getMetodoEstudioById.bind(metodoEstudioController));
 
 /**
@@ -126,7 +126,7 @@ router.get("/:id", authenticateToken, metodoEstudioController.getMetodoEstudioBy
  *         description: ID inválido
  */
 
-// POST /api/v1/metodos-estudio - Create a new study method
+// POST /api/v1/metodos-estudio - Crear un nuevo método de estudio
 router.post("/", authenticateToken, metodoEstudioController.createMetodoEstudio.bind(metodoEstudioController));
 
 /**
@@ -173,7 +173,7 @@ router.post("/", authenticateToken, metodoEstudioController.createMetodoEstudio.
  *         description: Datos de entrada inválidos
  */
 
-// PUT /api/v1/metodos-estudio/:id - Update a study method
+// PUT /api/v1/metodos-estudio/:id - Actualizar un método de estudio por ID
 router.put("/:id", authenticateToken, metodoEstudioController.updateMetodoEstudio.bind(metodoEstudioController));
 
 /**
@@ -227,7 +227,7 @@ router.put("/:id", authenticateToken, metodoEstudioController.updateMetodoEstudi
  *         description: Datos de entrada inválidos
  */
 
-// DELETE /api/v1/metodos-estudio/:id - Delete a study method
+// DELETE /api/v1/metodos-estudio/:id - Eliminar un método de estudio por ID
 router.delete("/:id", authenticateToken, metodoEstudioController.deleteMetodoEstudio.bind(metodoEstudioController));
 
 /**
@@ -266,7 +266,7 @@ router.delete("/:id", authenticateToken, metodoEstudioController.deleteMetodoEst
  *         description: ID inválido
  */
 
-// GET /api/v1/metodos-estudio/:id/beneficios - Get all benefits for a specific method
+// GET /api/v1/metodos-estudio/:id/beneficios - Obtener beneficios para un método específico
 router.get("/:id/beneficios", authenticateToken, metodoEstudioController.getBeneficiosForMetodo.bind(metodoEstudioController));
 
 /**
@@ -309,7 +309,7 @@ router.get("/:id/beneficios", authenticateToken, metodoEstudioController.getBene
  *         description: ID inválido
  */
 
-// POST /api/v1/metodos-estudio/:id_metodo/beneficios/:id_beneficio - Associate benefit with method
+// POST /api/v1/metodos-estudio/:id_metodo/beneficios/:id_beneficio - Asociar beneficio con método de estudio
 router.post("/:id_metodo/beneficios/:id_beneficio", authenticateToken, metodoEstudioController.addBeneficioToMetodo.bind(metodoEstudioController));
 
 /**
@@ -354,7 +354,7 @@ router.post("/:id_metodo/beneficios/:id_beneficio", authenticateToken, metodoEst
  *         description: Error interno del servidor
  */
 
-// DELETE /api/v1/metodos-estudio/:id_metodo/beneficios/:id_beneficio - Remove association
+// DELETE /api/v1/metodos-estudio/:id_metodo/beneficios/:id_beneficio - Eliminar asociación entre beneficio y método de estudio
 router.delete("/:id_metodo/beneficios/:id_beneficio", authenticateToken, metodoEstudioController.removeBeneficioFromMetodo.bind(metodoEstudioController));
 
 /**

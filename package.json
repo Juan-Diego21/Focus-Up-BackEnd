@@ -15,6 +15,7 @@
     "test:reports": "ts-node src/scripts/test-reports.ts",
     "test:reports-separation": "ts-node src/scripts/test-reports-domain-separation.ts",
     "test:sessions": "ts-node src/tests/sessions/session-endpoints.test.ts",
+    "test:motivational-email": "ts-node src/scripts/test-motivational-email.ts",
     "test:feynman": "node test-feynman-regression.js",
     "test:cornell": "node test-cornell-regression.js"
   },
@@ -41,16 +42,20 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.15",
     "@types/express": "^4.17.19",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.19.16",
     "@types/nodemailer": "^7.0.2",
+    "@types/supertest": "^6.0.3",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "express-list-endpoints": "^7.1.1",
+    "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2"

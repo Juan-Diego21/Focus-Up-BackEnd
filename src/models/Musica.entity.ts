@@ -38,7 +38,7 @@ export class MusicaEntity {
   @Column({ name: "url_musica", type: "text", nullable: false })
   urlMusica!: string;
 
-  // Relationship with Album
+  //Relación con album
   @ManyToOne(() => AlbumMusicaEntity, album => album.musicas, { nullable: true })
   @JoinColumn({ name: "id_album" })
   album?: AlbumMusicaEntity;

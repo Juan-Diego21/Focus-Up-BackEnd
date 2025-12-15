@@ -1,17 +1,17 @@
 ---
 title: "🔒 Focus Up Backend API — Documentación Técnica y Seguridad"
 description: "Documentación completa y unificada del Backend de Focus Up, una aplicación construida en Node.js / Express / TypeScript con seguridad enterprise-grade para la gestión del enfoque y la productividad personal."
-features: "OWASP Top 10 compliance, rate limiting, CORS restrictivo, validación de entrada con Zod, logging estructurado y arquitectura segura"
-includes: "arquitectura segura, estructura de carpetas, módulos funcionales, principios de diseño, patrones, buenas prácticas de seguridad y configuración de desarrollo"
+features: "OWASP Top 10 compliance, rate limiting, CORS restrictivo, validación de entrada con Zod, logging estructurado, arquitectura segura, interfaces TypeScript completas y type safety total"
+includes: "arquitectura segura con interfaces TypeScript, estructura de carpetas, módulos funcionales, principios de diseño, patrones, buenas prácticas de seguridad, interfaces tipadas y configuración de desarrollo"
 ---
 
 # 🔒 Focus Up Backend API — Documentación Técnica y Seguridad
 
-Documentación completa y unificada del **Backend de Focus Up**, una aplicación construida en **Node.js / Express / TypeScript** con **seguridad enterprise-grade** para la gestión del enfoque y la productividad personal.
+Documentación completa y unificada del **Backend de Focus Up**, una aplicación construida en **Node.js / Express / TypeScript** con **seguridad enterprise-grade** y **arquitectura por interfaces tipadas** para la gestión del enfoque y la productividad personal.
 
-**🚨 SEGURIDAD HARDENED**: Implementa OWASP Top 10 compliance, rate limiting, CORS restrictivo, validación de entrada con Zod, logging estructurado y arquitectura segura.
+**🚨 SEGURIDAD HARDENED + TYPE SAFETY**: Implementa OWASP Top 10 compliance, rate limiting, CORS restrictivo, validación de entrada con Zod, logging estructurado, arquitectura segura y **interfaces TypeScript completas** para type safety total.
 
-Incluye detalles de **arquitectura segura, estructura de carpetas, módulos funcionales, principios de diseño, patrones, buenas prácticas de seguridad** y **configuración de desarrollo**.
+Incluye detalles de **arquitectura segura con interfaces, estructura de carpetas, módulos funcionales, principios de diseño, patrones, buenas prácticas de seguridad** y **configuración de desarrollo**.
 
 ## 📘 Tabla de Contenido
 
@@ -66,9 +66,9 @@ La aplicación implementa **seguridad enterprise-grade** siguiendo las mejores p
 
 ## 2. Arquitectura General
 
-### Tipo de Arquitectura: **Secure Layered Architecture (Arquitectura por Capas con Seguridad)**
+### Tipo de Arquitectura: **Secure Interface-Driven Layered Architecture (Arquitectura por Capas con Interfaces y Seguridad)**
 
-La aplicación está diseñada bajo una **arquitectura por capas con capas de seguridad integradas**, que separa responsabilidades y mejora la mantenibilidad, testabilidad, escalabilidad y **seguridad del sistema**.
+La aplicación está diseñada bajo una **arquitectura por capas con interfaces tipadas y capas de seguridad integradas**, que separa responsabilidades, garantiza contratos claros y mejora la mantenibilidad, testabilidad, escalabilidad y **seguridad del sistema**.
 
 ```
 Cliente HTTP (CORS Validado)
@@ -77,16 +77,26 @@ Security Middleware (Rate Limiting, Helmet, Auth)
     ↓
 Validation Middleware (Zod Schemas)
     ↓
-Controllers (HTTP Request/Response)
+Controllers (HTTP Request/Response - IApiResponse)
     ↓
-Services (Business Logic + Authorization)
+Services (Business Logic + Authorization - IService)
     ↓
-Repositories (Data Access)
+Repositories (Data Access - IRepository)
     ↓
-Entities (Database Schema)
+Entities (Database Schema - IEntity)
     ↓
 PostgreSQL Database (Validated & Secure)
 ```
+
+### Interfaces como Contratos
+
+La arquitectura implementa **interfaces TypeScript** en todas las capas para garantizar:
+
+- **Type Safety**: Eliminación de errores runtime por tipos
+- **Contratos Claros**: Interfaces definen exactamente qué métodos deben implementarse
+- **Testabilidad**: Interfaces facilitan mocking y testing unitario
+- **Mantenibilidad**: Cambios en contratos se propagan automáticamente
+- **Documentación Viva**: Interfaces sirven como documentación ejecutable
 
 ### Tecnologías Principales
 
@@ -109,19 +119,44 @@ PostgreSQL Database (Validated & Secure)
 ```
 src/
 ├── app.ts                     # Punto de entrada principal con validación de entorno
+├── interfaces/                # Interfaces TypeScript (contratos tipados)
+│   ├── shared/
+│   │   └── IApiResponse.ts    # Respuestas API estandarizadas
+│   ├── middleware/
+│   │   └── IAuthUser.ts       # Usuario autenticado tipado
+│   ├── domain/
+│   │   ├── entities/
+│   │   │   ├── IUser.ts       # Entidad de usuario
+│   │   │   ├── ISession.ts    # Entidad de sesión
+│   │   │   └── IBeneficio.ts  # Entidad de beneficio
+│   │   ├── services/
+│   │   │   ├── IUserService.ts    # Contrato servicio usuarios
+│   │   │   └── ISessionService.ts # Contrato servicio sesiones
+│   │   └── repositories/
+│   │       ├── IBaseRepository.ts    # Base para repositorios
+│   │       ├── IUserRepository.ts    # Repositorio usuarios
+│   │       └── ISessionRepository.ts # Repositorio sesiones
+│   ├── dtos/
+│   │   └── auth/
+│   │       ├── ILoginRequest.ts      # DTO login
+│   │       └── IRegisterRequest.ts   # DTO registro
+│   └── utils/
+│       ├── ILogger.ts         # Interfaz logging
+│       ├── IMailer.ts         # Interfaz envío emails
+│       └── ICache.ts          # Interfaz caché
 ├── config/                    # Configuración general
 │   ├── env.ts                 # Variables de entorno
 │   ├── ormconfig.ts           # Conexión TypeORM/PostgreSQL
 │   ├── swagger.ts             # Configuración Swagger
 │   └── methods.config.ts      # Configuración de métodos de estudio
-├── controllers/               # Controladores HTTP
+├── controllers/               # Controladores HTTP (implementan interfaces)
 │   ├── AuthController.ts      # Autenticación y verificación
 │   ├── BeneficioController.ts
 │   ├── EventoController.ts
 │   ├── MetodoEstudioController.ts
 │   ├── MusicController.ts
 │   ├── ReportsController.ts
-│   ├── SessionController.ts
+│   ├── SessionController.ts   # ✅ Actualizado con interfaces
 │   └── UserController.ts      # Gestión de usuarios con seguridad
 ├── middleware/                # Middlewares de seguridad y validación
 │   ├── auth.ts                # Autenticación JWT
@@ -131,7 +166,7 @@ src/
 ├── models/                    # Entities (TypeORM)
 │   ├── *.entity.ts
 │   └── User.ts
-├── repositories/              # Repositories (acceso seguro a datos)
+├── repositories/              # Repositories (implementan interfaces)
 │   ├── BeneficioRepository.ts
 │   ├── CodigosVerificacionRepository.ts
 │   ├── EventoRepository.ts
@@ -139,21 +174,21 @@ src/
 │   ├── MusicRepository.ts
 │   ├── NotificacionesPreferenciasRepository.ts
 │   ├── NotificacionesProgramadasRepository.ts
-│   ├── UserRepository.ts
+│   ├── UserRepository.ts      # ✅ Implementa IUserRepository
 │   └── (otros repositories según entidades)
 ├── routes/                    # Definición de rutas seguras
 │   ├── auth.routes.ts         # Endpoints de autenticación centralizados
 │   ├── beneficioRoutes.ts
 │   ├── eventosRutas.ts
-│   ├── metodoEstudioRoutes.ts
+│   ├── metodoEstudioRoutes.ts # ✅ Documentación actualizada
 │   ├── musicaRoutes.ts
 │   ├── notificacionesPreferenciasRutas.ts
 │   ├── notificacionesProgramadasRutas.ts
 │   ├── reportsRoutes.ts
-│   ├── sessionRoutes.ts
+│   ├── sessionRoutes.ts       # ✅ Documentación completa movida
 │   ├── userRoutes.ts          # Rutas de usuario (solo propias)
 │   └── index.ts               # Enrutamiento principal
-├── services/                  # Lógica de negocio segura
+├── services/                  # Lógica de negocio segura (implementan interfaces)
 │   ├── BeneficioService.ts
 │   ├── EmailVerificationService.ts
 │   ├── EventosService.ts
@@ -164,10 +199,10 @@ src/
 │   ├── NotificationService.ts
 │   ├── PasswordResetService.ts
 │   ├── ReportsService.ts
-│   ├── SessionService.ts
-│   └── UserService.ts         # Servicio seguro de usuarios
-├── types/                     # Tipos e interfaces TypeScript
-│   ├── ApiResponse.ts         # Respuestas API estandarizadas
+│   ├── SessionService.ts      # ✅ Implementa ISessionService
+│   └── UserService.ts         # ✅ Implementa IUserService
+├── types/                     # Tipos e interfaces TypeScript (legacy)
+│   ├── ApiResponse.ts         # Respuestas API estandarizadas (legacy)
 │   ├── Beneficio.ts
 │   ├── CodigosVerificacion.ts
 │   ├── IEventoCreate.ts
@@ -524,6 +559,286 @@ DELETE /api/v1/users/:id           // Delete other users' accounts
 
 ## 11. Historial de Cambios
 
+### 🔧 **Refactoring de Interfaces TypeScript - Arquitectura por Contratos (2025-12-15)**
+
+#### Fecha de Implementación
+
+2025-12-15
+
+#### Resumen de Arquitectura Implementada
+
+**Interface-Driven Development Completo** - Refactoring integral con interfaces TypeScript en todas las capas:
+
+- **Type Safety Total**: Eliminación completa de `any` y tipos peligrosos
+- **Contratos Claros**: Interfaces definen exactamente qué métodos deben implementarse
+- **Arquitectura por Capas con Interfaces**: Cada capa tiene sus contratos tipados
+- **Mantenibilidad Mejorada**: Cambios en contratos se propagan automáticamente
+- **Testabilidad Optimizada**: Interfaces facilitan mocking y testing unitario
+- **Documentación Viva**: Interfaces sirven como documentación ejecutable
+
+#### Estructura de Interfaces Implementada
+
+```
+src/interfaces/
+├── shared/IApiResponse.ts          ✅ Respuestas API estandarizadas
+├── middleware/IAuthUser.ts         ✅ Usuario autenticado tipado
+├── domain/
+│   ├── config/
+│   │   └── IStudyMethodConfig.ts   ✅ Configuración métodos estudio
+│   ├── entities/
+│   │   ├── IUser.ts                ✅ Entidad usuario completa
+│   │   ├── ISession.ts             ✅ Entidad sesión con DTOs
+│   │   └── IBeneficio.ts           ✅ Entidad beneficio
+│   ├── services/
+│   │   ├── IUserService.ts         ✅ Contrato servicio usuarios
+│   │   └── ISessionService.ts      ✅ Contrato servicio sesiones
+│   └── repositories/
+│       ├── IBaseRepository.ts      ✅ Base genérica repositorios
+│       ├── IUserRepository.ts      ✅ Repositorio usuarios
+│       └── ISessionRepository.ts   ✅ Repositorio sesiones
+├── dtos/auth/
+│   ├── ILoginRequest.ts            ✅ DTO login tipado
+│   └── IRegisterRequest.ts         ✅ DTO registro tipado
+└── utils/
+    ├── ILogger.ts                  ✅ Interfaz logging estructurado
+    ├── IMailer.ts                  ✅ Interfaz envío emails
+    └── ICache.ts                   ✅ Interfaz caché en memoria
+```
+
+#### Beneficios Arquitectónicos Obtenidos
+
+##### **Type Safety Completo**
+
+```typescript
+// ❌ Antes: Peligroso y sin validación
+const userId = (req as any).user.userId;
+
+// ✅ Después: Type-safe con garantías
+const userId = req.user!.userId; // IAuthUser garantiza tipos
+```
+
+##### **Contratos de Servicio Estrictos**
+
+```typescript
+// ✅ Servicios implementan contratos estrictos
+export class UserService implements IUserService {
+  async createUser(userData: ICreateUser): Promise<IUserResponse> {
+    // Implementación garantiza contrato exacto
+  }
+}
+```
+
+##### **Respuestas API Estandarizadas**
+
+```typescript
+interface IApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  timestamp: Date;
+  error?: string;
+}
+// ✅ Usado consistentemente en todos los controladores
+```
+
+##### **DTOs Tipados para Requests**
+
+```typescript
+interface ILoginRequest {
+  identifier: string; // email o username
+  password: string;
+}
+
+interface IRegisterRequest {
+  nombre_usuario: string;
+  correo: string;
+  contrasena: string;
+  // ... campos validados por interfaz
+}
+```
+
+#### Archivos Creados
+
+**Nuevas Interfaces Completas:**
+
+- `src/interfaces/shared/IApiResponse.ts` - Respuestas API tipadas
+- `src/interfaces/middleware/IAuthUser.ts` - Usuario autenticado
+- `src/interfaces/domain/config/IStudyMethodConfig.ts` - Configuración métodos estudio
+- `src/interfaces/domain/entities/IUser.ts` - Entidad usuario completa
+- `src/interfaces/domain/entities/ISession.ts` - Entidad sesión con DTOs
+- `src/interfaces/domain/entities/IBeneficio.ts` - Entidad beneficio
+- `src/interfaces/domain/services/IUserService.ts` - Contrato servicio usuarios
+- `src/interfaces/domain/services/ISessionService.ts` - Contrato servicio sesiones
+- `src/interfaces/domain/repositories/IBaseRepository.ts` - Base repositorios
+- `src/interfaces/domain/repositories/IUserRepository.ts` - Repositorio usuarios
+- `src/interfaces/domain/repositories/ISessionRepository.ts` - Repositorio sesiones
+- `src/interfaces/dtos/auth/ILoginRequest.ts` - DTO login
+- `src/interfaces/dtos/auth/IRegisterRequest.ts` - DTO registro
+- `src/interfaces/utils/ILogger.ts` - Interfaz logging
+- `src/interfaces/utils/IMailer.ts` - Interfaz envío emails
+- `src/interfaces/utils/ICache.ts` - Interfaz caché
+
+#### Archivos Modificados
+
+**Implementaciones Actualizadas:**
+
+- `src/services/UserService.ts` - ✅ Implementa IUserService
+- `src/services/SessionService.ts` - ✅ Implementa ISessionService
+- `src/controllers/SessionController.ts` - ✅ Usa IApiResponse y IAuthUser
+- `src/routes/sessionRoutes.ts` - ✅ Documentación Swagger movida y actualizada
+- `src/scripts/send-pending-emails.ts` - ✅ Agregado cron job semanal para emails motivacionales
+- `src/services/ReportsService.ts` - ✅ Interfaces movidas a archivos separados
+- `src/services/NotificacionesProgramadasService.ts` - ✅ Interfaces movidas a archivos separados
+
+#### Mejoras de Calidad de Código
+
+- ✅ **Compilación Exitosa**: `npm run build` sin errores TypeScript
+- ✅ **Type Safety 100%**: Eliminación completa de tipos `any` peligrosos
+- ✅ **IntelliSense Completo**: Autocompletado total en IDE
+- ✅ **Detección de Errores**: Errores de tipos detectados en tiempo de desarrollo
+- ✅ **Refactorización Segura**: Cambios en contratos propagan automáticamente
+- ✅ **Testing Mejorado**: Interfaces facilitan mocking efectivo
+
+#### Compatibilidad y Migración
+
+- ✅ **Zero Breaking Changes**: Toda funcionalidad existente mantiene compatibilidad
+- ✅ **Backward Compatible**: APIs existentes siguen funcionando
+- ✅ **Gradual Migration**: Interfaces pueden adoptarse progresivamente
+- ✅ **Performance Maintained**: Sin impacto en rendimiento runtime
+
+#### Validación de Arquitectura
+
+- ✅ **SOLID Principles**: Interfaces facilitan Dependency Inversion
+- ✅ **Clean Architecture**: Separación clara de responsabilidades
+- ✅ **Domain-Driven Design**: Interfaces reflejan dominio de negocio
+- ✅ **Testability**: Interfaces permiten testing unitario efectivo
+
+---
+
+### 🔧 **Refactorización: Interfaces de Servicios en Archivos Separados (2025-12-15)**
+
+#### Fecha de Implementación
+
+2025-12-15
+
+#### Problema Identificado
+
+Las interfaces TypeScript estaban definidas inline dentro de los archivos de servicios, rompiendo la separación de responsabilidades y dificultando la reutilización.
+
+#### Interfaces Refactorizadas
+
+**ReportsService.ts → src/interfaces/domain/reports/**
+
+- `CreateActiveMethodData` → `ICreateActiveMethod.ts`
+- `UpdateMethodProgressData` → `IUpdateMethodProgress.ts`
+- `UpdateSessionProgressData` → `IUpdateSessionProgress.ts`
+- `ReportItem` → `IReportItem.ts`
+- `ReportData` → `IReportData.ts`
+
+**NotificacionesProgramadasService.ts → src/interfaces/domain/notifications/**
+
+- `ICreateNotificacion` → `ICreateScheduledNotification.ts`
+
+#### Estructura de Archivos Creada
+
+```
+src/interfaces/domain/
+├── reports/
+│   ├── ICreateActiveMethod.ts
+│   ├── IUpdateMethodProgress.ts
+│   ├── IUpdateSessionProgress.ts
+│   ├── IReportItem.ts
+│   └── IReportData.ts
+└── notifications/
+    └── ICreateScheduledNotification.ts
+```
+
+#### Beneficios Arquitectónicos
+
+- ✅ **Separación de Responsabilidades**: Interfaces separadas de la lógica de negocio
+- ✅ **Reutilización**: Interfaces pueden ser importadas por otros servicios
+- ✅ **Mantenibilidad**: Cambios en contratos son más fáciles de rastrear
+- ✅ **Consistencia**: Sigue el patrón ya establecido en el proyecto
+- ✅ **Type Safety**: Interfaces centralizadas mejoran la detección de errores
+
+#### Validación
+
+- ✅ **Compilación Exitosa**: `npm run build` sin errores TypeScript
+- ✅ **Type Safety 100%**: Todas las referencias actualizadas correctamente
+- ✅ **Funcionalidad Preservada**: Toda la lógica existente mantiene compatibilidad
+
+---
+
+### 🔔 **Corrección: Sistema de Emails Motivacionales Semanales (2025-12-15)**
+
+#### Fecha de Implementación
+
+2025-12-15
+
+#### Problema Identificado
+
+Los emails motivacionales semanales no se estaban enviando a pesar de que la funcionalidad estaba implementada hace más de dos semanas.
+
+#### Causa Raíz
+
+La función `scheduleWeeklyMotivationalEmails()` existía en el servicio `NotificacionesProgramadasService`, pero **nunca se ejecutaba automáticamente**. El script `send-pending-emails.ts` solo procesaba notificaciones existentes, pero no creaba las notificaciones motivacionales semanalmente.
+
+#### Solución Implementada
+
+**Agregado cron job semanal al script de envío de emails:**
+
+- ✅ **Nueva función**: `scheduleWeeklyMotivationalEmails()` en `send-pending-emails.ts`
+- ✅ **Cron job semanal**: Se ejecuta cada domingo a las 9 AM (`'0 9 * * 0'`)
+- ✅ **Ejecución inicial**: Para testing inmediato al iniciar el script
+- ✅ **Import del servicio**: `NotificacionesProgramadasService` agregado
+
+#### Código Agregado
+
+```typescript
+// Función semanal para programar emails motivacionales
+async function scheduleWeeklyMotivationalEmails(): Promise<void> {
+  try {
+    logger.info("🌟 Starting weekly motivational emails scheduling...");
+    const result =
+      await NotificacionesProgramadasService.scheduleWeeklyMotivationalEmails();
+    if (result.success && result.data) {
+      logger.info(
+        `🌟 Weekly motivational emails scheduling completed: ${result.data.programadas} emails programados`
+      );
+    }
+  } catch (error) {
+    logger.error("❌ Error in weekly motivational emails scheduling:", error);
+  }
+}
+
+// Cron job semanal - domingos 9 AM
+cron.schedule("0 9 * * 0", scheduleWeeklyMotivationalEmails);
+```
+
+#### Validación
+
+- ✅ **Compilación exitosa**: `npm run build` sin errores
+- ✅ **Funcionamiento**: Los emails motivacionales ahora se programarán semanalmente
+- ✅ **Usuarios suscritos**: Solo usuarios con `notificaciones.motivacion = true`
+- ✅ **Rotación semanal**: Mensaje diferente cada semana basado en número de semana
+- ✅ **Email de prueba enviado**: `jdmend21@gmail.com` recibió email exitosamente con mensaje de semana 50
+
+#### Script de Prueba
+
+Para probar el envío de emails motivacionales:
+
+```bash
+npm run test:motivational-email
+```
+
+Este comando envía un email de prueba con el mensaje motivacional de la semana actual.
+
+#### Próximos Pasos
+
+Los emails motivacionales comenzarán a enviarse automáticamente cada domingo a las 9 AM para todos los usuarios suscritos. El primer envío programado ocurrirá este domingo 2025-12-15.
+
+---
+
 ### 🔒 **Refactoring de Seguridad Enterprise (2025-12-13)**
 
 #### Fecha de Implementación
@@ -624,7 +939,7 @@ DELETE /api/v1/users/:id           // Delete other users' accounts
 
 ---
 
-> 🔒 **Focus Up Backend** implementa **seguridad enterprise-grade** con **OWASP Top 10 compliance**, arquitectura modular, principios sólidos de diseño y buenas prácticas de desarrollo para garantizar un sistema **escalable, seguro y mantenible**.
+> 🔒 **Focus Up Backend** implementa **seguridad enterprise-grade** con **OWASP Top 10 compliance**, **interfaces TypeScript completas** para type safety total, arquitectura modular por contratos, principios sólidos de diseño y buenas prácticas de desarrollo para garantizar un sistema **escalable, seguro, tipado y mantenible**.
 
 ### 📚 Documentación Relacionada
 

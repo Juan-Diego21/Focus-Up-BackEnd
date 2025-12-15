@@ -5,21 +5,10 @@ import { NotificacionesUsuarioEntity } from '../models/NotificacionesUsuario.ent
 import { MetodoRealizadoEntity } from '../models/MetodoRealizado.entity';
 import { getWeeklyMotivationalMessage, getCurrentWeekNumber } from '../config/motivationalMessages';
 import logger from '../utils/logger';
+import { ICreateScheduledNotification } from '../interfaces/domain/notifications/ICreateScheduledNotification';
 
 // Repositorio de usuarios para validaciones
 const userRepository = AppDataSource.getRepository(UserEntity);
-
-/**
- * Interfaz para crear una notificación programada
- * Define los campos requeridos para programar una nueva notificación
- */
-export interface ICreateNotificacion {
-  idUsuario: number;
-  tipo: string;
-  titulo?: string;
-  mensaje?: string;
-  fechaProgramada: Date;
-}
 
 /**
  * Servicio para la gestión de notificaciones programadas
@@ -32,7 +21,7 @@ export const NotificacionesProgramadasService = {
    * Valida que el usuario exista, que la fecha sea futura y que el tipo sea válido
    * Registra la creación en los logs para auditoría
    */
-  async createScheduledNotification(data: ICreateNotificacion) {
+  async createScheduledNotification(data: ICreateScheduledNotification) {
     try {
       logger.info(`Intentando crear notificación programada para usuario ${data.idUsuario}, tipo: ${data.tipo}`);
 

@@ -1,78 +1,11 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
-import { NotificacionesPreferenciasService } from '../services/NotificacionesPreferenciasService';
+import { NotificacionesPreferenciasController } from '../controllers/NotificacionesPreferenciasController';
 
 const router = Router();
 
-// Controlador temporal para las rutas (se puede mover a un archivo separado si es necesario)
-const notificacionesController = {
-  /**
-   * Obtiene las preferencias de notificaciones de un usuario
-   * Valida que el usuario autenticado pueda acceder a sus propias preferencias
-   */
-  async getPreferencias(req: any, res: any) {
-    try {
-      const { idUsuario } = req.params;
-      const userId = parseInt(idUsuario, 10);
-
-      // Validar que el usuario autenticado solo acceda a sus propias preferencias
-      if (req.user.userId !== userId) {
-        return res.status(403).json({
-          success: false,
-          error: 'No tienes permisos para acceder a estas preferencias'
-        });
-      }
-
-      const result = await NotificacionesPreferenciasService.getPreferenciasByUsuario(userId);
-
-      if (!result.success) {
-        return res.status(400).json(result);
-      }
-
-      res.status(200).json(result);
-    } catch (error) {
-      console.error('Error en getPreferencias:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Error interno del servidor'
-      });
-    }
-  },
-
-  /**
-   * Actualiza las preferencias de notificaciones de un usuario
-   * Valida entrada, actualiza timestamps automáticamente y retorna el objeto actualizado
-   */
-  async updatePreferencias(req: any, res: any) {
-    try {
-      const { idUsuario } = req.params;
-      const userId = parseInt(idUsuario, 10);
-      const data = req.body;
-
-      // Validar que el usuario autenticado solo modifique sus propias preferencias
-      if (req.user.userId !== userId) {
-        return res.status(403).json({
-          success: false,
-          error: 'No tienes permisos para modificar estas preferencias'
-        });
-      }
-
-      const result = await NotificacionesPreferenciasService.updatePreferencias(userId, data);
-
-      if (!result.success) {
-        return res.status(400).json(result);
-      }
-
-      res.status(200).json(result);
-    } catch (error) {
-      console.error('Error en updatePreferencias:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Error interno del servidor'
-      });
-    }
-  }
-};
+// Instancia del controlador para manejar las rutas de preferencias de notificaciones
+const notificacionesController = new NotificacionesPreferenciasController();
 
 // Obtener preferencias de notificaciones
 router.get('/preferencias/:idUsuario', authenticateToken, notificacionesController.getPreferencias.bind(notificacionesController));

@@ -17,7 +17,7 @@ const router = Router();
  * @swagger
  * /health:
  *   get:
- *     summary: Health check del servidor
+ *     summary: Verificación de salud del servidor
  *     tags: [Health]
  *     responses:
  *       200:
@@ -32,7 +32,7 @@ const router = Router();
  *                   example: "OK"
  *                 message:
  *                   type: string
- *                   example: "Focus Up API is running successfully"
+ *                   example: "La API de Focus Up está funcionando correctamente"
  *                 timestamp:
  *                   type: string
  *                   format: date-time
@@ -45,7 +45,7 @@ const router = Router();
 router.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
-    message: "Focus Up API is running successfully",
+    message: "La API de Focus Up está funcionando correctamente",
     timestamp: new Date().toISOString(),
     environment: env.NODE_ENV,
   });

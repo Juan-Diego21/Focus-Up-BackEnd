@@ -32,7 +32,7 @@ const braces = (input, options = {}) => {
       }
     }
   } else {
-    output = [].concat(braces.create(input, options));
+    output = [braces.create(input, options)].flat();
   }
 
   if (options && options.expand === true && options.nodupes === true) {
@@ -158,9 +158,9 @@ braces.create = (input, options = {}) => {
     return [input];
   }
 
-  return options.expand !== true
-    ? braces.compile(input, options)
-    : braces.expand(input, options);
+  return options.expand === true
+    ? braces.expand(input, options)
+    : braces.compile(input, options);
 };
 
 /**

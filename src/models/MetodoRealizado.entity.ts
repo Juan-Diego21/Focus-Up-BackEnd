@@ -60,7 +60,7 @@ export class MetodoRealizadoEntity {
   @UpdateDateColumn({ name: "fecha_actualizacion" })
   fechaActualizacion!: Date;
 
-  // Relations
+  // Relaciones
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: "id_usuario", referencedColumnName: "idUsuario" })
   usuario?: UserEntity;

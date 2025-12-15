@@ -7,8 +7,7 @@ exports.userCreateSchema = zod_1.z.object({
         .min(3, "El nombre de usuario debe tener al menos 3 caracteres")
         .max(50, "El nombre de usuario no puede exceder 50 caracteres")
         .regex(/^[a-zA-Z0-9_-]+$/, "El nombre de usuario solo puede contener letras, números, guiones bajos (_) y guiones (-), sin espacios"),
-    correo: zod_1.z.string()
-        .email("Formato de email inválido")
+    correo: zod_1.z.email("Formato de email inválido")
         .max(255, "El email no puede exceder 255 caracteres"),
     contrasena: zod_1.z.string()
         .min(8, "La contraseña debe tener al menos 8 caracteres")
@@ -19,7 +18,7 @@ exports.userCreateSchema = zod_1.z.object({
         .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido (YYYY-MM-DD)")
         .refine((date) => {
         const d = new Date(date);
-        return d instanceof Date && !isNaN(d.getTime()) && date !== '0002-02-02';
+        return d instanceof Date && !Number.isNaN(d.getTime()) && date !== '0002-02-02';
     }, "Fecha de nacimiento inválida")
         .optional(),
     horario_fav: zod_1.z.string()
@@ -29,7 +28,7 @@ exports.userCreateSchema = zod_1.z.object({
     distracciones: zod_1.z.array(zod_1.z.number().int().positive()).max(10, "No se pueden seleccionar más de 10 distracciones").optional(),
 });
 exports.loginSchema = zod_1.z.object({
-    correo: zod_1.z.string().email("Formato de email inválido").optional(),
+    correo: zod_1.z.email("Formato de email inválido").optional(),
     nombre_usuario: zod_1.z.string().min(1, "Nombre de usuario requerido").optional(),
     contrasena: zod_1.z.string().min(1, "Contraseña requerida"),
 }).refine((data) => data.correo || data.nombre_usuario, {
@@ -42,8 +41,7 @@ exports.userUpdateSchema = zod_1.z.object({
         .max(50, "El nombre de usuario no puede exceder 50 caracteres")
         .regex(/^[a-zA-Z0-9_-]+$/, "El nombre de usuario solo puede contener letras, números, guiones bajos (_) y guiones (-), sin espacios")
         .optional(),
-    correo: zod_1.z.string()
-        .email("Formato de email inválido")
+    correo: zod_1.z.email("Formato de email inválido")
         .max(255, "El email no puede exceder 255 caracteres")
         .optional(),
     contrasena: zod_1.z.string()
@@ -56,7 +54,7 @@ exports.userUpdateSchema = zod_1.z.object({
         .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido (YYYY-MM-DD)")
         .refine((date) => {
         const d = new Date(date);
-        return d instanceof Date && !isNaN(d.getTime()) && date !== '0002-02-02';
+        return d instanceof Date && !Number.isNaN(d.getTime()) && date !== '0002-02-02';
     }, "Fecha de nacimiento inválida")
         .optional(),
     horario_fav: zod_1.z.string()
@@ -72,14 +70,14 @@ exports.changePasswordSchema = zod_1.z.object({
         .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "La nueva contraseña debe contener al menos una mayúscula, una minúscula y un número"),
 });
 exports.requestVerificationCodeSchema = zod_1.z.object({
-    email: zod_1.z.string().email("Formato de email inválido"),
+    email: zod_1.z.email("Formato de email inválido"),
 });
 exports.verifyCodeSchema = zod_1.z.object({
-    email: zod_1.z.string().email("Formato de email inválido"),
+    email: zod_1.z.email("Formato de email inválido"),
     codigo: zod_1.z.string().length(6, "El código debe tener 6 dígitos").regex(/^\d{6}$/, "El código debe contener solo números"),
 });
 exports.registerSchema = zod_1.z.object({
-    email: zod_1.z.string().email("Formato de email inválido"),
+    email: zod_1.z.email("Formato de email inválido"),
     username: zod_1.z.string()
         .min(3, "El nombre de usuario debe tener al menos 3 caracteres")
         .max(50, "El nombre de usuario no puede exceder 50 caracteres")
@@ -92,7 +90,7 @@ exports.requestPasswordResetSchema = zod_1.z.object({
     emailOrUsername: zod_1.z.string().min(1, "Email o nombre de usuario requerido"),
 });
 exports.resetPasswordWithCodeSchema = zod_1.z.object({
-    email: zod_1.z.string().email("Formato de email inválido"),
+    email: zod_1.z.email("Formato de email inválido"),
     code: zod_1.z.string().length(6, "El código debe tener 6 dígitos").regex(/^\d{6}$/, "El código debe contener solo números"),
     newPassword: zod_1.z.string()
         .min(8, "La nueva contraseña debe tener al menos 8 caracteres")

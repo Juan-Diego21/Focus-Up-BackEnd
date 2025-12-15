@@ -28,7 +28,7 @@ export class AlbumMusicaEntity {
   @Column({ name: "genero", length: 50, nullable: true })
   genero!: string;
 
-  // Relationship with Music
+  // Relación con música (uno a muchos)
   @OneToMany(() => MusicaEntity, musica => musica.album)
   musicas?: MusicaEntity[];
 

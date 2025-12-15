@@ -1,5 +1,6 @@
 import { UserCreateInput, UserUpdateInput, User } from "../types/User";
-export declare class UserService {
+import { IUserService } from "../interfaces/domain/services/IUserService";
+export declare class UserService implements IUserService {
     private static readonly SALT_ROUNDS;
     private static hashPassword;
     private static verifyPassword;
@@ -24,6 +25,9 @@ export declare class UserService {
         user?: User;
         error?: string;
     }>;
+    private validateUpdateInput;
+    private sanitizeUpdateInput;
+    private checkUpdateUniqueness;
     verifyCredentials(identifier: string, password: string): Promise<{
         success: boolean;
         user?: User;

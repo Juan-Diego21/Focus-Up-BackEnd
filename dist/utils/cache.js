@@ -16,7 +16,7 @@ class CacheService {
         return cache.get(key);
     }
     static set(key, value, ttl) {
-        return ttl !== undefined ? cache.set(key, value, ttl) : cache.set(key, value);
+        return ttl === undefined ? cache.set(key, value) : cache.set(key, value, ttl);
     }
     static del(key) {
         return cache.del(key);

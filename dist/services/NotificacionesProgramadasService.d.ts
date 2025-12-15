@@ -1,12 +1,6 @@
-export interface ICreateNotificacion {
-    idUsuario: number;
-    tipo: string;
-    titulo?: string;
-    mensaje?: string;
-    fechaProgramada: Date;
-}
+import { ICreateScheduledNotification } from '../interfaces/domain/notifications/ICreateScheduledNotification';
 export declare const NotificacionesProgramadasService: {
-    createScheduledNotification(data: ICreateNotificacion): Promise<{
+    createScheduledNotification(data: ICreateScheduledNotification): Promise<{
         success: boolean;
         error: string;
         message?: undefined;

@@ -29,29 +29,16 @@ const tokenBlacklist = new Set<string>();
  * Gestiona tokens revocados hasta su expiración natural
  */
 export class TokenBlacklistService {
-  /**
-   * Agrega un token a la lista negra
-   * El token se mantiene invalidado hasta su expiración natural
-   */
   static addToBlacklist(token: string): void {
     tokenBlacklist.add(token);
   }
 
-  /**
-   * Verifica si un token está en la lista negra
-   * Retorna true si el token ha sido revocado
-   */
   static isBlacklisted(token: string): boolean {
     return tokenBlacklist.has(token);
   }
 
-  /**
-   * Limpia tokens expirados de la lista negra
-   * Se ejecuta periódicamente para mantener la memoria limpia
-   */
   static cleanupExpiredTokens(): void {
     // Nota: En implementación real, verificar expiración de cada token
-    // Por simplicidad, esta función está preparada para futura implementación
   }
 }
 
@@ -66,65 +53,60 @@ export interface JwtPayload {
  * Maneja tokens de acceso y refresh con configuración centralizada
  */
 export class JwtUtils {
-  // Generar access token - CON TIPADO EXPLÍCITO
   static generateAccessToken(payload: JwtPayload): string {
     const token = jwt.sign(
-      payload as object, // Asegurar que sea tipo object
-      JWT_SECRET as jwt.Secret, // Asegurar que sea tipo Secret
+      payload as object,
+      JWT_SECRET as jwt.Secret,
       {
         expiresIn: JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"],
       }
     );
 
-    // Debug logging for token expiration
     try {
       const decoded = jwt.decode(token) as any;
-      console.log('🔐 JWT Token generated:');
-      console.log('  📅 Issued at:', new Date(decoded.iat * 1000).toISOString());
-      console.log('  ⏰ Expires at:', new Date(decoded.exp * 1000).toISOString());
-      console.log('  ⏳ Expires in:', JWT_ACCESS_EXPIRES_IN);
-      console.log('  👤 User ID:', payload.userId);
+      console.log('🔐 JWT Token generado:');
+      console.log('  📅 Creación:', new Date(decoded.iat * 1000).toISOString());
+      console.log('  ⏰ Expira a:', new Date(decoded.exp * 1000).toISOString());
+      console.log('  ⏳ Expira en:', JWT_ACCESS_EXPIRES_IN);
+      console.log('  👤 ID usuario:', payload.userId);
     } catch (error) {
-      console.warn('⚠️ Could not decode generated token for logging');
+      console.error('❌ Error decoding JWT token:', error);
     }
 
     return token;
   }
 
-  // Generar refresh token - CON TIPADO EXPLÍCITO
   static generateRefreshToken(payload: JwtPayload): string {
     return jwt.sign(
-      payload as object, // Asegurar que sea tipo object
-      JWT_REFRESH_SECRET as jwt.Secret, // Asegurar que sea tipo Secret
+      payload as object,
+      JWT_REFRESH_SECRET as jwt.Secret,
       {
         expiresIn: JWT_REFRESH_EXPIRES_IN as jwt.SignOptions["expiresIn"],
       }
     );
   }
 
-  // Verificar access token
   static verifyAccessToken(token: string): JwtPayload {
     try {
       return jwt.verify(token, JWT_SECRET as jwt.Secret) as JwtPayload;
     } catch (error) {
+      console.error("❌ Error verifying access token:", error);
       throw new Error("Token de acceso inválido o expirado");
     }
   }
 
-  // Verificar refresh token
   static verifyRefreshToken(token: string): JwtPayload {
     try {
       return jwt.verify(token, JWT_REFRESH_SECRET as jwt.Secret) as JwtPayload;
     } catch (error) {
+      console.error("❌ Error verifying refresh token:", error);
       throw new Error("Token de refresco inválido o expirado");
     }
   }
 
-  // Extraer token del header Authorization
+
+  /*Cambios realizados*/
   static extractTokenFromHeader(authHeader: string | undefined): string | null {
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return null;
+    return authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null;
     }
-    return authHeader.substring(7);
-  }
 }

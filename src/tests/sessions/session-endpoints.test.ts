@@ -6,10 +6,6 @@
 import { AppDataSource } from '../../config/ormconfig';
 import { SessionService } from '../../services/SessionService';
 import { ReportsService } from '../../services/ReportsService';
-import { UserEntity } from '../../models/User.entity';
-import { SesionConcentracionEntity } from '../../models/SesionConcentracion.entity';
-import logger from '../../utils/logger';
-
 const TEST_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjE4LCJlbWFpbCI6ImpvaG5AZXhhbXBsZS5jb20iLCJ0b2tlblZlcnNpb24iOjI4LCJpYXQiOjE3NjQwODc1ODEsImV4cCI6MTc2NDE3Mzk4MX0.0Xblg_ILAWJmsg9rmRCoLkcs0uNyDk_Ifqr6SHSKkL0";
 
 /**
@@ -175,7 +171,5 @@ async function runTests() {
 
 // Ejecutar tests si se llama directamente
 if (require.main === module) {
-  runTests();
+  await AppDataSource.initialize();
 }
-
-export { runTests };

@@ -11,7 +11,7 @@ const router = Router();
  *   description: Gestión de beneficios
  */
 
-// GET /api/v1/beneficios - List all benefits
+// GET /api/v1/beneficios - Listar todos los beneficios
 router.get("/", authenticateToken, beneficioController.getAllBeneficios.bind(beneficioController));
 
 /**
@@ -45,7 +45,7 @@ router.get("/", authenticateToken, beneficioController.getAllBeneficios.bind(ben
  *         description: Error interno del servidor
  */
 
-// GET /api/v1/beneficios/:id - Get benefit by ID
+// GET /api/v1/beneficios/:id - Obtener beneficio por ID
 router.get("/:id", authenticateToken, beneficioController.getBeneficioById.bind(beneficioController));
 
 /**
@@ -86,7 +86,7 @@ router.get("/:id", authenticateToken, beneficioController.getBeneficioById.bind(
  *         description: ID inválido
  */
 
-// POST /api/v1/beneficios - Create a new benefit
+// POST /api/v1/beneficios - Crear un nuevo beneficio
 router.post("/", authenticateToken, beneficioController.createBeneficio.bind(beneficioController));
 
 /**
@@ -130,7 +130,7 @@ router.post("/", authenticateToken, beneficioController.createBeneficio.bind(ben
  *         description: Datos de entrada inválidos
  */
 
-// PUT /api/v1/beneficios/:id - Update a benefit
+// PUT /api/v1/beneficios/:id - Actualizar un beneficio
 router.put("/:id", authenticateToken, beneficioController.updateBeneficio.bind(beneficioController));
 
 /**
@@ -181,7 +181,7 @@ router.put("/:id", authenticateToken, beneficioController.updateBeneficio.bind(b
  *         description: Datos de entrada inválidos
  */
 
-// DELETE /api/v1/beneficios/:id - Delete a benefit
+// DELETE /api/v1/beneficios/:id - Eliminar un beneficio
 router.delete("/:id", authenticateToken, beneficioController.deleteBeneficio.bind(beneficioController));
 
 /**

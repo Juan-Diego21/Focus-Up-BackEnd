@@ -56,86 +56,6 @@ class UserController {
             res.status(500).json(responseBuilder_1.ResponseBuilder.serverError());
         }
     }
-    async getUserById(req, res) {
-        try {
-            const userId = parseInt(req.params.id);
-            if (isNaN(userId)) {
-                const response = {
-                    success: false,
-                    message: "ID de usuario inválido",
-                    timestamp: new Date(),
-                };
-                return res.status(400).json(response);
-            }
-            const result = await UserService_1.userService.getUserById(userId);
-            if (!result.success) {
-                const response = {
-                    success: false,
-                    message: "Error al obtener usuario",
-                    error: result.error,
-                    timestamp: new Date(),
-                };
-                return res.status(404).json(response);
-            }
-            const response = {
-                success: true,
-                message: "Usuario encontrado",
-                data: result.user,
-                timestamp: new Date(),
-            };
-            res.status(200).json(response);
-        }
-        catch (error) {
-            logger_1.default.error("Error en UserController.getUserById:", error);
-            const response = {
-                success: false,
-                message: "Error interno del servidor",
-                error: "Ocurrió un error inesperado",
-                timestamp: new Date(),
-            };
-            res.status(500).json(response);
-        }
-    }
-    async getUserByEmail(req, res) {
-        try {
-            const { email } = req.params;
-            if (!email) {
-                const response = {
-                    success: false,
-                    message: "Email es requerido",
-                    timestamp: new Date(),
-                };
-                return res.status(400).json(response);
-            }
-            const result = await UserService_1.userService.getUserByEmail(email);
-            if (!result.success) {
-                const response = {
-                    success: false,
-                    message: "Error al obtener usuario",
-                    error: result.error,
-                    timestamp: new Date(),
-                };
-                return res.status(404).json(response);
-            }
-            const response = {
-                success: true,
-                message: "Usuario encontrado",
-                data: result.user,
-                timestamp: new Date(),
-            };
-            res.status(200).json(response);
-        }
-        catch (error) {
-            logger_1.default.error("Error en UserController.getUserByEmail:", error);
-            const response = {
-                success: false,
-                message: "Error interno del servidor",
-                error: "Ocurrió un error inesperado",
-                timestamp: new Date(),
-            };
-            res.status(500).json(response);
-        }
-    }
     async updateUser(req, res) {
         try {
             const userId = parseInt(req.params.id);
@@ -322,37 +242,6 @@ class UserController {
         }
         catch (error) {
             logger_1.default.error("Error en UserController.logout:", error);
-            const response = {
-                success: false,
-                message: "Error interno del servidor",
-                error: "Ocurrió un error inesperado",
-                timestamp: new Date(),
-            };
-            res.status(500).json(response);
-        }
-    }
-    async getAllUsers(req, res) {
-        try {
-            const result = await UserService_1.userService.getAllUsers();
-            if (!result.success) {
-                const response = {
-                    success: false,
-                    message: "Error al obtener usuarios",
-                    error: result.error,
-                    timestamp: new Date(),
-                };
-                return res.status(500).json(response);
-            }
-            const response = {
-                success: true,
-                message: "Usuarios obtenidos exitosamente",
-                data: result.users,
-                timestamp: new Date(),
-            };
-            res.status(200).json(response);
-        }
-        catch (error) {
-            logger_1.default.error("Error en UserController.getAllUsers:", error);
             const response = {
                 success: false,
                 message: "Error interno del servidor",

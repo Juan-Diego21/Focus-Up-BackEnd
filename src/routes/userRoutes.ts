@@ -96,8 +96,8 @@ router.put("/", authenticateToken, validateUserUpdate, userController.updateProf
 
 
 
-// POST /api/v1/users - DISABLED: Use /api/v1/auth/register instead
-// Email verification is now required before user registration
+// POST /api/v1/users - DESHABILITADO: Usar /api/v1/auth/register en su lugar
+// La verificación por Email es necesaria para el registro
 router.post("/", (req, res) => {
   res.status(410).json({
     success: false,

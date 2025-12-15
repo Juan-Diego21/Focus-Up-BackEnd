@@ -37,6 +37,6 @@ export class MetodoEstudioEntity {
   })
   beneficios?: BeneficioEntity[];
 
-  // One-to-many with EventoEntity
-  eventos?: any[]; // For inverse relation, but since EventoEntity is not imported, just declare
+  // Uno a muchos con EventoEntity
+  eventos?: any[]; // Para la relación inversa con EventoEntity
 }

@@ -190,62 +190,21 @@ class UserService {
         }
     }
     async updateUser(id, updateData) {
-        const queryRunner = (await Promise.resolve().then(() => __importStar(require("../config/ormconfig")))).AppDataSource.createQueryRunner();
+        const { AppDataSource } = await Promise.resolve().then(() => __importStar(require("../config/ormconfig")));
+        const queryRunner = AppDataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
         try {
-            if (updateData.contrasena) {
-                if (!validation_1.ValidationUtils.isValidPassword(updateData.contrasena)) {
-                    return {
-                        success: false,
-                        error: "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número",
-                    };
-                }
-                updateData.contrasena = await UserService.hashPassword(updateData.contrasena);
-            }
-            if (updateData.correo &&
-                !validation_1.ValidationUtils.isValidEmail(updateData.correo)) {
-                return { success: false, error: "Formato de email inválido" };
-            }
-            if (updateData.horario_fav &&
-                !validation_1.ValidationUtils.isValidTime(updateData.horario_fav)) {
-                return {
-                    success: false,
-                    error: "Formato de hora inválido (use HH:MM)",
-                };
-            }
-            const sanitizedData = { ...updateData };
-            if (sanitizedData.nombre_usuario) {
-                sanitizedData.nombre_usuario = validation_1.ValidationUtils.sanitizeText(sanitizedData.nombre_usuario);
-            }
-            if (sanitizedData.pais) {
-                sanitizedData.pais = validation_1.ValidationUtils.sanitizeText(sanitizedData.pais);
-            }
-            if (sanitizedData.correo) {
-                sanitizedData.correo = sanitizedData.correo.toLowerCase().trim();
-            }
-            if (sanitizedData.correo) {
-                const emailExists = await UserRepository_1.userRepository.emailExists(sanitizedData.correo, id);
-                if (emailExists) {
-                    return {
-                        success: false,
-                        error: "El correo electrónico ya está registrado",
-                    };
-                }
-            }
-            if (sanitizedData.nombre_usuario) {
-                const usernameExists = await UserRepository_1.userRepository.usernameExists(sanitizedData.nombre_usuario, id);
-                if (usernameExists) {
-                    return {
-                        success: false,
-                        error: "El nombre de usuario ya está en uso",
-                    };
-                }
-            }
+            const validationError = await this.validateUpdateInput(updateData);
+            if (validationError)
+                return { success: false, error: validationError };
+            const sanitizedData = this.sanitizeUpdateInput(updateData);
+            const uniquenessError = await this.checkUpdateUniqueness(id, sanitizedData);
+            if (uniquenessError)
+                return { success: false, error: uniquenessError };
             const user = await UserRepository_1.userRepository.update(id, sanitizedData);
-            if (!user) {
+            if (!user)
                 return { success: false, error: "Usuario no encontrado" };
-            }
             if (updateData.intereses !== undefined) {
                 await this.updateUserInterestsInTransaction(queryRunner, id, updateData.intereses);
             }
@@ -258,19 +217,60 @@ class UserService {
         }
         catch (error) {
             await queryRunner.rollbackTransaction();
-            logger_1.default.error("Error en UserService.updateUser:", error);
+            logger_1.default.error("Error en UserService.updateUser:", {
+                error: error instanceof Error ? error.message : String(error),
+            });
             return { success: false, error: "Error al actualizar usuario" };
         }
         finally {
             await queryRunner.release();
         }
     }
+    async validateUpdateInput(updateData) {
+        if (updateData.contrasena) {
+            if (!validation_1.ValidationUtils.isValidPassword(updateData.contrasena)) {
+                return "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número";
+            }
+            updateData.contrasena = await UserService.hashPassword(updateData.contrasena);
+        }
+        if (updateData.correo && !validation_1.ValidationUtils.isValidEmail(updateData.correo)) {
+            return "Formato de email inválido";
+        }
+        if (updateData.horario_fav && !validation_1.ValidationUtils.isValidTime(updateData.horario_fav)) {
+            return "Formato de hora inválido (use HH:MM)";
+        }
+        return null;
+    }
+    sanitizeUpdateInput(updateData) {
+        const sanitized = { ...updateData };
+        if (sanitized.nombre_usuario) {
+            sanitized.nombre_usuario = validation_1.ValidationUtils.sanitizeText(sanitized.nombre_usuario);
+        }
+        if (sanitized.pais) {
+            sanitized.pais = validation_1.ValidationUtils.sanitizeText(sanitized.pais);
+        }
+        if (sanitized.correo) {
+            sanitized.correo = sanitized.correo.toLowerCase().trim();
+        }
+        return sanitized;
+    }
+    async checkUpdateUniqueness(id, sanitizedData) {
+        if (sanitizedData.correo) {
+            const emailExists = await UserRepository_1.userRepository.emailExists(sanitizedData.correo, id);
+            if (emailExists)
+                return "El correo electrónico ya está registrado";
+        }
+        if (sanitizedData.nombre_usuario) {
+            const usernameExists = await UserRepository_1.userRepository.usernameExists(sanitizedData.nombre_usuario, id);
+            if (usernameExists)
+                return "El nombre de usuario ya está en uso";
+        }
+        return null;
+    }
     async verifyCredentials(identifier, password) {
         try {
             let user = await UserRepository_1.userRepository.findByEmail(identifier);
-            if (!user) {
-                user = await UserRepository_1.userRepository.findByUsername(identifier);
-            }
+            user ?? (user = await UserRepository_1.userRepository.findByUsername(identifier));
             if (!user) {
                 return { success: false, error: "Credenciales inválidas" };
             }
@@ -424,5 +424,5 @@ class UserService {
     }
 }
 exports.UserService = UserService;
-UserService.SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS || "12");
+UserService.SALT_ROUNDS = Number.parseInt(process.env.BCRYPT_SALT_ROUNDS || "12");
 exports.userService = new UserService();

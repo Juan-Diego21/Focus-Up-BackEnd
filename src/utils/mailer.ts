@@ -15,7 +15,7 @@ import logger from "./logger";
 // Utiliza variables de entorno para la configuración SMTP
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com", // Servidor SMTP (Gmail por defecto)
-  port: parseInt(process.env.SMTP_PORT || "587"), // Puerto SMTP (587 para TLS)
+  port: Number.parseInt(process.env.SMTP_PORT || "587", 10), // Puerto SMTP (587 para TLS)
   secure: process.env.SMTP_SECURE === "true", // true para puerto 465, false para otros puertos
   auth: {
     user: process.env.EMAIL_USER!, // Usuario de correo electrónico

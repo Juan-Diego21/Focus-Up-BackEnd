@@ -1,4 +1,4 @@
-import { JwtPayload } from "../../utils/jwt";
+import { IAuthUser } from "../../interfaces/middleware/IAuthUser";
 
 /**
  * Extensión de tipos Express - req.user tipado
@@ -8,7 +8,7 @@ import { JwtPayload } from "../../utils/jwt";
 declare global {
   namespace Express {
     interface Request {
-      user?: JwtPayload;
+      user?: IAuthUser;
     }
   }
 }

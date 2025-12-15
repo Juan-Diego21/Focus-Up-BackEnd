@@ -43,11 +43,12 @@ const NotificacionesProgramadasRepository_1 = require("../repositories/Notificac
 const SessionService_1 = require("../services/SessionService");
 const NotificationService_1 = require("../services/NotificationService");
 const EmailVerificationService_1 = require("../services/EmailVerificationService");
+const NotificacionesProgramadasService_1 = require("../services/NotificacionesProgramadasService");
 const logger_1 = __importDefault(require("../utils/logger"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const transporter = nodemailer_1.default.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.SMTP_PORT || "587"),
+    port: Number.parseInt(process.env.SMTP_PORT || "587"),
     secure: process.env.SMTP_SECURE === "true",
     auth: {
         user: process.env.EMAIL_USER,
@@ -715,6 +716,21 @@ async function cleanupExpiredVerificationCodes() {
         logger_1.default.error('❌ Error during verification codes cleanup:', error);
     }
 }
+async function scheduleWeeklyMotivationalEmails() {
+    try {
+        logger_1.default.info('🌟 Starting weekly motivational emails scheduling...');
+        const result = await NotificacionesProgramadasService_1.NotificacionesProgramadasService.scheduleWeeklyMotivationalEmails();
+        if (result.success && result.data) {
+            logger_1.default.info(`🌟 Weekly motivational emails scheduling completed: ${result.data.programadas} emails programados, ${result.data.errores} errores`);
+        }
+        else {
+            logger_1.default.error('❌ Error in weekly motivational emails scheduling:', result.error);
+        }
+    }
+    catch (error) {
+        logger_1.default.error('❌ Critical error in weekly motivational emails scheduling:', error);
+    }
+}
 async function processPendingEmails() {
     try {
         logger_1.default.info('🔄 Starting automated email processing...');
@@ -822,9 +838,12 @@ async function initialize() {
         logger_1.default.info('🚀 Session notification system started - running daily at 2 AM');
         cron.schedule('0 3 * * *', cleanupExpiredVerificationCodes);
         logger_1.default.info('🚀 Verification codes cleanup system started - running daily at 3 AM');
+        cron.schedule('0 9 * * 0', scheduleWeeklyMotivationalEmails);
+        logger_1.default.info('🚀 Weekly motivational emails system started - running every Sunday at 9 AM');
         await processPendingEmails();
         await processSessionNotifications();
         await cleanupExpiredVerificationCodes();
+        await scheduleWeeklyMotivationalEmails();
     }
     catch (error) {
         logger_1.default.error('❌ Failed to initialize email delivery system:', error);

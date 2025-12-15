@@ -1,32 +1,8 @@
-import { MetodoRealizadoEntity, MetodoProgreso } from "../models/MetodoRealizado.entity";
-export interface CreateActiveMethodData {
-    idMetodo: number;
-    estado?: string;
-    progreso?: number;
-    idUsuario: number;
-}
-export interface UpdateMethodProgressData {
-    progreso?: MetodoProgreso;
-    finalizar?: boolean;
-}
-export interface UpdateSessionProgressData {
-    status?: "completed" | "pending";
-    elapsedMs?: number;
-    notes?: string;
-}
-export interface ReportItem {
-    id_reporte: number;
-    id_usuario: number;
-    nombre_metodo: string;
-    progreso?: number;
-    estado: string;
-    fecha_creacion: Date;
-}
-export interface ReportData {
-    metodos: any[];
-    sesiones: any[];
-    combined: ReportItem[];
-}
+import { MetodoRealizadoEntity } from "../models/MetodoRealizado.entity";
+import { ICreateActiveMethod } from "../interfaces/domain/reports/ICreateActiveMethod";
+import { IUpdateMethodProgress } from "../interfaces/domain/reports/IUpdateMethodProgress";
+import { IUpdateSessionProgress } from "../interfaces/domain/reports/IUpdateSessionProgress";
+import { IReportData } from "../interfaces/domain/reports/IReportData";
 export declare class ReportsService {
     private metodoRealizadoRepository;
     private sesionRepository;
@@ -49,7 +25,7 @@ export declare class ReportsService {
         methods?: any[];
         error?: string;
     }>;
-    createActiveMethod(data: CreateActiveMethodData): Promise<{
+    createActiveMethod(data: ICreateActiveMethod): Promise<{
         success: boolean;
         metodoRealizado?: MetodoRealizadoEntity;
         message?: string;
@@ -57,16 +33,16 @@ export declare class ReportsService {
     }>;
     getUserReports(userId: number): Promise<{
         success: boolean;
-        reports?: ReportData;
+        reports?: IReportData;
         error?: string;
     }>;
-    updateMethodProgress(methodId: number, userId: number, data: UpdateMethodProgressData): Promise<{
+    updateMethodProgress(methodId: number, userId: number, data: IUpdateMethodProgress): Promise<{
         success: boolean;
         metodoRealizado?: MetodoRealizadoEntity;
         message?: string;
         error?: string;
     }>;
-    updateSessionProgress(sessionId: number, userId: number, data: UpdateSessionProgressData): Promise<{
+    updateSessionProgress(sessionId: number, userId: number, data: IUpdateSessionProgress): Promise<{
         success: boolean;
         session?: any;
         message?: string;

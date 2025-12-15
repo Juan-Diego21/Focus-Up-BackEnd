@@ -5,26 +5,35 @@
  *
  * Este script se ejecuta en un horario cron para enviar automáticamente notificaciones
  * de correo electrónico pendientes almacenadas en la base de datos. Procesa todos los
- * tipos de notificaciones:
+ * tipos de notificaciones y programa nuevas notificaciones automáticamente:
+ *
+ * TIPOS DE NOTIFICACIONES PROCESADAS:
  * - Recordatorios de eventos (10 minutos antes o a la hora del evento)
  * - Recordatorios de métodos de estudio incompletos (después de 7 días)
- * - Mensajes motivacionales semanales
+ * - Recordatorios de sesiones pendientes (después de 7 días)
+ * - Mensajes motivacionales semanales (cada domingo)
+ *
+ * CRON JOBS AUTOMÁTICOS:
+ * - Procesamiento de emails: cada 10 segundos
+ * - Creación de notificaciones de sesiones: diariamente a las 2 AM
+ * - Limpieza de códigos expirados: diariamente a las 3 AM
+ * - Programación de emails motivacionales: cada domingo a las 9 AM
  *
  * El script realiza los siguientes pasos:
  * 1. Se conecta a la base de datos
  * 2. Obtiene las notificaciones pendientes
  * 3. Envía correos electrónicos usando NodeMailer
  * 4. Marca las notificaciones como enviadas
- * 5. Se ejecuta cada 10 segundos vía cron para mayor precisión
+ * 5. Programa nuevas notificaciones automáticamente
  */
 
 import * as cron from 'node-cron';
 import { AppDataSource } from '../config/ormconfig';
 import { getPendingNotifications, markAsSent } from '../repositories/NotificacionesProgramadasRepository';
-import { getWeeklyMotivationalMessage } from '../config/motivationalMessages';
 import { SessionService } from '../services/SessionService';
 import { NotificationService } from '../services/NotificationService';
 import { EmailVerificationService } from '../services/EmailVerificationService';
+import { NotificacionesProgramadasService } from '../services/NotificacionesProgramadasService';
 import logger from '../utils/logger';
 import nodemailer from 'nodemailer';
 
@@ -32,7 +41,7 @@ import nodemailer from 'nodemailer';
 // Utiliza las mismas credenciales SMTP que el módulo principal de correos
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com", // Servidor SMTP configurado
-  port: parseInt(process.env.SMTP_PORT || "587"), // Puerto SMTP (587 para TLS)
+  port: Number.parseInt(process.env.SMTP_PORT || "587"), // Puerto SMTP (587 para TLS)
   secure: process.env.SMTP_SECURE === "true", // Conexión segura para puerto 465
   auth: {
     user: process.env.EMAIL_USER!, // Usuario de correo electrónico
@@ -793,6 +802,35 @@ async function cleanupExpiredVerificationCodes(): Promise<void> {
 }
 
 /**
+ * Programa emails motivacionales semanales para todos los usuarios suscritos
+ *
+ * Esta función se ejecuta semanalmente para crear notificaciones motivacionales
+ * para todos los usuarios que tienen habilitadas las notificaciones de motivación.
+ * Cada semana rota el mensaje motivacional basado en el número de semana del año.
+ *
+ * Reglas de negocio:
+ * - Solo usuarios con notificaciones.motivacion = true
+ * - Un email por semana exactamente 7 días después de la ejecución
+ * - Mensaje rotativo semanal basado en el número de semana (0-51)
+ */
+async function scheduleWeeklyMotivationalEmails(): Promise<void> {
+  try {
+    logger.info('🌟 Starting weekly motivational emails scheduling...');
+
+    const result = await NotificacionesProgramadasService.scheduleWeeklyMotivationalEmails();
+
+    if (result.success && result.data) {
+      logger.info(`🌟 Weekly motivational emails scheduling completed: ${result.data.programadas} emails programados, ${result.data.errores} errores`);
+    } else {
+      logger.error('❌ Error in weekly motivational emails scheduling:', result.error);
+    }
+
+  } catch (error) {
+    logger.error('❌ Critical error in weekly motivational emails scheduling:', error);
+  }
+}
+
+/**
  * Procesa todas las notificaciones pendientes y envía correos electrónicos
  *
  * Esta función se ejecuta cada minuto para procesar todas las notificaciones
@@ -954,10 +992,15 @@ async function initialize(): Promise<void> {
     cron.schedule('0 3 * * *', cleanupExpiredVerificationCodes);
     logger.info('🚀 Verification codes cleanup system started - running daily at 3 AM');
 
+    // Start weekly cron job for motivational emails - runs every Sunday at 9 AM
+    cron.schedule('0 9 * * 0', scheduleWeeklyMotivationalEmails);
+    logger.info('🚀 Weekly motivational emails system started - running every Sunday at 9 AM');
+
     // Run initial checks
     await processPendingEmails();
     await processSessionNotifications();
     await cleanupExpiredVerificationCodes();
+    await scheduleWeeklyMotivationalEmails();
 
   } catch (error) {
     logger.error('❌ Failed to initialize email delivery system:', error);

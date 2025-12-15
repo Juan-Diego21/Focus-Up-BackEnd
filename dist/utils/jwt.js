@@ -40,7 +40,7 @@ class JwtUtils {
             console.log('  👤 User ID:', payload.userId);
         }
         catch (error) {
-            console.warn('⚠️ Could not decode generated token for logging');
+            console.error('❌ Error decoding JWT token:', error);
         }
         return token;
     }
@@ -54,6 +54,7 @@ class JwtUtils {
             return jsonwebtoken_1.default.verify(token, JWT_SECRET);
         }
         catch (error) {
+            console.error("❌ Error verifying access token:", error);
             throw new Error("Token de acceso inválido o expirado");
         }
     }
@@ -62,14 +63,12 @@ class JwtUtils {
             return jsonwebtoken_1.default.verify(token, JWT_REFRESH_SECRET);
         }
         catch (error) {
+            console.error("❌ Error verifying refresh token:", error);
             throw new Error("Token de refresco inválido o expirado");
         }
     }
     static extractTokenFromHeader(authHeader) {
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return null;
-        }
-        return authHeader.substring(7);
+        return authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null;
     }
 }
 exports.JwtUtils = JwtUtils;
