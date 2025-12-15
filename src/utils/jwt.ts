@@ -64,11 +64,11 @@ export class JwtUtils {
 
     try {
       const decoded = jwt.decode(token) as any;
-      console.log('🔐 JWT Token generated:');
-      console.log('  📅 Issued at:', new Date(decoded.iat * 1000).toISOString());
-      console.log('  ⏰ Expires at:', new Date(decoded.exp * 1000).toISOString());
-      console.log('  ⏳ Expires in:', JWT_ACCESS_EXPIRES_IN);
-      console.log('  👤 User ID:', payload.userId);
+      console.log('🔐 JWT Token generado:');
+      console.log('  📅 Creación:', new Date(decoded.iat * 1000).toISOString());
+      console.log('  ⏰ Expira a:', new Date(decoded.exp * 1000).toISOString());
+      console.log('  ⏳ Expira en:', JWT_ACCESS_EXPIRES_IN);
+      console.log('  👤 ID usuario:', payload.userId);
     } catch (error) {
       console.error('❌ Error decoding JWT token:', error);
     }

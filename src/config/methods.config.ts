@@ -2,26 +2,9 @@
 // Este archivo contiene todas las definiciones de métodos, estados y procesos
 // Agregar nuevos métodos aquí para habilitarlos automáticamente en el backend
 
-interface StudyMethodConfig {
-  validCreationProgress: number[];
-  validUpdateProgress: number[];
-  validResumeProgress: number[];
-  statusMap: { [progress: number]: string };
-  processes?: string[];
-  states?: string[];
-  totalSteps?: number;
-  routePrefix?: string;
-}
+import { IStudyMethodConfig, IStudyMethodRegistry, IMethodAliases } from "../interfaces/domain/config/IStudyMethodConfig";
 
-interface StudyMethodRegistry {
-  [methodName: string]: StudyMethodConfig;
-}
-
-interface MethodAliases {
-  [alias: string]: string;
-}
-
-const studyMethodRegistry: StudyMethodRegistry = {
+const studyMethodRegistry: IStudyMethodRegistry = {
   pomodoro: {
     validCreationProgress: [0, 20],
     validUpdateProgress: [0, 20, 40, 50, 60, 80, 100],
@@ -113,7 +96,7 @@ const studyMethodRegistry: StudyMethodRegistry = {
 };
 
 // Alias de nombres de métodos para reconocimiento
-const methodAliases: MethodAliases = {
+const methodAliases: IMethodAliases = {
   // Pomodoro
   pomodoro: "pomodoro",
   "metodo pomodoro": "pomodoro",

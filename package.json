@@ -15,6 +15,7 @@
     "test:reports": "ts-node src/scripts/test-reports.ts",
     "test:reports-separation": "ts-node src/scripts/test-reports-domain-separation.ts",
     "test:sessions": "ts-node src/tests/sessions/session-endpoints.test.ts",
+    "test:motivational-email": "ts-node src/scripts/test-motivational-email.ts",
     "test:feynman": "node test-feynman-regression.js",
     "test:cornell": "node test-cornell-regression.js"
   },

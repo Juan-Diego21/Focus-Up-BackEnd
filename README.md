@@ -583,6 +583,8 @@ src/interfaces/
 ├── shared/IApiResponse.ts          ✅ Respuestas API estandarizadas
 ├── middleware/IAuthUser.ts         ✅ Usuario autenticado tipado
 ├── domain/
+│   ├── config/
+│   │   └── IStudyMethodConfig.ts   ✅ Configuración métodos estudio
 │   ├── entities/
 │   │   ├── IUser.ts                ✅ Entidad usuario completa
 │   │   ├── ISession.ts             ✅ Entidad sesión con DTOs
@@ -661,6 +663,7 @@ interface IRegisterRequest {
 
 - `src/interfaces/shared/IApiResponse.ts` - Respuestas API tipadas
 - `src/interfaces/middleware/IAuthUser.ts` - Usuario autenticado
+- `src/interfaces/domain/config/IStudyMethodConfig.ts` - Configuración métodos estudio
 - `src/interfaces/domain/entities/IUser.ts` - Entidad usuario completa
 - `src/interfaces/domain/entities/ISession.ts` - Entidad sesión con DTOs
 - `src/interfaces/domain/entities/IBeneficio.ts` - Entidad beneficio
@@ -683,6 +686,9 @@ interface IRegisterRequest {
 - `src/services/SessionService.ts` - ✅ Implementa ISessionService
 - `src/controllers/SessionController.ts` - ✅ Usa IApiResponse y IAuthUser
 - `src/routes/sessionRoutes.ts` - ✅ Documentación Swagger movida y actualizada
+- `src/scripts/send-pending-emails.ts` - ✅ Agregado cron job semanal para emails motivacionales
+- `src/services/ReportsService.ts` - ✅ Interfaces movidas a archivos separados
+- `src/services/NotificacionesProgramadasService.ts` - ✅ Interfaces movidas a archivos separados
 
 #### Mejoras de Calidad de Código
 
@@ -706,6 +712,130 @@ interface IRegisterRequest {
 - ✅ **Clean Architecture**: Separación clara de responsabilidades
 - ✅ **Domain-Driven Design**: Interfaces reflejan dominio de negocio
 - ✅ **Testability**: Interfaces permiten testing unitario efectivo
+
+---
+
+### 🔧 **Refactorización: Interfaces de Servicios en Archivos Separados (2025-12-15)**
+
+#### Fecha de Implementación
+
+2025-12-15
+
+#### Problema Identificado
+
+Las interfaces TypeScript estaban definidas inline dentro de los archivos de servicios, rompiendo la separación de responsabilidades y dificultando la reutilización.
+
+#### Interfaces Refactorizadas
+
+**ReportsService.ts → src/interfaces/domain/reports/**
+
+- `CreateActiveMethodData` → `ICreateActiveMethod.ts`
+- `UpdateMethodProgressData` → `IUpdateMethodProgress.ts`
+- `UpdateSessionProgressData` → `IUpdateSessionProgress.ts`
+- `ReportItem` → `IReportItem.ts`
+- `ReportData` → `IReportData.ts`
+
+**NotificacionesProgramadasService.ts → src/interfaces/domain/notifications/**
+
+- `ICreateNotificacion` → `ICreateScheduledNotification.ts`
+
+#### Estructura de Archivos Creada
+
+```
+src/interfaces/domain/
+├── reports/
+│   ├── ICreateActiveMethod.ts
+│   ├── IUpdateMethodProgress.ts
+│   ├── IUpdateSessionProgress.ts
+│   ├── IReportItem.ts
+│   └── IReportData.ts
+└── notifications/
+    └── ICreateScheduledNotification.ts
+```
+
+#### Beneficios Arquitectónicos
+
+- ✅ **Separación de Responsabilidades**: Interfaces separadas de la lógica de negocio
+- ✅ **Reutilización**: Interfaces pueden ser importadas por otros servicios
+- ✅ **Mantenibilidad**: Cambios en contratos son más fáciles de rastrear
+- ✅ **Consistencia**: Sigue el patrón ya establecido en el proyecto
+- ✅ **Type Safety**: Interfaces centralizadas mejoran la detección de errores
+
+#### Validación
+
+- ✅ **Compilación Exitosa**: `npm run build` sin errores TypeScript
+- ✅ **Type Safety 100%**: Todas las referencias actualizadas correctamente
+- ✅ **Funcionalidad Preservada**: Toda la lógica existente mantiene compatibilidad
+
+---
+
+### 🔔 **Corrección: Sistema de Emails Motivacionales Semanales (2025-12-15)**
+
+#### Fecha de Implementación
+
+2025-12-15
+
+#### Problema Identificado
+
+Los emails motivacionales semanales no se estaban enviando a pesar de que la funcionalidad estaba implementada hace más de dos semanas.
+
+#### Causa Raíz
+
+La función `scheduleWeeklyMotivationalEmails()` existía en el servicio `NotificacionesProgramadasService`, pero **nunca se ejecutaba automáticamente**. El script `send-pending-emails.ts` solo procesaba notificaciones existentes, pero no creaba las notificaciones motivacionales semanalmente.
+
+#### Solución Implementada
+
+**Agregado cron job semanal al script de envío de emails:**
+
+- ✅ **Nueva función**: `scheduleWeeklyMotivationalEmails()` en `send-pending-emails.ts`
+- ✅ **Cron job semanal**: Se ejecuta cada domingo a las 9 AM (`'0 9 * * 0'`)
+- ✅ **Ejecución inicial**: Para testing inmediato al iniciar el script
+- ✅ **Import del servicio**: `NotificacionesProgramadasService` agregado
+
+#### Código Agregado
+
+```typescript
+// Función semanal para programar emails motivacionales
+async function scheduleWeeklyMotivationalEmails(): Promise<void> {
+  try {
+    logger.info("🌟 Starting weekly motivational emails scheduling...");
+    const result =
+      await NotificacionesProgramadasService.scheduleWeeklyMotivationalEmails();
+    if (result.success && result.data) {
+      logger.info(
+        `🌟 Weekly motivational emails scheduling completed: ${result.data.programadas} emails programados`
+      );
+    }
+  } catch (error) {
+    logger.error("❌ Error in weekly motivational emails scheduling:", error);
+  }
+}
+
+// Cron job semanal - domingos 9 AM
+cron.schedule("0 9 * * 0", scheduleWeeklyMotivationalEmails);
+```
+
+#### Validación
+
+- ✅ **Compilación exitosa**: `npm run build` sin errores
+- ✅ **Funcionamiento**: Los emails motivacionales ahora se programarán semanalmente
+- ✅ **Usuarios suscritos**: Solo usuarios con `notificaciones.motivacion = true`
+- ✅ **Rotación semanal**: Mensaje diferente cada semana basado en número de semana
+- ✅ **Email de prueba enviado**: `jdmend21@gmail.com` recibió email exitosamente con mensaje de semana 50
+
+#### Script de Prueba
+
+Para probar el envío de emails motivacionales:
+
+```bash
+npm run test:motivational-email
+```
+
+Este comando envía un email de prueba con el mensaje motivacional de la semana actual.
+
+#### Próximos Pasos
+
+Los emails motivacionales comenzarán a enviarse automáticamente cada domingo a las 9 AM para todos los usuarios suscritos. El primer envío programado ocurrirá este domingo 2025-12-15.
 
 ---
 

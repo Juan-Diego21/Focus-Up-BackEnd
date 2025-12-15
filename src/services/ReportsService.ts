@@ -9,6 +9,11 @@ import { MusicaEntity } from "../models/Musica.entity";
 import { NotificacionesProgramadasService } from "./NotificacionesProgramadasService";
 import logger from "../utils/logger";
 import { studyMethodRegistry, methodAliases } from "../config/methods.config";
+import { ICreateActiveMethod } from "../interfaces/domain/reports/ICreateActiveMethod";
+import { IUpdateMethodProgress } from "../interfaces/domain/reports/IUpdateMethodProgress";
+import { IUpdateSessionProgress } from "../interfaces/domain/reports/IUpdateSessionProgress";
+import { IReportItem } from "../interfaces/domain/reports/IReportItem";
+import { IReportData } from "../interfaces/domain/reports/IReportData";
 
 // Extended interface for methods with additional properties (like Feynman)
 interface StudyMethodConfig {
@@ -20,39 +25,6 @@ interface StudyMethodConfig {
   states?: string[];     // Feynman-specific
   totalSteps?: number;   // Feynman-specific
   routePrefix?: string;  // Feynman-specific
-}
-
-export interface CreateActiveMethodData {
-  idMetodo: number;
-  estado?: string;
-  progreso?: number;
-  idUsuario: number;
-}
-
-export interface UpdateMethodProgressData {
-  progreso?: MetodoProgreso;
-  finalizar?: boolean;
-}
-
-export interface UpdateSessionProgressData {
-   status?: "completed" | "pending";
-   elapsedMs?: number;
-   notes?: string;
-}
-
-export interface ReportItem {
-  id_reporte: number;
-  id_usuario: number;
-  nombre_metodo: string;
-  progreso?: number;
-  estado: string;
-  fecha_creacion: Date;
-}
-
-export interface ReportData {
-  metodos: any[];
-  sesiones: any[];
-  combined: ReportItem[];
 }
 
 // Dynamic validation system using centralized configuration
@@ -488,7 +460,7 @@ export class ReportsService {
     * Permite múltiples métodos activos simultáneamente - cada uno con su propia sesión independiente
     * Inicializa el método con progreso 0 y estado en progreso
     */
-  async createActiveMethod(data: CreateActiveMethodData): Promise<{
+  async createActiveMethod(data: ICreateActiveMethod): Promise<{
     success: boolean;
     metodoRealizado?: MetodoRealizadoEntity;
     message?: string;
@@ -650,7 +622,7 @@ export class ReportsService {
    */
   async getUserReports(userId: number): Promise<{
     success: boolean;
-    reports?: ReportData;
+    reports?: IReportData;
     error?: string;
   }> {
     try {
@@ -722,7 +694,7 @@ export class ReportsService {
       }));
 
       // Crear array combinado para el formato simplificado
-      const combined: ReportItem[] = [
+      const combined: IReportItem[] = [
         ...metodos.map(metodo => ({
           id_reporte: metodo.id,
           id_usuario: numericUserId,
@@ -766,7 +738,7 @@ export class ReportsService {
   async updateMethodProgress(
     methodId: number,
     userId: number,
-    data: UpdateMethodProgressData
+    data: IUpdateMethodProgress
   ): Promise<{
     success: boolean;
     metodoRealizado?: MetodoRealizadoEntity;
@@ -887,7 +859,7 @@ export class ReportsService {
   async updateSessionProgress(
     sessionId: number,
     userId: number,
-    data: UpdateSessionProgressData
+    data: IUpdateSessionProgress
   ): Promise<{
     success: boolean;
     session?: any;

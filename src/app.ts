@@ -132,12 +132,15 @@ const PORT = env.PORT;
 app.listen(PORT, async () => {
   try {
     await initializeDatabase();
-    logger.info(`🚀 Focus Up API server is running on port ${PORT}`);
-    logger.info(`📍 Environment: ${env.NODE_ENV}`);
+    logger.info(`🚀 El server de la API de Focus Up está corriendo en el puerto ${PORT}`);
+    logger.info(`📍 Entorno: ${env.NODE_ENV}`);
     logger.info(
-      `🌐 Health check: http://localhost:${PORT}${env.API_PREFIX}/health`
+      `🌐 Verificación de salud: http://localhost:${PORT}${env.API_PREFIX}/health`
     );
-    logger.info(`📊 TypeORM connected: ${AppDataSource.isInitialized}`);
+    logger.info(
+      `📄 Documentación Swagger: http://localhost:${PORT}/api-docs`
+    );
+    logger.info(`📊 TypeORM conectado: ${AppDataSource.isInitialized}`);
   } catch (error) {
     logger.error("❌ Failed to start server:", error);
     process.exit(1);
@@ -146,5 +149,3 @@ app.listen(PORT, async () => {
 
 // Exportar app para testing
 export default app;
-
-// Force restart comment
