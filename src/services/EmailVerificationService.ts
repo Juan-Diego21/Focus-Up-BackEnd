@@ -202,7 +202,7 @@ export class EmailVerificationService {
 
       // Hash de la contraseña
       const bcrypt = await import("bcryptjs");
-      const hashedPassword = await bcrypt.hash(password, parseInt(process.env.BCRYPT_SALT_ROUNDS || "12"));
+      const hashedPassword = await bcrypt.hash(password, Number.parseInt(process.env.BCRYPT_SALT_ROUNDS || "12"));
 
       // Crear el usuario
       const newUser = await userRepository.create({

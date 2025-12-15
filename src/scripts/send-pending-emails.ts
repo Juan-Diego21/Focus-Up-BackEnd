@@ -21,7 +21,6 @@
 import * as cron from 'node-cron';
 import { AppDataSource } from '../config/ormconfig';
 import { getPendingNotifications, markAsSent } from '../repositories/NotificacionesProgramadasRepository';
-import { getWeeklyMotivationalMessage } from '../config/motivationalMessages';
 import { SessionService } from '../services/SessionService';
 import { NotificationService } from '../services/NotificationService';
 import { EmailVerificationService } from '../services/EmailVerificationService';
@@ -32,7 +31,7 @@ import nodemailer from 'nodemailer';
 // Utiliza las mismas credenciales SMTP que el módulo principal de correos
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com", // Servidor SMTP configurado
-  port: parseInt(process.env.SMTP_PORT || "587"), // Puerto SMTP (587 para TLS)
+  port: Number.parseInt(process.env.SMTP_PORT || "587"), // Puerto SMTP (587 para TLS)
   secure: process.env.SMTP_SECURE === "true", // Conexión segura para puerto 465
   auth: {
     user: process.env.EMAIL_USER!, // Usuario de correo electrónico

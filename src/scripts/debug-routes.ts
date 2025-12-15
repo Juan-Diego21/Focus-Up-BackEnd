@@ -1,5 +1,5 @@
-import { AppDataSource } from '../config/ormconfig';
-import { initializeDatabase } from '../config/ormconfig';
+import { AppDataSource , initializeDatabase } from '../config/ormconfig';
+
 import { userRepository } from '../repositories/UserRepository';
 
 const debugRoutes = async () => {

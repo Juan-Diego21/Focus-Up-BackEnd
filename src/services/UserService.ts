@@ -454,89 +454,89 @@ user ??= await userRepository.findByUsername(identifier);
    * Inserta las distracciones del usuario dentro de una transacción de base de datos
    * Garantiza atomicidad en la creación de usuarios con distracciones asociadas
    */
-   private async insertUserDistractionsInTransaction(
-     queryRunner: any,
-     userId: number,
-     distractionIds: number[]
-   ): Promise<void> {
-     const inserts = distractionIds.map((distractionId) => ({
-       idUsuario: userId,
-       idDistraccion: distractionId,
-     }));
+    private async insertUserDistractionsInTransaction(
+      queryRunner: any,
+      userId: number,
+      distractionIds: number[]
+    ): Promise<void> {
+      const inserts = distractionIds.map((distractionId) => ({
+        idUsuario: userId,
+        idDistraccion: distractionId,
+      }));
 
-     await queryRunner.manager
-       .createQueryBuilder()
-       .insert()
-       .into("usuariodistracciones")
-       .values(inserts)
-       .execute();
-   }
+      await queryRunner.manager
+        .createQueryBuilder()
+        .insert()
+        .into("usuariodistracciones")
+        .values(inserts)
+        .execute();
+    }
 
-   /**
+    /**
     * Actualiza los intereses del usuario dentro de una transacción
     * Elimina intereses existentes y agrega los nuevos
     */
-   private async updateUserInterestsInTransaction(
-     queryRunner: any,
-     userId: number,
-     interestIds: number[]
-   ): Promise<void> {
+    private async updateUserInterestsInTransaction(
+      queryRunner: any,
+      userId: number,
+      interestIds: number[]
+    ): Promise<void> {
      // Eliminar intereses existentes
-     await queryRunner.manager
-       .createQueryBuilder()
-       .delete()
-       .from("usuariointereses")
-       .where("idUsuario = :userId", { userId })
-       .execute();
+      await queryRunner.manager
+        .createQueryBuilder()
+        .delete()
+        .from("usuariointereses")
+        .where("idUsuario = :userId", { userId })
+        .execute();
 
      // Insertar nuevos intereses si hay
-     if (interestIds.length > 0) {
-       const inserts = interestIds.map((interestId) => ({
-         idUsuario: userId,
-         idInteres: interestId,
-       }));
+      if (interestIds.length > 0) {
+        const inserts = interestIds.map((interestId) => ({
+          idUsuario: userId,
+          idInteres: interestId,
+        }));
 
-       await queryRunner.manager
-         .createQueryBuilder()
-         .insert()
-         .into("usuariointereses")
-         .values(inserts)
-         .execute();
-     }
-   }
+        await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into("usuariointereses")
+          .values(inserts)
+          .execute();
+      }
+    }
 
-   /**
+    /**
     * Actualiza las distracciones del usuario dentro de una transacción
     * Elimina distracciones existentes y agrega las nuevas
     */
-   private async updateUserDistractionsInTransaction(
-     queryRunner: any,
-     userId: number,
-     distractionIds: number[]
-   ): Promise<void> {
-     // Eliminar distracciones existentes
-     await queryRunner.manager
-       .createQueryBuilder()
-       .delete()
-       .from("usuariodistracciones")
-       .where("idUsuario = :userId", { userId })
-       .execute();
+    private async updateUserDistractionsInTransaction(
+      queryRunner: any,
+      userId: number,
+      distractionIds: number[]
+    ): Promise<void> {
+      // Eliminar distracciones existentes
+      await queryRunner.manager
+        .createQueryBuilder()
+        .delete()
+        .from("usuariodistracciones")
+        .where("idUsuario = :userId", { userId })
+        .execute();
 
-     // Insertar nuevas distracciones si hay
-     if (distractionIds.length > 0) {
-       const inserts = distractionIds.map((distractionId) => ({
-         idUsuario: userId,
-         idDistraccion: distractionId,
-       }));
+      // Insertar nuevas distracciones si hay
+      if (distractionIds.length > 0) {
+        const inserts = distractionIds.map((distractionId) => ({
+          idUsuario: userId,
+          idDistraccion: distractionId,
+        }));
 
-       await queryRunner.manager
-         .createQueryBuilder()
-         .insert()
-         .into("usuariodistracciones")
-         .values(inserts)
-         .execute();
-     }
-   }
+        await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into("usuariodistracciones")
+          .values(inserts)
+          .execute();
+      }
+    }
 
   /**
    * Cambia la contraseña de un usuario verificando la contraseña actual
