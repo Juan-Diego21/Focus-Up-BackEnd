@@ -94,7 +94,30 @@ router.put("/", authenticateToken, validateUserUpdate, userController.updateProf
  *         description: No autorizado
  */
 
+// DELETE /api/v1/users/me - Eliminar cuenta del usuario autenticado
+router.delete("/me", authenticateToken, userController.deleteMyAccount.bind(userController));
 
+/**
+ * @swagger
+ * /users/me:
+ *   delete:
+ *     summary: Eliminar la cuenta del usuario autenticado
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     description: |
+ *       Elimina permanentemente la cuenta del usuario autenticado y todas las sesiones asociadas.
+ *       Esta acción no se puede deshacer.
+ *     responses:
+ *       200:
+ *         description: Cuenta eliminada exitosamente
+ *       400:
+ *         description: Error al eliminar la cuenta (usuario no encontrado o restricciones de integridad)
+ *       401:
+ *         description: No autorizado - token JWT requerido
+ *       500:
+ *         description: Error interno del servidor
+ */
 
 // POST /api/v1/users - DESHABILITADO: Usar /api/v1/auth/register en su lugar
 // La verificación por Email es necesaria para el registro

@@ -302,6 +302,55 @@ export class UserController {
      }
    }
 
+   /**
+    * Eliminar la cuenta del usuario autenticado
+    * Operación destructiva que requiere autenticación
+    */
+   async deleteMyAccount(req: Request, res: Response) {
+     try {
+       const userPayload = req.user as JwtPayload;
+       const userId = userPayload.userId;
+
+       const result = await userService.deleteUser(userId);
+
+       if (!result.success) {
+         const response: ApiResponse = {
+           success: false,
+           message: "Error al eliminar la cuenta",
+           error: result.error,
+           timestamp: new Date(),
+         };
+         return res.status(400).json(response);
+       }
+
+       // Invalidar el token después de eliminar la cuenta
+       const authHeader = req.headers["authorization"];
+       const token = JwtUtils.extractTokenFromHeader(authHeader);
+       if (token) {
+         TokenBlacklistService.addToBlacklist(token);
+       }
+
+       const response: ApiResponse = {
+         success: true,
+         message: "Cuenta eliminada exitosamente",
+         timestamp: new Date(),
+       };
+
+       res.status(200).json(response);
+     } catch (error) {
+       logger.error("Error en UserController.deleteMyAccount:", error);
+
+       const response: ApiResponse = {
+         success: false,
+         message: "Error interno del servidor",
+         error: "Ocurrió un error inesperado",
+         timestamp: new Date(),
+       };
+
+       res.status(500).json(response);
+     }
+   }
+
   /**
    * Eliminar un usuario del sistema por su ID
    * Operación destructiva que requiere validación del ID
@@ -415,6 +464,7 @@ export class UserController {
       const response: ApiResponse = {
         success: false,
         message: "Error interno del servidor",
+        error: "Ocurrió un error inesperado",
         timestamp: new Date(),
       };
 
@@ -475,6 +525,7 @@ export class UserController {
       const response: ApiResponse = {
         success: false,
         message: "Error interno del servidor",
+        error: "Ocurrió un error inesperado",
         timestamp: new Date(),
       };
 
