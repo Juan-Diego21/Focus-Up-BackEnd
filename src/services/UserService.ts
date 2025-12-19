@@ -622,6 +622,15 @@ user ??= await userRepository.findByUsername(identifier);
 
       logger.info(`Iniciando eliminación del usuario ID: ${id}`);
 
+      // Primero, establecer id_objetivo_estudio a NULL para evitar restricciones de clave foránea
+      // ya que la constraint usuario_id_objetivo_estudio_fkey no tiene ON DELETE CASCADE
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update("usuario")
+        .set({ idObjetivoEstudio: null })
+        .where("id_usuario = :id", { id })
+        .execute();
+
       // Eliminar el usuario principal
       // Las cascadas automáticas de la BD eliminarán:
       // - usuariointereses (línea 2065: ON DELETE CASCADE)

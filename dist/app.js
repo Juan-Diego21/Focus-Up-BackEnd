@@ -72,7 +72,7 @@ app.use((error, req, res, next) => {
         message: "Error interno del servidor",
         error: env_1.env.NODE_ENV === "development"
             ? error.message
-            : "Internal server error",
+            : "Error interno del servidorr",
         timestamp: new Date(),
     });
 });

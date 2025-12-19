@@ -112,9 +112,9 @@ router.delete("/me", authenticateToken, userController.deleteMyAccount.bind(user
  *       200:
  *         description: Cuenta eliminada exitosamente
  *       400:
- *         description: Error al eliminar la cuenta (usuario no encontrado o restricciones de integridad)
+ *         description: Error al eliminar la cuenta
  *       401:
- *         description: No autorizado - token JWT requerido
+ *         description: No autorizado
  *       500:
  *         description: Error interno del servidor
  */
