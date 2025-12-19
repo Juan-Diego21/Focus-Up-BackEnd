@@ -475,9 +475,9 @@ user ??= await userRepository.findByUsername(identifier);
     }
 
     /**
-    * Actualiza los intereses del usuario dentro de una transacción
-    * Elimina intereses existentes y agrega los nuevos
-    */
+     * Actualiza los intereses del usuario dentro de una transacción
+     * Elimina intereses existentes y agrega los nuevos
+     */
     private async updateUserInterestsInTransaction(
       queryRunner: any,
       userId: number,
@@ -508,9 +508,9 @@ user ??= await userRepository.findByUsername(identifier);
     }
 
     /**
-    * Actualiza las distracciones del usuario dentro de una transacción
-    * Elimina distracciones existentes y agrega las nuevas
-    */
+     * Actualiza las distracciones del usuario dentro de una transacción
+     * Elimina distracciones existentes y agrega las nuevas
+     */
     private async updateUserDistractionsInTransaction(
       queryRunner: any,
       userId: number,
@@ -596,19 +596,82 @@ user ??= await userRepository.findByUsername(identifier);
   }
 
   /**
-   * Elimina un usuario del sistema por su ID
-   * Operación destructiva que requiere validación previa
+   * Elimina un usuario del sistema por su ID de forma segura
+   * La base de datos maneja las eliminaciones en cascada automáticamente
+   * gracias a las constraints CASCADE configuradas
    */
   async deleteUser(id: number): Promise<{ success: boolean; error?: string }> {
+    const { AppDataSource } = await import("../config/ormconfig");
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
-      const deleted = await userRepository.delete(id);
-      if (!deleted) {
+      // Verificar que el usuario existe antes de proceder
+      const userExists = await queryRunner.manager
+        .createQueryBuilder()
+        .select()
+        .from("usuario", "u")
+        .where("u.id_usuario = :id", { id })
+        .getCount();
+
+      if (userExists === 0) {
+        await queryRunner.rollbackTransaction();
         return { success: false, error: "Usuario no encontrado" };
       }
+
+      logger.info(`Iniciando eliminación del usuario ID: ${id}`);
+
+      // Primero, establecer id_objetivo_estudio a NULL para evitar restricciones de clave foránea
+      // ya que la constraint usuario_id_objetivo_estudio_fkey no tiene ON DELETE CASCADE
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update("usuario")
+        .set({ idObjetivoEstudio: null })
+        .where("id_usuario = :id", { id })
+        .execute();
+
+      // Eliminar el usuario principal
+      // Las cascadas automáticas de la BD eliminarán:
+      // - usuariointereses (línea 2065: ON DELETE CASCADE)
+      // - usuariodistracciones (línea 2049: ON DELETE CASCADE)
+      // - sesiones_concentracion (línea 2025: ON DELETE CASCADE)
+      // - eventos (línea 1937: ON DELETE CASCADE)
+      // - notificaciones_usuario (línea 1985: ON DELETE CASCADE)
+      // - notificaciones_programadas (línea 1977: ON DELETE CASCADE)
+      // - password_resets (línea 1993: ON DELETE CASCADE)
+      // - aplicacionesrestringidas (línea 1921: ON DELETE CASCADE)
+      const deleteResult = await queryRunner.manager
+        .createQueryBuilder()
+        .delete()
+        .from("usuario")
+        .where("id_usuario = :id", { id })
+        .execute();
+
+      if (!deleteResult.affected || deleteResult.affected === 0) {
+        await queryRunner.rollbackTransaction();
+        return { success: false, error: "Error eliminando usuario" };
+      }
+
+      await queryRunner.commitTransaction();
+      logger.info(`Usuario ID: ${id} y todos sus datos asociados eliminados exitosamente`);
+
       return { success: true };
     } catch (error) {
-      console.error("Error en UserService.deleteUser:", error);
-      return { success: false, error: "Error eliminando usuario" };
+      await queryRunner.rollbackTransaction();
+      logger.error("Error en UserService.deleteUser:", {
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: id,
+      });
+      return { 
+        success: false, 
+        error: error instanceof Error && error.message.includes('FOREIGN KEY')
+          ? "No se puede eliminar el usuario debido a restricciones de integridad"
+          : "Error eliminando usuario"
+      };
+    } finally {
+      await queryRunner.release();
     }
   }
 
