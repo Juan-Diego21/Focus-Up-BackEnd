@@ -1,14 +1,12 @@
 import dotenv from "dotenv";
-import path from "path";
 
 /**
  * Configuración centralizada de variables de entorno
  * Carga y valida todas las variables necesarias para la aplicación
  */
 
-// Cargar variables desde .env - CON RUTA ABSOLUTA
-const envPath = path.resolve(__dirname, "../../.env");
-dotenv.config({ path: envPath });
+// Cambio productivo: cargar variables sin ruta absoluta para compatibilidad en Render/Railway y entornos containerizados.
+dotenv.config();
 
 /**
  * Interface para tipar las variables de entorno de la aplicación
@@ -18,6 +16,7 @@ interface Env {
   PORT: number;
   NODE_ENV: string;
   API_PREFIX: string;
+  FRONTEND_URL: string;
 
   // Database Configuration (Neon.tech PostgreSQL)
   PGHOST: string;
@@ -43,6 +42,7 @@ export const env: Env = {
   PORT: parseInt(process.env.PORT || "3001", 10),
   NODE_ENV: process.env.NODE_ENV || "development",
   API_PREFIX: process.env.API_PREFIX || "/api/v1",
+  FRONTEND_URL: process.env.FRONTEND_URL || "",
 
   // Database Configuration
   PGHOST: process.env.PGHOST || "",
@@ -53,10 +53,9 @@ export const env: Env = {
   PGSSLMODE: process.env.PGSSLMODE || "require",
 
   // JWT Configuration
-  JWT_SECRET: process.env.JWT_SECRET || "fallback-secret-change-in-production",
-  JWT_REFRESH_SECRET:
-    process.env.JWT_REFRESH_SECRET ||
-    "fallback-refresh-secret-change-in-production",
+  // Cambio productivo: secretos JWT obligatorios sin fallback inseguro.
+  JWT_SECRET: process.env.JWT_SECRET || "",
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "",
   JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
 
@@ -83,5 +82,13 @@ if (!env.PGDATABASE)
 if (!env.PGUSER) throw new Error("❌ PGUSER no está configurada en .env");
 if (!env.PGPASSWORD)
   throw new Error("❌ PGPASSWORD no está configurada en .env");
+// Cambio productivo: fallar al inicio si secretos críticos no están definidos.
+if (!env.JWT_SECRET)
+  throw new Error("❌ JWT_SECRET no está configurada en .env");
+if (!env.JWT_REFRESH_SECRET)
+  throw new Error("❌ JWT_REFRESH_SECRET no está configurada en .env");
+// Cambio productivo: en producción el frontend oficial debe estar definido para CORS estricto.
+if (env.NODE_ENV === "production" && !env.FRONTEND_URL)
+  throw new Error("❌ FRONTEND_URL no está configurada en producción");
 
 console.log("✅ Configuración de entorno cargada correctamente");

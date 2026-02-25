@@ -46,21 +46,31 @@ app.use(
       // Permitir requests sin origin (como mobile apps, curl, etc.)
       if (!origin) return callback(null, true);
 
-      const allowedOrigins = [
-        "http://localhost:8081",
-        "http://localhost:5173",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001", // También permitir 127.0.0.1
-      ];
+      if (env.NODE_ENV === "development") {
+        // Cambio productivo: en desarrollo se permiten orígenes locales para facilitar pruebas.
+        const allowedDevOrigins = [
+          "http://localhost:8081",
+          "http://localhost:5173",
+          "http://localhost:3001",
+          "http://127.0.0.1:3001",
+        ];
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
+        if (allowedDevOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+
+        if (
+          /^http:\/\/localhost:\d+$/.test(origin) ||
+          /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)
+        ) {
+          return callback(null, true);
+        }
+      } else {
+        // Cambio productivo: en producción solo se permite el dominio oficial del frontend (sin wildcard/regex).
+        if (origin === env.FRONTEND_URL) {
+          return callback(null, true);
+        }
       }
-
-      // Para desarrollo, permitir cualquier localhost origin
-      if (new RegExp(/^http:\/\/localhost:\d+$/).exec(origin) || new RegExp(/^http:\/\/127\.0\.0\.1:\d+$/).exec(origin)) {
-  return callback(null, true);
-}
 
       return callback(new Error("Not allowed by CORS"));
     },
@@ -88,17 +98,20 @@ app.use(env.API_PREFIX, routes);
 // ======================
 // DOCUMENTACIÓN SWAGGER
 // ======================
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec, swaggerUiOptions)
-);
+if (env.NODE_ENV === "development") {
+  // Cambio productivo: exponer Swagger únicamente en desarrollo.
+  app.use(
+    "/api-docs",
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec, swaggerUiOptions)
+  );
 
-// Ruta para obtener la especificación Swagger en JSON
-app.get("/api-docs.json", (req, res) => {
-  res.setHeader("Content-Type", "application/json");
-  res.send(swaggerSpec);
-});
+  // Ruta para obtener la especificación Swagger en JSON (solo desarrollo)
+  app.get("/api-docs.json", (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.send(swaggerSpec);
+  });
+}
 
 // ======================
 // MANEJO DE ERRORES GLOBAL
@@ -110,15 +123,19 @@ app.use(
     res: express.Response,
     next: express.NextFunction
   ) => {
-    logger.error("Error global:", error);
+    // Cambio productivo: registrar detalle interno completo, sin exponerlo al cliente.
+    logger.error("Error global:", {
+      message: error?.message,
+      stack: error?.stack,
+      status: error?.status,
+      method: req.method,
+      path: req.originalUrl,
+    });
 
-    res.status(error.status || 500).json({
+    // Cambio productivo: responder siempre con mensaje genérico de error interno.
+    res.status(500).json({
       success: false,
       message: "Error interno del servidor",
-      error:
-        env.NODE_ENV === "development"
-          ? error.message
-          : "Error interno del servidorr",
       timestamp: new Date(),
     });
   }
@@ -134,12 +151,17 @@ app.listen(PORT, async () => {
     await initializeDatabase();
     logger.info(`🚀 El server de la API de Focus Up está corriendo en el puerto ${PORT}`);
     logger.info(`📍 Entorno: ${env.NODE_ENV}`);
-    logger.info(
-      `🌐 Verificación de salud: http://localhost:${PORT}${env.API_PREFIX}/health`
-    );
-    logger.info(
-      `📄 Documentación Swagger: http://localhost:${PORT}/api-docs`
-    );
+    // Cambio productivo: evitar URLs localhost en logs de producción.
+    if (env.NODE_ENV === "development") {
+      logger.info(
+        `🌐 Verificación de salud: http://localhost:${PORT}${env.API_PREFIX}/health`
+      );
+      logger.info(
+        `📄 Documentación Swagger: http://localhost:${PORT}/api-docs`
+      );
+    } else {
+      logger.info("✅ API iniciada correctamente");
+    }
     logger.info(`📊 TypeORM conectado: ${AppDataSource.isInitialized}`);
   } catch (error) {
     logger.error("❌ Failed to start server:", error);
