@@ -251,6 +251,64 @@ class UserController {
             res.status(500).json(response);
         }
     }
+    async deleteMyAccount(req, res) {
+        try {
+            const userPayload = req.user;
+            if (!userPayload || !userPayload.userId) {
+                const response = {
+                    success: false,
+                    message: "No autorizado: Token de autenticación inválido",
+                    timestamp: new Date(),
+                };
+                return res.status(401).json(response);
+            }
+            if (typeof userPayload.userId !== 'number' || isNaN(userPayload.userId)) {
+                const response = {
+                    success: false,
+                    message: "No autorizado: Estructura de token inválida",
+                    timestamp: new Date(),
+                };
+                return res.status(401).json(response);
+            }
+            const userId = userPayload.userId;
+            logger_1.default.info(`Solicitud de eliminación de cuenta - Usuario ID: ${userId}`);
+            const result = await UserService_1.userService.deleteUser(userId, userId);
+            if (!result.success) {
+                const response = {
+                    success: false,
+                    message: "Error al eliminar la cuenta",
+                    error: result.error,
+                    timestamp: new Date(),
+                };
+                return res.status(400).json(response);
+            }
+            const authHeader = req.headers["authorization"];
+            const token = jwt_1.JwtUtils.extractTokenFromHeader(authHeader);
+            if (token) {
+                jwt_1.TokenBlacklistService.addToBlacklist(token);
+                logger_1.default.info(`Token invalidado después de eliminación de cuenta - Usuario ID: ${userId}`);
+            }
+            const response = {
+                success: true,
+                message: "Cuenta eliminada exitosamente",
+                timestamp: new Date(),
+            };
+            res.status(200).json(response);
+        }
+        catch (error) {
+            logger_1.default.error("Error en UserController.deleteMyAccount:", {
+                error: error instanceof Error ? error.message : error,
+                userId: req.user?.userId,
+            });
+            const response = {
+                success: false,
+                message: "Error interno del servidor",
+                error: "Ocurrió un error inesperado",
+                timestamp: new Date(),
+            };
+            res.status(500).json(response);
+        }
+    }
     async deleteUser(req, res) {
         try {
             const id = parseInt(req.params.id);
@@ -337,6 +395,7 @@ class UserController {
             const response = {
                 success: false,
                 message: "Error interno del servidor",
+                error: "Ocurrió un error inesperado",
                 timestamp: new Date(),
             };
             res.status(500).json(response);
@@ -384,6 +443,7 @@ class UserController {
             const response = {
                 success: false,
                 message: "Error interno del servidor",
+                error: "Ocurrió un error inesperado",
                 timestamp: new Date(),
             };
             res.status(500).json(response);

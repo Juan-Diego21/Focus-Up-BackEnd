@@ -6,6 +6,7 @@ export declare class UserController {
     getProfile(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     updateProfile(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     logout(req: Request, res: Response): Promise<void>;
+    deleteMyAccount(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     deleteUser(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     requestPasswordReset(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     resetPasswordWithCode(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;

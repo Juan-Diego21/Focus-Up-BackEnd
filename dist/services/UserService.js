@@ -409,17 +409,77 @@ class UserService {
             return { success: false, error: "Error interno del servidor" };
         }
     }
-    async deleteUser(id) {
+    async deleteUser(id, requesterId) {
+        const { AppDataSource } = await Promise.resolve().then(() => __importStar(require("../config/ormconfig")));
+        const queryRunner = AppDataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
         try {
-            const deleted = await UserRepository_1.userRepository.delete(id);
-            if (!deleted) {
+            if (requesterId && requesterId !== id) {
+                await queryRunner.rollbackTransaction();
+                return { success: false, error: "No autorizado: Solo puedes eliminar tu propia cuenta" };
+            }
+            const user = await queryRunner.manager
+                .createQueryBuilder()
+                .select(["u.id_usuario", "u.nombre_usuario", "u.activo"])
+                .from("usuario", "u")
+                .where("u.id_usuario = :id", { id })
+                .setLock("pessimistic_write")
+                .getOne();
+            if (!user) {
+                await queryRunner.rollbackTransaction();
                 return { success: false, error: "Usuario no encontrado" };
             }
+            if (!user.activo) {
+                await queryRunner.rollbackTransaction();
+                return { success: false, error: "Usuario ya eliminado" };
+            }
+            logger_1.default.info(`Iniciando eliminación segura del usuario ID: ${id}`);
+            await queryRunner.manager
+                .createQueryBuilder()
+                .update("usuario")
+                .set({ activo: false, fecha_actualizacion: new Date() })
+                .where("id_usuario = :id AND activo = true", { id })
+                .execute();
+            const updateResult = await queryRunner.manager
+                .createQueryBuilder()
+                .select()
+                .from("usuario", "u")
+                .where("u.id_usuario = :id AND u.activo = false", { id })
+                .getCount();
+            if (updateResult === 0) {
+                throw new Error('Error en soft delete - posible race condition');
+            }
+            const deleteResult = await queryRunner.manager
+                .createQueryBuilder()
+                .delete()
+                .from("usuario")
+                .where("id_usuario = :id AND activo = false", { id })
+                .execute();
+            if (!deleteResult.affected || deleteResult.affected === 0) {
+                throw new Error('Error eliminando usuario - posible race condition');
+            }
+            await queryRunner.commitTransaction();
+            logger_1.default.info(`Usuario ID: ${id} y todos sus datos asociados eliminados exitosamente`);
             return { success: true };
         }
         catch (error) {
-            console.error("Error en UserService.deleteUser:", error);
-            return { success: false, error: "Error eliminando usuario" };
+            await queryRunner.rollbackTransaction();
+            logger_1.default.error(`Error eliminando usuario ID ${id}:`, {
+                error: error instanceof Error ? error.message : error,
+                userId: id,
+            });
+            return {
+                success: false,
+                error: error instanceof Error && error.message.includes('FOREIGN KEY')
+                    ? "No se puede eliminar el usuario debido a restricciones de integridad"
+                    : error instanceof Error && error.message.includes('race condition')
+                        ? "Error eliminando usuario - operación conflictiva detectada"
+                        : "Error eliminando usuario"
+            };
+        }
+        finally {
+            await queryRunner.release();
         }
     }
 }

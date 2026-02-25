@@ -9,6 +9,7 @@ const router = (0, express_1.Router)();
 const sessionController = new SessionController_1.SessionController();
 router.get("/", auth_1.authenticateToken, UserController_1.userController.getProfile.bind(UserController_1.userController));
 router.put("/", auth_1.authenticateToken, validation_1.validateUserUpdate, UserController_1.userController.updateProfile.bind(UserController_1.userController));
+router.delete("/me", auth_1.authenticateToken, UserController_1.userController.deleteMyAccount.bind(UserController_1.userController));
 router.post("/", (req, res) => {
     res.status(410).json({
         success: false,

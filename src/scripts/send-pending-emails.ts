@@ -34,6 +34,7 @@ import { SessionService } from '../services/SessionService';
 import { NotificationService } from '../services/NotificationService';
 import { EmailVerificationService } from '../services/EmailVerificationService';
 import { NotificacionesProgramadasService } from '../services/NotificacionesProgramadasService';
+import { getWeeklyMotivationalMessage, getCurrentWeekNumber } from '../config/motivationalMessages';
 import logger from '../utils/logger';
 import nodemailer from 'nodemailer';
 
@@ -917,9 +918,14 @@ async function processPendingEmails(): Promise<void> {
             break;
 
           case 'motivation':
-            // Weekly motivation - mensaje contains the motivational text
+            // Correccion: Calcular mensaje motivacional de la semana actual al momento del envio
+            // Esto asegura que cada semana se envie un mensaje diferente, independientemente
+            // de cuando fue programada la notificacion
             subject = 'Motivación Semanal - Focus-Up';
-            html = generateMotivationEmailTemplate(notification.mensaje || '¡Sigue adelante con tus metas!');
+            const currentWeek = getCurrentWeekNumber();
+            const currentMessage = getWeeklyMotivationalMessage(currentWeek);
+            logger.info(`Enviando mensaje motivacional de la semana ${currentWeek}: ${currentMessage}`);
+            html = generateMotivationEmailTemplate(currentMessage);
             break;
 
           default:

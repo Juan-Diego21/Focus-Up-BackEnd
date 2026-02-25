@@ -1,4 +1,19 @@
-# Asegúrate de que el archivo .env esté en .gitignore
-echo ".env" >> .gitignore
-echo ".env.local" >> .gitignore
-echo ".env.*" >> .gitignore
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Environment files (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
