@@ -5,6 +5,8 @@ import { JwtUtils, JwtPayload, TokenBlacklistService } from "../utils/jwt";
 import { ResponseBuilder } from "../utils/responseBuilder";
 import logger from "../utils/logger";
 
+type IdParams = { id: string };
+
 /**
  * Controlador para la gestión de usuarios
  * Maneja operaciones CRUD de usuarios, autenticación y recuperación de contraseña
@@ -36,7 +38,7 @@ export class UserController {
    * Actualizar la información de un usuario existente
    * Valida el ID del usuario y los datos de actualización proporcionados
    */
-  async updateUser(req: Request, res: Response) {
+  async updateUser(req: Request<IdParams>, res: Response) {
     try {
       const userId = parseInt(req.params.id);
 
@@ -355,7 +357,7 @@ export class UserController {
    * Eliminar un usuario del sistema por su ID
    * Operación destructiva que requiere validación del ID
    */
-  async deleteUser(req: Request, res: Response) {
+  async deleteUser(req: Request<IdParams>, res: Response) {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -476,7 +478,7 @@ export class UserController {
    * Cambiar contraseña del usuario autenticado
    * Verifica la contraseña actual antes de actualizar
    */
-  async changePassword(req: Request, res: Response) {
+  async changePassword(req: Request<IdParams>, res: Response) {
     try {
       const userId = parseInt(req.params.id);
       const { currentPassword, newPassword } = req.body;

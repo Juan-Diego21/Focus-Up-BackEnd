@@ -44,6 +44,7 @@ const SessionService_1 = require("../services/SessionService");
 const NotificationService_1 = require("../services/NotificationService");
 const EmailVerificationService_1 = require("../services/EmailVerificationService");
 const NotificacionesProgramadasService_1 = require("../services/NotificacionesProgramadasService");
+const motivationalMessages_1 = require("../config/motivationalMessages");
 const logger_1 = __importDefault(require("../utils/logger"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const transporter = nodemailer_1.default.createTransport({
@@ -786,7 +787,10 @@ async function processPendingEmails() {
                         break;
                     case 'motivation':
                         subject = 'Motivación Semanal - Focus-Up';
-                        html = generateMotivationEmailTemplate(notification.mensaje || '¡Sigue adelante con tus metas!');
+                        const currentWeek = (0, motivationalMessages_1.getCurrentWeekNumber)();
+                        const currentMessage = (0, motivationalMessages_1.getWeeklyMotivationalMessage)(currentWeek);
+                        logger_1.default.info(`Enviando mensaje motivacional de la semana ${currentWeek}: ${currentMessage}`);
+                        html = generateMotivationEmailTemplate(currentMessage);
                         break;
                     default:
                         logger_1.default.warn(`Unknown notification type: ${notification.tipo} for notification ${notification.idNotificacion}`);

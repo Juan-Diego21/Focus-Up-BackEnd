@@ -3,6 +3,9 @@ import { metodoEstudioService } from "../services/MetodoEstudioService";
 import { ApiResponse } from "../types/ApiResponse";
 import logger from "../utils/logger";
 
+type IdParams = { id: string };
+type MetodoBeneficioParams = { id_metodo: string; id_beneficio: string };
+
 /**
  * Controlador para la gestión de métodos de estudio
  * Maneja operaciones CRUD de métodos de estudio y sus asociaciones con beneficios
@@ -42,7 +45,7 @@ export class MetodoEstudioController {
     }
   }
 
-  async getMetodoEstudioById(req: Request, res: Response) {
+  async getMetodoEstudioById(req: Request<IdParams>, res: Response) {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -84,7 +87,7 @@ export class MetodoEstudioController {
     }
   }
 
-  async updateMetodoEstudio(req: Request, res: Response) {
+  async updateMetodoEstudio(req: Request<IdParams>, res: Response) {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -128,7 +131,7 @@ export class MetodoEstudioController {
     }
   }
 
-  async deleteMetodoEstudio(req: Request, res: Response) {
+  async deleteMetodoEstudio(req: Request<IdParams>, res: Response) {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -192,7 +195,7 @@ export class MetodoEstudioController {
     }
   }
 
-  async getBeneficiosForMetodo(req: Request, res: Response) {
+  async getBeneficiosForMetodo(req: Request<IdParams>, res: Response) {
     try {
       const idMetodo = parseInt(req.params.id);
       if (isNaN(idMetodo)) {
@@ -234,7 +237,7 @@ export class MetodoEstudioController {
     }
   }
 
-  async addBeneficioToMetodo(req: Request, res: Response) {
+  async addBeneficioToMetodo(req: Request<MetodoBeneficioParams>, res: Response) {
     try {
       const idMetodo = parseInt(req.params.id_metodo);
       const idBeneficio = parseInt(req.params.id_beneficio);
@@ -267,7 +270,7 @@ export class MetodoEstudioController {
     }
   }
 
-  async removeBeneficioFromMetodo(req: Request, res: Response) {
+  async removeBeneficioFromMetodo(req: Request<MetodoBeneficioParams>, res: Response) {
     try {
       const idMetodo = parseInt(req.params.id_metodo);
       const idBeneficio = parseInt(req.params.id_beneficio);

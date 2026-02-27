@@ -2,6 +2,10 @@ import { Request, Response } from "express";
 import { musicService } from "../services/MusicService";
 import { ApiResponse } from "../types/ApiResponse";
 
+type IdParams = { id: string };
+type NombreParams = { nombre: string };
+type AlbumIdParams = { albumId: string };
+
 /**
  * Controlador para la gestión de música y álbumes
  * Maneja consultas de canciones y álbumes para la funcionalidad de música de fondo
@@ -21,7 +25,7 @@ export class MusicController {
     res.status(result.success ? 200 : 500).json(response);
   }
 
-  async getCancionById(req: Request, res: Response) {
+  async getCancionById(req: Request<IdParams>, res: Response) {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
       return res.status(400).json({
@@ -42,7 +46,7 @@ export class MusicController {
     res.status(status).json(response);
   }
 
-  async getCancionByNombre(req: Request, res: Response) {
+  async getCancionByNombre(req: Request<NombreParams>, res: Response) {
     const { nombre } = req.params;
     if (!nombre)
       return res.status(400).json({
@@ -76,7 +80,7 @@ export class MusicController {
     res.status(result.success ? 200 : 500).json(response);
   }
 
-  async getCancionesByAlbum(req: Request, res: Response) {
+  async getCancionesByAlbum(req: Request<AlbumIdParams>, res: Response) {
     const albumId = parseInt(req.params.albumId);
     if (isNaN(albumId))
       return res.status(400).json({
@@ -99,7 +103,7 @@ export class MusicController {
     res.status(result.success ? 200 : 500).json(response);
   }
 
-  async getAlbumById(req: Request, res: Response) {
+  async getAlbumById(req: Request<IdParams>, res: Response) {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
       return res
@@ -121,7 +125,7 @@ export class MusicController {
     });
   }
 
-  async getAlbumByNombre(req: Request, res: Response) {
+  async getAlbumByNombre(req: Request<NombreParams>, res: Response) {
     const { nombre } = req.params;
     if (!nombre) {
       return res

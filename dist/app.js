@@ -37,17 +37,25 @@ app.use((0, cors_1.default)({
     origin: function (origin, callback) {
         if (!origin)
             return callback(null, true);
-        const allowedOrigins = [
-            "http://localhost:8081",
-            "http://localhost:5173",
-            "http://localhost:3001",
-            "http://127.0.0.1:3001",
-        ];
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
+        if (env_1.env.NODE_ENV === "development") {
+            const allowedDevOrigins = [
+                "http://localhost:8081",
+                "http://localhost:5173",
+                "http://localhost:3001",
+                "http://127.0.0.1:3001",
+            ];
+            if (allowedDevOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            if (/^http:\/\/localhost:\d+$/.test(origin) ||
+                /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) {
+                return callback(null, true);
+            }
         }
-        if (new RegExp(/^http:\/\/localhost:\d+$/).exec(origin) || new RegExp(/^http:\/\/127\.0\.0\.1:\d+$/).exec(origin)) {
-            return callback(null, true);
+        else {
+            if (origin === env_1.env.FRONTEND_URL) {
+                return callback(null, true);
+            }
         }
         return callback(new Error("Not allowed by CORS"));
     },
@@ -60,19 +68,24 @@ app.use((0, morgan_1.default)(env_1.env.NODE_ENV === "production" ? "combined" :
 app.use(express_1.default.json({ limit: "10mb" }));
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(env_1.env.API_PREFIX, routes_1.default);
-app.use("/api-docs", swagger_1.swaggerUi.serve, swagger_1.swaggerUi.setup(swagger_1.swaggerSpec, swagger_1.swaggerUiOptions));
-app.get("/api-docs.json", (req, res) => {
-    res.setHeader("Content-Type", "application/json");
-    res.send(swagger_1.swaggerSpec);
-});
+if (env_1.env.NODE_ENV === "development") {
+    app.use("/api-docs", swagger_1.swaggerUi.serve, swagger_1.swaggerUi.setup(swagger_1.swaggerSpec, swagger_1.swaggerUiOptions));
+    app.get("/api-docs.json", (req, res) => {
+        res.setHeader("Content-Type", "application/json");
+        res.send(swagger_1.swaggerSpec);
+    });
+}
 app.use((error, req, res, next) => {
-    logger_1.default.error("Error global:", error);
-    res.status(error.status || 500).json({
+    logger_1.default.error("Error global:", {
+        message: error?.message,
+        stack: error?.stack,
+        status: error?.status,
+        method: req.method,
+        path: req.originalUrl,
+    });
+    res.status(500).json({
         success: false,
         message: "Error interno del servidor",
-        error: env_1.env.NODE_ENV === "development"
-            ? error.message
-            : "Error interno del servidorr",
         timestamp: new Date(),
     });
 });
@@ -82,8 +95,13 @@ app.listen(PORT, async () => {
         await (0, ormconfig_1.initializeDatabase)();
         logger_1.default.info(`🚀 El server de la API de Focus Up está corriendo en el puerto ${PORT}`);
         logger_1.default.info(`📍 Entorno: ${env_1.env.NODE_ENV}`);
-        logger_1.default.info(`🌐 Verificación de salud: http://localhost:${PORT}${env_1.env.API_PREFIX}/health`);
-        logger_1.default.info(`📄 Documentación Swagger: http://localhost:${PORT}/api-docs`);
+        if (env_1.env.NODE_ENV === "development") {
+            logger_1.default.info(`🌐 Verificación de salud: http://localhost:${PORT}${env_1.env.API_PREFIX}/health`);
+            logger_1.default.info(`📄 Documentación Swagger: http://localhost:${PORT}/api-docs`);
+        }
+        else {
+            logger_1.default.info("✅ API iniciada correctamente");
+        }
         logger_1.default.info(`📊 TypeORM conectado: ${ormconfig_1.AppDataSource.isInitialized}`);
     }
     catch (error) {

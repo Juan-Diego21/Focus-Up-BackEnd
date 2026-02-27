@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { NotificacionesPreferenciasService } from '../services/NotificacionesPreferenciasService';
 
+type IdUsuarioParams = { idUsuario: string };
+
 /**
  * Controlador para la gestión de preferencias de notificaciones de usuarios
  * Maneja la lógica de negocio para obtener y actualizar las preferencias de notificación
@@ -13,7 +15,7 @@ export class NotificacionesPreferenciasController {
    * Obtiene las preferencias de notificaciones de un usuario específico
    * Valida que el usuario autenticado pueda acceder a sus propias preferencias
    */
-  async getPreferencias(req: Request, res: Response): Promise<void> {
+  async getPreferencias(req: Request<IdUsuarioParams>, res: Response): Promise<void> {
     try {
       // Extraer el ID del usuario de los parámetros de ruta
       const { idUsuario } = req.params;
@@ -55,7 +57,7 @@ export class NotificacionesPreferenciasController {
    * Actualiza las preferencias de notificaciones de un usuario
    * Valida entrada, actualiza timestamps automáticamente y retorna el objeto actualizado
    */
-  async updatePreferencias(req: Request, res: Response): Promise<void> {
+  async updatePreferencias(req: Request<IdUsuarioParams>, res: Response): Promise<void> {
     try {
       // Extraer el ID del usuario de los parámetros de ruta
       const { idUsuario } = req.params;

@@ -5,6 +5,12 @@ import { CreateSessionDto, UpdateSessionDto, SessionFilters } from "../types/Ses
 import { IApiResponse } from "../interfaces/shared/IApiResponse";
 import logger from "../utils/logger";
 
+type SessionIdParams = { sessionId: string };
+type UserIdParams = { userId: string };
+type EventIdParams = { eventId: string };
+type PaginationQuery = { page?: string; perPage?: string };
+type DaysQuery = { days?: string };
+
 /**
  * Controlador para la gestión de sesiones de concentración
  * Maneja todas las operaciones CRUD y control de temporizadores
@@ -62,7 +68,7 @@ export class SessionController {
    * Obtiene una sesión específica
    * GET /api/v1/sessions/:sessionId
    */
-  async getSession(req: Request, res: Response): Promise<void> {
+  async getSession(req: Request<SessionIdParams>, res: Response): Promise<void> {
     try {
       const userId = req.user!.userId;
       const sessionId = parseInt(req.params.sessionId);
@@ -111,7 +117,7 @@ export class SessionController {
   * Lista sesiones del usuario
   * GET /api/v1/users/:userId/sessions
   */
-  async listUserSessions(req: Request, res: Response): Promise<void> {
+  async listUserSessions(req: Request<UserIdParams, {}, {}, PaginationQuery>, res: Response): Promise<void> {
     try {
       const tokenUserId = req.user!.userId;
       const requestedUserId = parseInt(req.params.userId);
@@ -128,8 +134,8 @@ export class SessionController {
       }
 
       // Solo paginación básica, sin filtros
-      const page = req.query.page ? parseInt(req.query.page as string) : 1;
-      const perPage = req.query.perPage ? parseInt(req.query.perPage as string) : 10;
+      const page = req.query.page ? parseInt(req.query.page) : 1;
+      const perPage = req.query.perPage ? parseInt(req.query.perPage) : 10;
 
       // Validar parámetros de paginación
       if (page < 1 || perPage < 1 || perPage > 100) {
@@ -169,7 +175,7 @@ export class SessionController {
    * Actualiza una sesión existente
    * PATCH /api/v1/sessions/:sessionId
    */
-  async updateSession(req: Request, res: Response): Promise<void> {
+  async updateSession(req: Request<SessionIdParams>, res: Response): Promise<void> {
     try {
       const userId = req.user!.userId;
       const sessionId = parseInt(req.params.sessionId);
@@ -224,11 +230,11 @@ export class SessionController {
    * GET /api/v1/sessions/pending/aged
    * Endpoint para uso del cron job
    */
-  async getPendingAgedSessions(req: Request, res: Response): Promise<void> {
+  async getPendingAgedSessions(req: Request<{}, {}, {}, DaysQuery>, res: Response): Promise<void> {
     try {
       // Este endpoint requiere autenticación especial para cron
       // Por ahora permitimos cualquier usuario autenticado
-      const days = req.query.days ? parseInt(req.query.days as string) : 7;
+      const days = req.query.days ? parseInt(req.query.days) : 7;
 
       if (isNaN(days) || days <= 0) {
         const response: IApiResponse = {
@@ -269,7 +275,7 @@ export class SessionController {
    * Crea una sesión de concentración desde un evento
    * GET /api/v1/sessions/from-event/:eventId
    */
-  async createSessionFromEvent(req: Request, res: Response): Promise<void> {
+  async createSessionFromEvent(req: Request<EventIdParams>, res: Response): Promise<void> {
     try {
       const userId = req.user!.userId;
       const eventId = parseInt(req.params.eventId);

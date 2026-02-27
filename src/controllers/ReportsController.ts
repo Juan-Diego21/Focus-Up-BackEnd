@@ -4,6 +4,9 @@ import { ApiResponse } from "../types/ApiResponse";
 import { JwtPayload } from "../utils/jwt";
 import logger from "../utils/logger";
 
+type IdParams = { id: string };
+type UserReportsQuery = { userId?: string };
+
 /**
  * Controlador para la gestión de reportes de métodos de estudio y sesiones de concentración
  * Maneja operaciones CRUD para reportes con autenticación requerida
@@ -98,13 +101,13 @@ export class ReportsController {
    * Este endpoint es mantenido temporalmente para compatibilidad hacia atrás.
    * Se recomienda usar los endpoints dedicados por dominio.
    */
-  async getUserReports(req: Request, res: Response) {
+  async getUserReports(req: Request<{}, {}, {}, UserReportsQuery>, res: Response) {
     try {
       const userPayload = (req as any).user as JwtPayload;
       const { userId: queryUserId } = req.query;
 
       // Use provided userId or fallback to authenticated user's ID
-      const targetUserId = queryUserId ? parseInt(queryUserId as string) : userPayload.userId;
+      const targetUserId = queryUserId ? parseInt(queryUserId) : userPayload.userId;
 
       if (isNaN(targetUserId)) {
         const response: ApiResponse = {
@@ -166,7 +169,7 @@ export class ReportsController {
    * Actualiza el progreso de un método de estudio
    * PATCH /api/v1/reports/methods/:id/progress
    */
-  async updateMethodProgress(req: Request, res: Response) {
+  async updateMethodProgress(req: Request<IdParams>, res: Response) {
     try {
       const userPayload = (req as any).user as JwtPayload;
       const methodId = parseInt(req.params.id);
@@ -239,7 +242,7 @@ export class ReportsController {
    * Acepta tanto el nuevo formato (status, elapsedMs) como el antiguo (estado, duracion)
    * para compatibilidad hacia atrás
    */
-  async updateSessionProgress(req: Request, res: Response) {
+  async updateSessionProgress(req: Request<IdParams>, res: Response) {
     try {
       const userPayload = (req as any).user as JwtPayload;
       const sessionId = parseInt(req.params.id);
@@ -435,7 +438,7 @@ export class ReportsController {
    * Elimina un reporte por ID
    * DELETE /api/v1/reports/:id
    */
-  async deleteReport(req: Request, res: Response) {
+  async deleteReport(req: Request<IdParams>, res: Response) {
     try {
       const userPayload = (req as any).user as JwtPayload;
       const reportId = parseInt(req.params.id);
