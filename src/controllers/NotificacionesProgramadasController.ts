@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { NotificacionesProgramadasService } from '../services/NotificacionesProgramadasService';
 
+type IdParams = { id: string };
+
 /**
  * Controlador para la gestión de notificaciones programadas
  * Maneja la lógica de negocio para crear, obtener y marcar notificaciones como enviadas
@@ -101,7 +103,7 @@ export class NotificacionesProgramadasController {
    * Marca una notificación específica como enviada después de un envío exitoso de email
    * Actualiza el estado de la notificación en la base de datos
    */
-  async markAsSent(req: Request, res: Response): Promise<void> {
+  async markAsSent(req: Request<IdParams>, res: Response): Promise<void> {
     try {
       // Extraer y validar el ID de la notificación de los parámetros de ruta
       const { id } = req.params;

@@ -49,7 +49,7 @@ export declare class UserService implements IUserService {
         message?: string;
         error?: string;
     }>;
-    deleteUser(id: number, requesterId?: number): Promise<{
+    deleteUser(id: number): Promise<{
         success: boolean;
         error?: string;
     }>;

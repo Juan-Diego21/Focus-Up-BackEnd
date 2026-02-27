@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { ApiResponse } from "../types/ApiResponse";
 import logger from "../utils/logger";
 
+type SessionIdParams = { sessionId: string };
+
 /**
  * Middleware para verificar que el usuario autenticado es propietario de la sesión
  * @param req - Request de Express
@@ -9,7 +11,7 @@ import logger from "../utils/logger";
  * @param next - Next function
  */
 export const checkSessionOwnership = async (
-  req: Request,
+  req: Request<SessionIdParams>,
   res: Response,
   next: NextFunction
 ): Promise<void> => {

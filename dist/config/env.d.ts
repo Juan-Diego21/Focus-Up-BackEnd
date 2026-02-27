@@ -2,6 +2,7 @@ interface Env {
     PORT: number;
     NODE_ENV: string;
     API_PREFIX: string;
+    FRONTEND_URL: string;
     PGHOST: string;
     PGPORT: number;
     PGDATABASE: string;

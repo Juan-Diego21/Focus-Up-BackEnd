@@ -3,6 +3,8 @@ import { beneficioService } from "../services/BeneficioService";
 import { ApiResponse } from "../types/ApiResponse";
 import logger from "../utils/logger";
 
+type IdParams = { id: string };
+
 /**
  * Controlador para la gestión de beneficios de estudio
  * Maneja operaciones CRUD de beneficios asociados a métodos de estudio
@@ -50,7 +52,7 @@ export class BeneficioController {
    * Obtener un beneficio específico por su ID
    * Valida que el ID proporcionado sea numérico
    */
-  async getBeneficioById(req: Request, res: Response) {
+  async getBeneficioById(req: Request<IdParams>, res: Response) {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -96,7 +98,7 @@ export class BeneficioController {
    * Actualizar la información de un beneficio existente
    * Valida el ID y permite actualizar la descripción del beneficio
    */
-  async updateBeneficio(req: Request, res: Response) {
+  async updateBeneficio(req: Request<IdParams>, res: Response) {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -144,7 +146,7 @@ export class BeneficioController {
    * Eliminar un beneficio del sistema por su ID
    * Operación destructiva que requiere validación del ID
    */
-  async deleteBeneficio(req: Request, res: Response) {
+  async deleteBeneficio(req: Request<IdParams>, res: Response) {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {

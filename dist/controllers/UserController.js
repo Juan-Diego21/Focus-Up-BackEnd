@@ -254,25 +254,8 @@ class UserController {
     async deleteMyAccount(req, res) {
         try {
             const userPayload = req.user;
-            if (!userPayload || !userPayload.userId) {
-                const response = {
-                    success: false,
-                    message: "No autorizado: Token de autenticación inválido",
-                    timestamp: new Date(),
-                };
-                return res.status(401).json(response);
-            }
-            if (typeof userPayload.userId !== 'number' || isNaN(userPayload.userId)) {
-                const response = {
-                    success: false,
-                    message: "No autorizado: Estructura de token inválida",
-                    timestamp: new Date(),
-                };
-                return res.status(401).json(response);
-            }
             const userId = userPayload.userId;
-            logger_1.default.info(`Solicitud de eliminación de cuenta - Usuario ID: ${userId}`);
-            const result = await UserService_1.userService.deleteUser(userId, userId);
+            const result = await UserService_1.userService.deleteUser(userId);
             if (!result.success) {
                 const response = {
                     success: false,
@@ -286,7 +269,6 @@ class UserController {
             const token = jwt_1.JwtUtils.extractTokenFromHeader(authHeader);
             if (token) {
                 jwt_1.TokenBlacklistService.addToBlacklist(token);
-                logger_1.default.info(`Token invalidado después de eliminación de cuenta - Usuario ID: ${userId}`);
             }
             const response = {
                 success: true,
@@ -296,10 +278,7 @@ class UserController {
             res.status(200).json(response);
         }
         catch (error) {
-            logger_1.default.error("Error en UserController.deleteMyAccount:", {
-                error: error instanceof Error ? error.message : error,
-                userId: req.user?.userId,
-            });
+            logger_1.default.error("Error en UserController.deleteMyAccount:", error);
             const response = {
                 success: false,
                 message: "Error interno del servidor",

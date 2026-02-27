@@ -15,13 +15,13 @@
     "test:reports": "ts-node src/scripts/test-reports.ts",
     "test:reports-separation": "ts-node src/scripts/test-reports-domain-separation.ts",
     "test:sessions": "ts-node src/tests/sessions/session-endpoints.test.ts",
-    "test:motivational-email": "ts-node src/scripts/test-motivational-email.ts"  
+    "test:motivational-email": "ts-node src/scripts/test-motivational-email.ts"
   },
   "dependencies": {
     "@react-email/components": "^0.5.6",
     "@types/node-cron": "^3.0.11",
     "axios": "^1.6.0",
-    "bcryptjs": "^3.0.2",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
@@ -32,6 +32,7 @@
     "node-cache": "^5.1.2",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.9",
+    "pg": "^8.19.0",
     "reflect-metadata": "^0.2.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",

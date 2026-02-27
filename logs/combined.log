@@ -11139,3 +11139,98 @@
 {"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-02-25 11:24:17"}
 {"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-02-25 11:24:17"}
 {"level":"info","message":"Token version incremented to 74 for user 51","service":"focus-up-backend","timestamp":"2026-02-25 11:25:27"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-02-26 10:00:25"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-02-26 10:00:25"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-02-26 10:00:25"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-02-26 10:00:25"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-02-26 10:00:25"}
+{"level":"info","message":"Código de verificación creado para email: juandimend21@gmail.com","service":"focus-up-backend","timestamp":"2026-02-26 10:01:05"}
+{"level":"info","message":"Nuevo código de verificación creado para email: juandimend21@gmail.com","service":"focus-up-backend","timestamp":"2026-02-26 10:01:05"}
+{"level":"info","message":"Código de verificación enviado exitosamente a: juandimend21@gmail.com","service":"focus-up-backend","timestamp":"2026-02-26 10:01:08"}
+{"level":"info","message":"Códigos de verificación eliminados para email: juandimend21@gmail.com","service":"focus-up-backend","timestamp":"2026-02-26 10:02:16"}
+{"level":"info","message":"Usuario registrado exitosamente: PrimerUsuario (juandimend21@gmail.com)","service":"focus-up-backend","timestamp":"2026-02-26 10:02:16"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-02-27 11:00:57"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-02-27 11:00:57"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-02-27 11:00:57"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-02-27 11:00:57"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-02-27 11:00:57"}
+{"level":"info","message":"Código de verificación creado para email: juandimend@gmail.com","service":"focus-up-backend","timestamp":"2026-02-27 11:01:33"}
+{"level":"info","message":"Nuevo código de verificación creado para email: juandimend@gmail.com","service":"focus-up-backend","timestamp":"2026-02-27 11:01:33"}
+{"level":"info","message":"Código de verificación enviado exitosamente a: juandimend@gmail.com","service":"focus-up-backend","timestamp":"2026-02-27 11:01:35"}
+{"level":"info","message":"Códigos de verificación eliminados para email: juandimend@gmail.com","service":"focus-up-backend","timestamp":"2026-02-27 11:03:00"}
+{"level":"info","message":"Usuario registrado exitosamente: JuanDiego (juandimend@gmail.com)","service":"focus-up-backend","timestamp":"2026-02-27 11:03:00"}
+{"level":"info","message":"Auth header received: present for POST /api/v1/auth/logout","service":"focus-up-backend","timestamp":"2026-02-27 11:04:30"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-02-27 11:04:30"}
+{"level":"warn","message":"Acceso no autorizado - Token desconocido: POST /api/v1/auth/logout desde ::1 - Error: Token de acceso inválido o expirado","service":"focus-up-backend","timestamp":"2026-02-27 11:04:30"}
+{"level":"info","message":"Token version incremented to 2 for user 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:04"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/metodos-estudio","service":"focus-up-backend","timestamp":"2026-02-27 11:05:08"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-02-27 11:05:08"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: juandimend@gmail.com, tokenVersion: 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:08"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:08"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-02-27 11:05:08"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/metodos-estudio","service":"focus-up-backend","timestamp":"2026-02-27 11:05:08"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-02-27 11:05:08"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: juandimend@gmail.com, tokenVersion: 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:08"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:09"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-02-27 11:05:09"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/metodos-estudio/1","service":"focus-up-backend","timestamp":"2026-02-27 11:05:12"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-02-27 11:05:12"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: juandimend@gmail.com, tokenVersion: 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:12"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:12"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-02-27 11:05:12"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/metodos-estudio/1","service":"focus-up-backend","timestamp":"2026-02-27 11:05:12"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-02-27 11:05:12"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: juandimend@gmail.com, tokenVersion: 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:12"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:12"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-02-27 11:05:12"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/metodos-estudio/1","service":"focus-up-backend","timestamp":"2026-02-27 11:05:14"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-02-27 11:05:14"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: juandimend@gmail.com, tokenVersion: 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:14"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:14"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-02-27 11:05:14"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/metodos-estudio/1","service":"focus-up-backend","timestamp":"2026-02-27 11:05:14"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-02-27 11:05:14"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: juandimend@gmail.com, tokenVersion: 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:14"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:14"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-02-27 11:05:14"}
+{"level":"info","message":"Auth header received: present for POST /api/v1/reports/active-methods","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: juandimend@gmail.com, tokenVersion: 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"debug","message":"Registry config for pomodoro: {\"validCreationProgress\":[0,20],\"validUpdateProgress\":[0,20,40,50,60,80,100],\"validResumeProgress\":[0,20,40,50,60,80],\"statusMap\":{\"0\":\"en_progreso\",\"20\":\"en_progreso\",\"40\":\"en_progreso\",\"50\":\"en_progreso\",\"60\":\"en_progreso\",\"80\":\"en_progreso\",\"100\":\"completado\"}}","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"debug","message":"Registry config for pomodoro: {\"validCreationProgress\":[0,20],\"validUpdateProgress\":[0,20,40,50,60,80,100],\"validResumeProgress\":[0,20,40,50,60,80],\"statusMap\":{\"0\":\"en_progreso\",\"20\":\"en_progreso\",\"40\":\"en_progreso\",\"50\":\"en_progreso\",\"60\":\"en_progreso\",\"80\":\"en_progreso\",\"100\":\"completado\"}}","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"debug","message":"Status validation: input=\"en_progreso\" -> normalized=\"en_progreso\", expected=\"en_progreso\" -> normalized=\"en_progreso\"","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"debug","message":"Status validation result: VALID, accepted variations: [en_progreso, en progreso, enprogreso, EN_PROGRESO, EN PROGRESO]","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"debug","message":"Registry config for pomodoro: {\"validCreationProgress\":[0,20],\"validUpdateProgress\":[0,20,40,50,60,80,100],\"validResumeProgress\":[0,20,40,50,60,80],\"statusMap\":{\"0\":\"en_progreso\",\"20\":\"en_progreso\",\"40\":\"en_progreso\",\"50\":\"en_progreso\",\"60\":\"en_progreso\",\"80\":\"en_progreso\",\"100\":\"completado\"}}","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"info","message":"Intentando crear notificación programada para usuario 2, tipo: metodo_pendiente","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"info","message":"Notificación programada creada exitosamente: ID 1 para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"info","message":"Recordatorio programado para método 100 del usuario 2 en Fri Mar 06 2026 16:05:11 GMT-0500 (hora estándar de Colombia)","service":"focus-up-backend","timestamp":"2026-02-27 11:05:16"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/reports/sessions","service":"focus-up-backend","timestamp":"2026-02-27 11:05:30"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-02-27 11:05:30"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: juandimend@gmail.com, tokenVersion: 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:30"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/reports/methods","service":"focus-up-backend","timestamp":"2026-02-27 11:05:30"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-02-27 11:05:30"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: juandimend@gmail.com, tokenVersion: 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:30"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Buscando reportes de sesiones para usuario ID:","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Encontradas 0 sesiones para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/reports/sessions","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: juandimend@gmail.com, tokenVersion: 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Buscando reportes de sesiones para usuario ID:","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Encontradas 0 sesiones para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Buscando reportes de métodos para usuario ID:","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Encontrados 1 métodos realizados para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/reports/methods","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: juandimend@gmail.com, tokenVersion: 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Buscando reportes de métodos para usuario ID:","service":"focus-up-backend","timestamp":"2026-02-27 11:05:31"}
+{"level":"info","message":"Encontrados 1 métodos realizados para usuario 2","service":"focus-up-backend","timestamp":"2026-02-27 11:05:32"}
