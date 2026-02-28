@@ -220,8 +220,8 @@ export class PendingEmailScheduler {
     }, delayMs);
     this.timer = timer;
 
-    if (typeof (timer as { unref?: () => void }).unref === "function") {
-      (timer as { unref: () => void }).unref();
+    if (typeof timer !== "number" && typeof timer.unref === "function") {
+      timer.unref();
     }
   }
 
