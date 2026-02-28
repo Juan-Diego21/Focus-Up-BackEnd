@@ -159,7 +159,7 @@ export class PendingEmailScheduler {
   private readonly intervalMs: number;
   private readonly batchSize: number;
   private readonly enabled: boolean;
-  private timer: NodeJS.Timeout | null = null;
+  private timer: ReturnType<typeof setTimeout> | null = null;
   private started = false;
   private stopping = false;
   private running = false;
@@ -215,10 +215,14 @@ export class PendingEmailScheduler {
   private scheduleNext(delayMs: number): void {
     if (this.stopping) return;
 
-    this.timer = setTimeout(() => {
+    const timer = setTimeout(() => {
       void this.tick();
     }, delayMs);
-    this.timer.unref?.();
+    this.timer = timer;
+
+    if (typeof (timer as { unref?: () => void }).unref === "function") {
+      (timer as { unref: () => void }).unref();
+    }
   }
 
   private async tick(): Promise<void> {
