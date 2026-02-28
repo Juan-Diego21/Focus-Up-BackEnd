@@ -14,6 +14,7 @@ const swagger_1 = require("./config/swagger");
 const ormconfig_1 = require("./config/ormconfig");
 const logger_1 = __importDefault(require("./utils/logger"));
 const envValidation_1 = require("./utils/envValidation");
+const pendingEmailScheduler_1 = require("./jobs/pendingEmailScheduler");
 (0, envValidation_1.validateEnvironment)();
 const app = (0, express_1.default)();
 app.use((0, helmet_1.default)({
@@ -90,9 +91,11 @@ app.use((error, req, res, next) => {
     });
 });
 const PORT = env_1.env.PORT;
-app.listen(PORT, async () => {
+const emailScheduler = new pendingEmailScheduler_1.PendingEmailScheduler();
+const server = app.listen(PORT, async () => {
     try {
         await (0, ormconfig_1.initializeDatabase)();
+        await emailScheduler.start();
         logger_1.default.info(`🚀 El server de la API de Focus Up está corriendo en el puerto ${PORT}`);
         logger_1.default.info(`📍 Entorno: ${env_1.env.NODE_ENV}`);
         if (env_1.env.NODE_ENV === "development") {
@@ -108,5 +111,35 @@ app.listen(PORT, async () => {
         logger_1.default.error("❌ Failed to start server:", error);
         process.exit(1);
     }
+});
+const shutdown = async (signal) => {
+    logger_1.default.info(`🛑 Señal ${signal} recibida, iniciando apagado graceful...`);
+    try {
+        await emailScheduler.stop();
+        await new Promise((resolve, reject) => {
+            server.close((error) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve();
+            });
+        });
+        if (ormconfig_1.AppDataSource.isInitialized) {
+            await ormconfig_1.AppDataSource.destroy();
+        }
+        logger_1.default.info("✅ Shutdown completado correctamente");
+        process.exit(0);
+    }
+    catch (error) {
+        logger_1.default.error("❌ Error durante shutdown", { error });
+        process.exit(1);
+    }
+};
+process.on("SIGTERM", () => {
+    void shutdown("SIGTERM");
+});
+process.on("SIGINT", () => {
+    void shutdown("SIGINT");
 });
 exports.default = app;
