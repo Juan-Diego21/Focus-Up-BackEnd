@@ -9,6 +9,7 @@ import { swaggerSpec, swaggerUi, swaggerUiOptions } from "./config/swagger";
 import { initializeDatabase, AppDataSource } from "./config/ormconfig";
 import logger from "./utils/logger";
 import { validateEnvironment } from "./utils/envValidation";
+import { PendingEmailScheduler } from "./jobs/pendingEmailScheduler";
 
 // Validar variables de entorno al inicio
 validateEnvironment();
@@ -145,10 +146,12 @@ app.use(
 // INICIAR SERVIDOR
 // ======================
 const PORT = env.PORT;
-
-app.listen(PORT, async () => {
+const emailScheduler = new PendingEmailScheduler();
+const server = app.listen(PORT, async () => {
   try {
     await initializeDatabase();
+    await emailScheduler.start();
+
     logger.info(`🚀 El server de la API de Focus Up está corriendo en el puerto ${PORT}`);
     logger.info(`📍 Entorno: ${env.NODE_ENV}`);
     // Cambio productivo: evitar URLs localhost en logs de producción.
@@ -167,6 +170,42 @@ app.listen(PORT, async () => {
     logger.error("❌ Failed to start server:", error);
     process.exit(1);
   }
+});
+
+const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
+  logger.info(`🛑 Señal ${signal} recibida, iniciando apagado graceful...`);
+
+  try {
+    await emailScheduler.stop();
+
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      });
+    });
+
+    if (AppDataSource.isInitialized) {
+      await AppDataSource.destroy();
+    }
+
+    logger.info("✅ Shutdown completado correctamente");
+    process.exit(0);
+  } catch (error) {
+    logger.error("❌ Error durante shutdown", { error });
+    process.exit(1);
+  }
+};
+
+process.on("SIGTERM", () => {
+  void shutdown("SIGTERM");
+});
+
+process.on("SIGINT", () => {
+  void shutdown("SIGINT");
 });
 
 // Exportar app para testing
