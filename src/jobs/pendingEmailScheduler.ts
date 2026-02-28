@@ -219,10 +219,6 @@ export class PendingEmailScheduler {
       void this.tick();
     }, delayMs);
     this.timer = timer;
-
-    if (typeof timer !== "number" && typeof timer.unref === "function") {
-      timer.unref();
-    }
   }
 
   private async tick(): Promise<void> {
