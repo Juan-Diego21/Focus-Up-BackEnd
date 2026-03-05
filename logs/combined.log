@@ -14619,3 +14619,17 @@
 {"level":"info","message":"Buscando reportes de métodos para usuario ID:","service":"focus-up-backend","timestamp":"2026-03-05 12:07:45"}
 {"level":"info","message":"Encontradas 1 sesiones para usuario 2","service":"focus-up-backend","timestamp":"2026-03-05 12:07:45"}
 {"level":"info","message":"Encontrados 7 métodos realizados para usuario 2","service":"focus-up-backend","timestamp":"2026-03-05 12:07:45"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-05 12:59:14"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-05 12:59:14"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-05 12:59:14"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-05 12:59:14"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-05 12:59:14"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-05 12:59:14"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-05 12:59:14"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-05 12:59:35"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-05 12:59:35"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-05 12:59:35"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-05 12:59:35"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-05 12:59:35"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-05 12:59:35"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-05 12:59:35"}
