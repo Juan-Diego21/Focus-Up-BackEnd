@@ -34,7 +34,9 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  *       400:
- *         description: Datos inválidos o método ya activo
+ *         description: Datos inválidos
+ *       409:
+ *         description: Ya existe un método activo para el usuario y método (active_method_exists)
  *       401:
  *         description: No autorizado
  */

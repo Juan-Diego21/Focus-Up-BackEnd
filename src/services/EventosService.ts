@@ -6,11 +6,39 @@ import { UserEntity } from '../models/User.entity';
 import { AlbumMusicaEntity } from '../models/AlbumMusica.entity';
 import { MetodoEstudioEntity } from '../models/MetodoEstudio.entity';
 import { EventoEntity } from '../models/Evento.entity';
+import { NotificacionesUsuarioEntity } from '../models/NotificacionesUsuario.entity';
 import { NotificacionesProgramadasService } from './NotificacionesProgramadasService';
 
 // Repositorios adicionales para validaciones
 const userRepository = AppDataSource.getRepository(UserEntity);
 const albumRepository = AppDataSource.getRepository(AlbumMusicaEntity);
+const preferenciasRepository = AppDataSource.getRepository(NotificacionesUsuarioEntity);
+
+const parseLocalDateTime = (dateValue: string | Date, timeValue: string): Date | null => {
+  const dateString = dateValue instanceof Date
+    ? dateValue.toISOString().split('T')[0]
+    : String(dateValue);
+
+  const dateParts = dateString.split('-').map((part) => Number.parseInt(part, 10));
+  const timeParts = timeValue.split(':').map((part) => Number.parseInt(part, 10));
+  if (dateParts.length !== 3 || timeParts.length < 2) return null;
+
+  const [year, month, day] = dateParts;
+  const [hour, minute, second = 0] = timeParts;
+  if (
+    !Number.isFinite(year) ||
+    !Number.isFinite(month) ||
+    !Number.isFinite(day) ||
+    !Number.isFinite(hour) ||
+    !Number.isFinite(minute) ||
+    !Number.isFinite(second)
+  ) {
+    return null;
+  }
+
+  const localDate = new Date(year, month - 1, day, hour, minute, second, 0);
+  return Number.isNaN(localDate.getTime()) ? null : localDate;
+};
 
 /**
  * Función para validar el estado del evento
@@ -215,10 +243,17 @@ export const EventoService = {
             // Regla de negocio: Si el evento es para un día futuro, enviar recordatorio 10 minutos antes
             // Si el evento es para hoy, enviar recordatorio a la hora exacta del evento
             try {
+                const preferencias = await preferenciasRepository.findOne({
+                    where: { idUsuario: data.idUsuario }
+                });
+                const eventosHabilitados = preferencias?.eventos ?? true;
+                if (!eventosHabilitados) {
+                    console.log(`🔕 Notificaciones de eventos desactivadas para usuario ${data.idUsuario}`);
+                } else {
                 // Combinar fecha y hora del evento de manera segura
-                const eventDateTime = new Date(`${eventoCompleto.fechaEvento}T${eventoCompleto.horaEvento}`);
+                const eventDateTime = parseLocalDateTime(eventoCompleto.fechaEvento, eventoCompleto.horaEvento);
 
-                if (isNaN(eventDateTime.getTime())) {
+                if (!eventDateTime) {
                     console.error(`Fecha/hora inválida para evento ${eventoCompleto.idEvento}: ${eventoCompleto.fechaEvento}T${eventoCompleto.horaEvento}`);
                 } else {
                     // Obtener fecha actual y fecha del evento (solo fecha, sin hora)
@@ -273,6 +308,7 @@ export const EventoService = {
                         console.log(`✅ Notificación programada exitosamente para evento ${eventoCompleto.idEvento}`);
                     }
                 }
+              }
             } catch (error) {
                 // Loggear error pero no fallar la creación del evento
                 console.error('❌ Error al programar recordatorio automático para evento:', error);

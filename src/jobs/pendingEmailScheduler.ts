@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+﻿import nodemailer from "nodemailer";
 import { AppDataSource } from "../config/ormconfig";
 import { getWeeklyMotivationalMessage, getCurrentWeekNumber } from "../config/motivationalMessages";
 import { getPendingNotifications, markAsSent } from "../repositories/NotificacionesProgramadasRepository";
@@ -63,65 +63,251 @@ const asNumber = (value: unknown, fallback = 0): number => {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 };
 
+const getFrontendEventsUrl = (): string => {
+  if ((process.env.NODE_ENV || "").toLowerCase() === "development") {
+    return "http://localhost:5173/events";
+  }
+
+  const frontendUrl = (process.env.FRONTEND_URL || "").trim();
+  if (!frontendUrl) {
+    return "http://localhost:5173/events";
+  }
+
+  return `${frontendUrl.replace(/\/+$/, "")}/events`;
+};
+
+const normalizeKind = (kind: NotificationKind): NotificationKind => {
+  if (kind === "motivacion") return "motivation";
+  return kind;
+};
+
+const wrapEmailTemplate = (title: string, subtitle: string, accentColor: string, content: string): string => {
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${title}</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #333333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #f8f9fa;
+        }
+        .container {
+          background-color: #ffffff;
+          padding: 30px;
+          border-radius: 12px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          border: 1px solid #e9ecef;
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 30px;
+          padding-bottom: 20px;
+          border-bottom: 2px solid ${accentColor};
+        }
+        .brand-text {
+          font-size: 32px;
+          font-weight: 700;
+          color: #007bff;
+          margin: 0;
+          letter-spacing: -0.5px;
+        }
+        .subtitle {
+          font-size: 16px;
+          color: #6c757d;
+          margin: 8px 0 0 0;
+          font-weight: 500;
+        }
+        .content {
+          color: #333333;
+          margin-bottom: 25px;
+        }
+        .box {
+          padding: 20px;
+          border-radius: 8px;
+          margin: 25px 0;
+          border-left: 4px solid ${accentColor};
+          background-color: #f8f9fa;
+        }
+        .highlight {
+          padding: 15px;
+          border-radius: 6px;
+          margin: 15px 0;
+          border: 1px solid #d5e7ff;
+          background-color: #eef5ff;
+        }
+        .highlight p {
+          margin: 0;
+          color: #0c5460;
+          font-weight: 500;
+        }
+        .footer {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #dee2e6;
+          font-size: 14px;
+          color: #6c757d;
+          text-align: center;
+        }
+        .cta a {
+          display: inline-block;
+          margin-top: 10px;
+          padding: 10px 14px;
+          border-radius: 6px;
+          background-color: ${accentColor};
+          color: #ffffff !important;
+          text-decoration: none;
+          font-weight: 600;
+        }
+        @media (max-width: 480px) {
+          body {
+            padding: 10px;
+          }
+          .container {
+            padding: 20px;
+          }
+          .brand-text {
+            font-size: 28px;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1 class="brand-text">Focus-Up</h1>
+          <p class="subtitle">${subtitle}</p>
+        </div>
+        <div class="content">
+          ${content}
+        </div>
+        <div class="footer">
+          <p>Este es un mensaje autom&aacute;tico de Focus-Up.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
 const buildEmailPayload = (kind: NotificationKind, title?: string, message?: string): EmailPayload => {
+  const normalizedKind = normalizeKind(kind);
   const parsed = parseMessageAsJson(message);
 
-  if (kind === "evento") {
+  if (normalizedKind === "evento") {
     const eventName = asString(parsed?.nombreEvento, title || "Evento");
     const eventDate = asString(parsed?.fechaEvento, "");
     const eventTime = asString(parsed?.horaEvento, "");
     const eventDescription = asString(parsed?.descripcionEvento, message || "");
+    const eventLink = asString(parsed?.link, "");
     return {
       subject: `Recordatorio: ${eventName}`,
-      html: `
-        <h2>Recordatorio de evento</h2>
-        <p><strong>${eventName}</strong></p>
-        <p>Fecha: ${eventDate || "Por definir"}</p>
-        <p>Hora: ${eventTime || "Por definir"}</p>
-        <p>${eventDescription}</p>
-      `,
+      html: wrapEmailTemplate(
+        "Recordatorio de Evento - Focus-Up",
+        "Recordatorio de Evento",
+        "#007bff",
+        `
+          <p>Hola, te recordamos que tienes un evento proximo:</p>
+          <div class="box">
+            <p><strong>${eventName}</strong></p>
+            <p>Fecha: ${eventDate || "Por definir"}</p>
+            <p>Hora: ${eventTime || "Por definir"}</p>
+            ${eventDescription ? `<p>Descripcion: ${eventDescription}</p>` : ""}
+            ${eventLink ? `<p class="cta"><a href="${eventLink}">Iniciar sesion de concentracion</a></p>` : ""}
+          </div>
+          <div class="highlight">
+            <p>No pierdas el ritmo. Planifica unos minutos antes para empezar con foco.</p>
+          </div>
+        `
+      ),
     };
   }
 
-  if (kind === "metodo_pendiente") {
+  if (normalizedKind === "metodo_pendiente") {
     const methodName = asString(parsed?.nombreMetodo, "Metodo de estudio");
     const progress = asNumber(parsed?.progreso, 0);
     return {
       subject: "Recordatorio: Metodo de estudio pendiente",
-      html: `
-        <h2>Continua tu metodo de estudio</h2>
-        <p>Metodo: <strong>${methodName}</strong></p>
-        <p>Progreso actual: <strong>${progress}%</strong></p>
-      `,
+      html: wrapEmailTemplate(
+        "Recordatorio de Metodo de Estudio - Focus-Up",
+        "Recordatorio de Metodo Pendiente",
+        "#ffc107",
+        `
+          <p>Hola, tienes un metodo de estudio pendiente por continuar:</p>
+          <div class="box" style="border-left-color:#ffc107;background:#fff8e1;">
+            <p><strong>Metodo:</strong> ${methodName}</p>
+            <p><strong>Progreso actual:</strong> ${progress}%</p>
+          </div>
+          <div class="highlight">
+            <p>Un avance corto hoy mantiene el impulso. Continua donde lo dejaste.</p>
+          </div>
+        `
+      ),
     };
   }
 
-  if (kind === "sesion_pendiente") {
+  if (normalizedKind === "sesion_pendiente") {
     const sessionName = asString(parsed?.message, title || "Sesion de concentracion");
+    const sessionId = asNumber(parsed?.sessionId, 0);
+    const baseEventsUrl = getFrontendEventsUrl();
+    const sessionLink = sessionId > 0 ? `${baseEventsUrl}?sessionId=${sessionId}` : baseEventsUrl;
     return {
       subject: "Recordatorio: Sesion de concentracion pendiente",
-      html: `
-        <h2>Sesion pendiente</h2>
-        <p>${sessionName}</p>
-      `,
+      html: wrapEmailTemplate(
+        "Recordatorio de Sesion de Concentracion - Focus-Up",
+        "Recordatorio de Sesion Pendiente",
+        "#28a745",
+        `
+          <p>Hola, tienes una sesion de concentracion pendiente:</p>
+          <div class="box" style="border-left-color:#28a745;background:#edf9f0;">
+            <p><strong>${sessionName}</strong></p>
+            <p class="cta"><a href="${sessionLink}">Ir a mis eventos/sesiones</a></p>
+          </div>
+          <div class="highlight">
+            <p>Retoma tu sesion y suma otro bloque de progreso a tu objetivo.</p>
+          </div>
+        `
+      ),
     };
   }
 
-  if (kind === "motivation") {
+  if (normalizedKind === "motivation") {
     const currentWeek = getCurrentWeekNumber();
     const motivationalMessage = getWeeklyMotivationalMessage(currentWeek);
     return {
       subject: "Motivacion semanal - Focus-Up",
-      html: `
-        <h2>Mensaje motivacional de la semana</h2>
-        <p>${motivationalMessage}</p>
-      `,
+      html: wrapEmailTemplate(
+        "Motivacion Semanal - Focus-Up",
+        "Motivacion Semanal",
+        "#6f42c1",
+        `
+          <p>Hola, aqui tienes tu mensaje motivacional de la semana:</p>
+          <div class="box" style="border-left-color:#6f42c1;background:#f4efff;">
+            <p><strong>"${motivationalMessage}"</strong></p>
+          </div>
+          <div class="highlight">
+            <p>Una semana a la vez, con enfoque constante y progreso real.</p>
+          </div>
+        `
+      ),
     };
   }
 
   return {
     subject: title || "Notificacion Focus-Up",
-    html: `<p>${message || "Tienes una notificacion pendiente."}</p>`,
+    html: wrapEmailTemplate(
+      title || "Notificacion Focus-Up",
+      "Notificacion",
+      "#007bff",
+      `<p>${message || "Tienes una notificacion pendiente."}</p>`
+    ),
   };
 };
 
@@ -144,15 +330,6 @@ const sendEmail = async (to: string, payload: EmailPayload): Promise<boolean> =>
     logger.error("Email scheduler: error enviando correo", { to, error });
     return false;
   }
-};
-
-const tryAcquireGlobalLock = async (): Promise<boolean> => {
-  const rows = await AppDataSource.query("SELECT pg_try_advisory_lock($1) AS locked", [ADVISORY_LOCK_KEY]);
-  return Boolean(rows?.[0]?.locked);
-};
-
-const releaseGlobalLock = async (): Promise<void> => {
-  await AppDataSource.query("SELECT pg_advisory_unlock($1)", [ADVISORY_LOCK_KEY]);
 };
 
 export class PendingEmailScheduler {
@@ -243,10 +420,13 @@ export class PendingEmailScheduler {
   }
 
   private async processCycle(): Promise<void> {
+    const queryRunner = AppDataSource.createQueryRunner();
     let lockAcquired = false;
 
     try {
-      lockAcquired = await tryAcquireGlobalLock();
+      await queryRunner.connect();
+      const lockRows = await queryRunner.query("SELECT pg_try_advisory_lock($1) AS locked", [ADVISORY_LOCK_KEY]);
+      lockAcquired = Boolean(lockRows?.[0]?.locked);
       if (!lockAcquired) {
         logger.info("Email scheduler: lock global no adquirido, se omite este ciclo");
         return;
@@ -302,11 +482,18 @@ export class PendingEmailScheduler {
     } finally {
       if (lockAcquired) {
         try {
-          await releaseGlobalLock();
+          await queryRunner.query("SELECT pg_advisory_unlock($1)", [ADVISORY_LOCK_KEY]);
         } catch (unlockError) {
           logger.error("Email scheduler: error liberando lock global", { unlockError });
         }
       }
+
+      try {
+        await queryRunner.release();
+      } catch (releaseError) {
+        logger.error("Email scheduler: error liberando query runner", { releaseError });
+      }
     }
   }
 }
+

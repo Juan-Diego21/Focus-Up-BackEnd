@@ -33,7 +33,7 @@ router.post('/programadas', authenticateToken, notificacionesProgramadasControll
  *                 description: ID del usuario que recibirá la notificación
  *               tipo:
  *                 type: string
- *                 description: Tipo de notificación (ej. 'recordatorio', 'motivacion')
+ *                 description: Tipo de notificación (evento, metodo_pendiente, sesion_pendiente, motivation)
  *               titulo:
  *                 type: string
  *                 description: Título opcional de la notificación

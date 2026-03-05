@@ -3,12 +3,40 @@ import { AppDataSource } from '../config/ormconfig';
 import { UserEntity } from '../models/User.entity';
 import { NotificacionesUsuarioEntity } from '../models/NotificacionesUsuario.entity';
 import { MetodoRealizadoEntity } from '../models/MetodoRealizado.entity';
+import { EventoEntity } from '../models/Evento.entity';
 import { getWeeklyMotivationalMessage, getCurrentWeekNumber } from '../config/motivationalMessages';
 import logger from '../utils/logger';
 import { ICreateScheduledNotification } from '../interfaces/domain/notifications/ICreateScheduledNotification';
 
 // Repositorio de usuarios para validaciones
 const userRepository = AppDataSource.getRepository(UserEntity);
+const preferencesRepository = AppDataSource.getRepository(NotificacionesUsuarioEntity);
+
+const parseLocalDateTime = (dateValue: string | Date, timeValue: string): Date | null => {
+  const dateString = dateValue instanceof Date
+    ? dateValue.toISOString().split('T')[0]
+    : String(dateValue);
+
+  const dateParts = dateString.split('-').map((part) => Number.parseInt(part, 10));
+  const timeParts = timeValue.split(':').map((part) => Number.parseInt(part, 10));
+  if (dateParts.length !== 3 || timeParts.length < 2) return null;
+
+  const [year, month, day] = dateParts;
+  const [hour, minute, second = 0] = timeParts;
+  if (
+    !Number.isFinite(year) ||
+    !Number.isFinite(month) ||
+    !Number.isFinite(day) ||
+    !Number.isFinite(hour) ||
+    !Number.isFinite(minute) ||
+    !Number.isFinite(second)
+  ) {
+    return null;
+  }
+
+  const localDate = new Date(year, month - 1, day, hour, minute, second, 0);
+  return Number.isNaN(localDate.getTime()) ? null : localDate;
+};
 
 /**
  * Servicio para la gestión de notificaciones programadas
@@ -62,6 +90,26 @@ export const NotificacionesProgramadasService = {
         return {
           success: false,
           error: 'La fecha programada no puede ser más de 1 año en el futuro'
+        };
+      }
+
+      // Evitar duplicados exactos para reducir spam/reintentos
+      const duplicate = await NotificacionesProgramadasRepository.findOne({
+        where: {
+          idUsuario: data.idUsuario,
+          tipo: data.tipo.trim(),
+          titulo: data.titulo?.trim(),
+          fechaProgramada: data.fechaProgramada,
+          enviada: false
+        }
+      });
+
+      if (duplicate) {
+        logger.info(`Notificación duplicada omitida para usuario ${data.idUsuario}, tipo: ${data.tipo}`);
+        return {
+          success: true,
+          message: 'Notificación ya programada previamente',
+          data: duplicate
         };
       }
 
@@ -129,131 +177,93 @@ export const NotificacionesProgramadasService = {
        const today = new Date(now);
        today.setHours(0, 0, 0, 0);
 
-       const allNotifications = [];
+       const allNotifications: any[] = [];
+       const preferencias = await preferencesRepository.findOne({ where: { idUsuario: userId } });
+       const eventosEnabled = preferencias?.eventos ?? true;
+       const metodosEnabled = preferencias?.metodosPendientes ?? true;
+       const motivacionEnabled = preferencias?.motivacion ?? true;
 
-       // 1. EVENT NOTIFICATIONS - Eventos próximos con notificaciones
-       try {
-         const eventos = await AppDataSource.getRepository('EventoEntity')
-           .createQueryBuilder("evento")
-           .leftJoinAndSelect("evento.metodoEstudio", "metodo")
-           .leftJoinAndSelect("evento.album", "album")
-           .where("evento.id_usuario = :userId", { userId })
-           .andWhere("(evento.estado IS NULL OR evento.estado = :pendiente)", { pendiente: 'pendiente' })
-           .orderBy("evento.fecha_evento", "ASC")
-           .addOrderBy("evento.hora_evento", "ASC")
-           .getMany();
+       if (eventosEnabled) {
+         try {
+           const eventos = await AppDataSource.getRepository(EventoEntity)
+             .createQueryBuilder("evento")
+             .leftJoinAndSelect("evento.metodoEstudio", "metodo")
+             .leftJoinAndSelect("evento.album", "album")
+             .where("evento.id_usuario = :userId", { userId })
+             .andWhere("(evento.estado IS NULL OR evento.estado = :pendiente)", { pendiente: 'pendiente' })
+             .orderBy("evento.fecha_evento", "ASC")
+             .addOrderBy("evento.hora_evento", "ASC")
+             .getMany();
 
-         logger.info(`Encontrados ${eventos.length} eventos pendientes para usuario ${userId}`);
+           logger.info(`Encontrados ${eventos.length} eventos pendientes para usuario ${userId}`);
 
-         for (const evento of eventos) {
-           try {
-             const eventDateTime = new Date(`${evento.fechaEvento}T${evento.horaEvento}`);
-
-             if (isNaN(eventDateTime.getTime())) {
-               logger.warn(`Fecha/hora inválida para evento ${evento.idEvento}: ${evento.fechaEvento}T${evento.horaEvento}`);
-               continue;
-             }
-
-             const eventDate = new Date(evento.fechaEvento + 'T00:00:00');
-             let notificationTime: Date;
-
-             if (eventDate.getTime() === today.getTime()) {
-               notificationTime = new Date(eventDateTime);
-               logger.debug(`Evento ${evento.idEvento} es hoy - notificación a las ${evento.horaEvento}`);
-             } else {
-               notificationTime = new Date(eventDateTime.getTime() - 10 * 60 * 1000);
-               logger.debug(`Evento ${evento.idEvento} es futuro - notificación 10 min antes: ${notificationTime}`);
-             }
-
-             if (notificationTime >= now) {
-               // Create stored notification for email delivery
-               try {
-                 await this.createScheduledNotification({
-                   idUsuario: userId,
-                   tipo: 'evento',
-                   titulo: `Recordatorio: ${evento.nombreEvento}`,
-                   mensaje: JSON.stringify({
-                     nombreEvento: evento.nombreEvento,
-                     fechaEvento: evento.fechaEvento,
-                     horaEvento: evento.horaEvento,
-                     descripcionEvento: evento.descripcionEvento,
-                     metodoEstudio: evento.metodoEstudio?.nombreMetodo,
-                     album: evento.album?.nombreAlbum
-                   }),
-                   fechaProgramada: notificationTime
-                 });
-                 logger.debug(`Stored notification created for event ${evento.idEvento}`);
-               } catch (storeError) {
-                 logger.error(`Failed to create stored notification for event ${evento.idEvento}:`, storeError);
+           for (const evento of eventos) {
+             try {
+               const eventDateTime = parseLocalDateTime(evento.fechaEvento, evento.horaEvento);
+               if (!eventDateTime) {
+                 logger.warn(`Fecha/hora inválida para evento ${evento.idEvento}: ${evento.fechaEvento}T${evento.horaEvento}`);
+                 continue;
                }
 
-               allNotifications.push({
-                 type: 'event',
-                 idEvento: evento.idEvento,
-                 nombreEvento: evento.nombreEvento,
-                 fechaEvento: evento.fechaEvento,
-                 horaEvento: evento.horaEvento,
-                 descripcionEvento: evento.descripcionEvento,
-                 estado: evento.estado,
-                 metodoEstudio: evento.metodoEstudio ? {
-                   idMetodo: evento.metodoEstudio.idMetodo,
-                   nombreMetodo: evento.metodoEstudio.nombreMetodo
-                 } : null,
-                 album: evento.album ? {
-                   idAlbum: evento.album.idAlbum,
-                   nombreAlbum: evento.album.nombreAlbum
-                 } : null,
-                 notificationTime: notificationTime.toISOString(),
-                 notificationRule: eventDate.getTime() === today.getTime() ? 'same_day' : 'future_10min_before'
-               });
+               const eventDate = new Date(eventDateTime);
+               eventDate.setHours(0, 0, 0, 0);
+               let notificationTime: Date;
+
+               if (eventDate.getTime() === today.getTime()) {
+                 notificationTime = new Date(eventDateTime);
+               } else {
+                 notificationTime = new Date(eventDateTime.getTime() - 10 * 60 * 1000);
+               }
+
+               if (notificationTime >= now) {
+                 allNotifications.push({
+                   type: 'event',
+                   idEvento: evento.idEvento,
+                   nombreEvento: evento.nombreEvento,
+                   fechaEvento: evento.fechaEvento,
+                   horaEvento: evento.horaEvento,
+                   descripcionEvento: evento.descripcionEvento,
+                   estado: evento.estado,
+                   metodoEstudio: evento.metodoEstudio ? {
+                     idMetodo: evento.metodoEstudio.idMetodo,
+                     nombreMetodo: evento.metodoEstudio.nombreMetodo
+                   } : null,
+                   album: evento.album ? {
+                     idAlbum: evento.album.idAlbum,
+                     nombreAlbum: evento.album.nombreAlbum
+                   } : null,
+                   notificationTime: notificationTime.toISOString(),
+                   notificationRule: eventDate.getTime() === today.getTime() ? 'same_day' : 'future_10min_before'
+                 });
+               }
+             } catch (error) {
+               logger.error(`Error procesando evento ${evento.idEvento}:`, error);
              }
-           } catch (error) {
-             logger.error(`Error procesando evento ${evento.idEvento}:`, error);
            }
+         } catch (error) {
+           logger.error(`Error obteniendo notificaciones de eventos para usuario ${userId}:`, error);
          }
-       } catch (error) {
-         logger.error(`Error obteniendo notificaciones de eventos para usuario ${userId}:`, error);
        }
 
-       // 2. STUDY METHOD REMINDERS - Métodos con progreso < 100% y > 7 días
-       try {
-         const sevenDaysAgo = new Date();
-         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+       if (metodosEnabled) {
+         try {
+           const sevenDaysAgo = new Date();
+           sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-         const metodosIncompletos = await AppDataSource.getRepository('MetodoRealizadoEntity')
-           .createQueryBuilder("mr")
-           .leftJoinAndSelect("mr.metodo", "m")
-           .where("mr.id_usuario = :userId", { userId })
-           .andWhere("mr.progreso < :completado", { completado: 100 })
-           .andWhere("mr.fecha_creacion <= :sevenDaysAgo", { sevenDaysAgo })
-           .orderBy("mr.fecha_creacion", "ASC")
-           .getMany();
+           const metodosIncompletos = await AppDataSource.getRepository(MetodoRealizadoEntity)
+             .createQueryBuilder("mr")
+             .leftJoinAndSelect("mr.metodo", "m")
+             .where("mr.id_usuario = :userId", { userId })
+             .andWhere("mr.progreso < :completado", { completado: 100 })
+             .andWhere("mr.fecha_creacion <= :sevenDaysAgo", { sevenDaysAgo })
+             .orderBy("mr.fecha_creacion", "ASC")
+             .getMany();
 
-         logger.info(`Encontrados ${metodosIncompletos.length} métodos incompletos para recordatorios`);
+           logger.info(`Encontrados ${metodosIncompletos.length} métodos incompletos para recordatorios`);
 
-         for (const metodo of metodosIncompletos) {
-           try {
-             // Para métodos incompletos, mostrar recordatorio inmediato (próximos 24 horas)
+           for (const metodo of metodosIncompletos) {
              const notificationTime = new Date(now);
-             notificationTime.setHours(notificationTime.getHours() + 1); // Recordatorio en 1 hora
-
-             // Create stored notification for email delivery
-             try {
-               await this.createScheduledNotification({
-                 idUsuario: userId,
-                 tipo: 'metodo_pendiente',
-                 titulo: 'Recordatorio de método pendiente',
-                 mensaje: JSON.stringify({
-                   nombreMetodo: metodo.metodo?.nombreMetodo || 'Método desconocido',
-                   progreso: metodo.progreso,
-                   idMetodoRealizado: metodo.idMetodoRealizado
-                 }),
-                 fechaProgramada: notificationTime
-               });
-               logger.debug(`Stored notification created for incomplete method ${metodo.idMetodoRealizado}`);
-             } catch (storeError) {
-               logger.error(`Failed to create stored notification for method ${metodo.idMetodoRealizado}:`, storeError);
-             }
+             notificationTime.setHours(notificationTime.getHours() + 1);
 
              allNotifications.push({
                type: 'incomplete_study_method',
@@ -262,53 +272,27 @@ export const NotificacionesProgramadasService = {
                progreso: metodo.progreso,
                notificationTime: notificationTime.toISOString()
              });
-
-             logger.debug(`Recordatorio agregado para método incompleto ${metodo.idMetodoRealizado} (${metodo.progreso}%)`);
-           } catch (error) {
-             logger.error(`Error procesando recordatorio de método ${metodo.idMetodoRealizado}:`, error);
            }
+         } catch (error) {
+           logger.error(`Error obteniendo recordatorios de métodos para usuario ${userId}:`, error);
          }
-       } catch (error) {
-         logger.error(`Error obteniendo recordatorios de métodos para usuario ${userId}:`, error);
        }
 
-       // 3. WEEKLY MOTIVATIONAL NOTIFICATIONS - Una por semana
-       try {
-         // Verificar si el usuario tiene habilitadas las notificaciones motivacionales
-         const notificacionesUsuario = await AppDataSource.getRepository('NotificacionesUsuarioEntity')
-           .findOne({
-             where: { idUsuario: userId, motivacion: true }
-           });
-
-         if (notificacionesUsuario) {
-           // Calcular la próxima notificación semanal (7 días desde ahora)
-           const notificationTime = new Date();
-           notificationTime.setDate(notificationTime.getDate() + 7);
-
-           // Obtener número de semana actual para seleccionar mensaje
-           const currentWeek = getCurrentWeekNumber();
-
-           allNotifications.push({
-             type: 'weekly_motivation',
-             notificationTime: notificationTime.toISOString(),
-             templateId: currentWeek
-           });
-
-           logger.debug(`Notificación motivacional semanal programada para usuario ${userId} en semana ${currentWeek}`);
-         }
-       } catch (error) {
-         logger.error(`Error obteniendo notificaciones motivacionales para usuario ${userId}:`, error);
+       if (motivacionEnabled) {
+         const notificationTime = new Date();
+         notificationTime.setDate(notificationTime.getDate() + 7);
+         const currentWeek = getCurrentWeekNumber();
+         allNotifications.push({
+           type: 'weekly_motivation',
+           notificationTime: notificationTime.toISOString(),
+           templateId: currentWeek
+         });
        }
 
-       // Ordenar todas las notificaciones por tiempo
        allNotifications.sort((a, b) => new Date(a.notificationTime).getTime() - new Date(b.notificationTime).getTime());
 
        logger.info(`Retornando ${allNotifications.length} notificaciones programadas totales para usuario ${userId}`);
-
-       return {
-         success: true,
-         data: allNotifications
-       };
+       return { success: true, data: allNotifications };
      } catch (error) {
        logger.error(`Error al obtener notificaciones programadas para usuario ${userId}:`, error);
        return {
@@ -408,6 +392,27 @@ export const NotificacionesProgramadasService = {
           // Calcular fecha de envío: exactamente 7 días desde ahora
           const fechaEnvio = new Date();
           fechaEnvio.setDate(fechaEnvio.getDate() + 7);
+
+          const weekStart = new Date(fechaEnvio);
+          weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+          weekStart.setHours(0, 0, 0, 0);
+
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekEnd.getDate() + 6);
+          weekEnd.setHours(23, 59, 59, 999);
+
+          const existingInWeek = await NotificacionesProgramadasRepository
+            .createQueryBuilder("n")
+            .where("n.idUsuario = :idUsuario", { idUsuario: notificacionUsuario.idUsuario })
+            .andWhere("n.tipo = :tipo", { tipo: "motivation" })
+            .andWhere("n.fechaProgramada BETWEEN :weekStart AND :weekEnd", { weekStart, weekEnd })
+            .andWhere("n.enviada = false")
+            .getCount();
+
+          if (existingInWeek > 0) {
+            logger.debug(`Email motivacional omitido por duplicado semanal para usuario ${notificacionUsuario.idUsuario}`);
+            continue;
+          }
 
           // Programar la notificación motivacional
           await this.createScheduledNotification({

@@ -2,6 +2,7 @@ import { AppDataSource } from "../config/ormconfig";
 import { NotificacionesProgramadasEntity } from "../models/NotificacionesProgramadas.entity";
 import { UserEntity } from "../models/User.entity";
 import { SesionConcentracionEntity } from "../models/SesionConcentracion.entity";
+import { NotificacionesUsuarioEntity } from "../models/NotificacionesUsuario.entity";
 import logger from "../utils/logger";
 
 /**
@@ -12,6 +13,7 @@ export class NotificationService {
   private notificationRepository = AppDataSource.getRepository(NotificacionesProgramadasEntity);
   private userRepository = AppDataSource.getRepository(UserEntity);
   private sessionRepository = AppDataSource.getRepository(SesionConcentracionEntity);
+  private preferencesRepository = AppDataSource.getRepository(NotificacionesUsuarioEntity);
 
   /**
    * Crea una notificación programada para una sesión
@@ -37,6 +39,20 @@ export class NotificationService {
   }): Promise<NotificacionesProgramadasEntity> {
     logger.info(`Creando notificación programada para usuario ${userId}, sesión ${sessionId}`);
 
+    const preferencias = await this.preferencesRepository.findOne({ where: { idUsuario: userId } });
+    const sesionesHabilitadas = preferencias?.sesionesPendientes ?? true;
+    if (!sesionesHabilitadas) {
+      logger.info(`Notificaciones de sesiones pendientes desactivadas para usuario ${userId}`);
+      return this.notificationRepository.create({
+        idUsuario: userId,
+        tipo: "sesion_pendiente",
+        titulo: title,
+        mensaje: JSON.stringify({ sessionId, message, omittedByPreference: true }),
+        fechaProgramada: scheduledAt,
+        enviada: false,
+      });
+    }
+
     // Verificar que no existe una notificación duplicada para la misma sesión en la misma semana
     const weekStart = new Date(scheduledAt);
     weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Inicio de semana (domingo)
@@ -46,13 +62,14 @@ export class NotificationService {
     weekEnd.setDate(weekEnd.getDate() + 6); // Fin de semana (sábado)
     weekEnd.setHours(23, 59, 59, 999);
 
-    const existingNotification = await this.notificationRepository.findOne({
-      where: {
-        idUsuario: userId,
-        tipo: "sesion_pendiente",
-        fechaProgramada: scheduledAt
-      }
-    });
+    const existingNotification = await this.notificationRepository
+      .createQueryBuilder("n")
+      .where("n.idUsuario = :userId", { userId })
+      .andWhere("n.tipo = :tipo", { tipo: "sesion_pendiente" })
+      .andWhere("n.enviada = false")
+      .andWhere("n.fechaProgramada BETWEEN :weekStart AND :weekEnd", { weekStart, weekEnd })
+      .andWhere("n.mensaje LIKE :sessionPattern", { sessionPattern: `%"sessionId":${sessionId}%` })
+      .getOne();
 
     if (existingNotification) {
       logger.info(`Notificación ya existe para usuario ${userId}, sesión ${sessionId} en la semana`);
