@@ -14,10 +14,31 @@ const userRepository = AppDataSource.getRepository(UserEntity);
 const albumRepository = AppDataSource.getRepository(AlbumMusicaEntity);
 const preferenciasRepository = AppDataSource.getRepository(NotificacionesUsuarioEntity);
 
+const EVENT_TIMEZONE_OFFSET_MINUTES = Number.parseInt(
+  process.env.EVENT_TIMEZONE_OFFSET_MINUTES ?? '-300',
+  10
+);
+
+const formatYmdFromDate = (dateValue: Date): string => {
+  const year = dateValue.getUTCFullYear();
+  const month = String(dateValue.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(dateValue.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getDatePartsInConfiguredTimezone = (date: Date) => {
+  const shifted = new Date(date.getTime() + EVENT_TIMEZONE_OFFSET_MINUTES * 60000);
+  return {
+    year: shifted.getUTCFullYear(),
+    month: shifted.getUTCMonth() + 1,
+    day: shifted.getUTCDate(),
+  };
+};
+
 const parseLocalDateTime = (dateValue: string | Date, timeValue: string): Date | null => {
   const dateString = dateValue instanceof Date
-    ? dateValue.toISOString().split('T')[0]
-    : String(dateValue);
+    ? formatYmdFromDate(dateValue)
+    : String(dateValue).split('T')[0];
 
   const dateParts = dateString.split('-').map((part) => Number.parseInt(part, 10));
   const timeParts = timeValue.split(':').map((part) => Number.parseInt(part, 10));
@@ -36,8 +57,11 @@ const parseLocalDateTime = (dateValue: string | Date, timeValue: string): Date |
     return null;
   }
 
-  const localDate = new Date(year, month - 1, day, hour, minute, second, 0);
-  return Number.isNaN(localDate.getTime()) ? null : localDate;
+  const utcFromConfiguredTimezone = new Date(
+    Date.UTC(year, month - 1, day, hour, minute, second, 0) -
+      EVENT_TIMEZONE_OFFSET_MINUTES * 60000
+  );
+  return Number.isNaN(utcFromConfiguredTimezone.getTime()) ? null : utcFromConfiguredTimezone;
 };
 
 /**
@@ -258,15 +282,23 @@ export const EventoService = {
                 } else {
                     // Obtener fecha actual y fecha del evento (solo fecha, sin hora)
                     const ahora = new Date();
-                    const hoy = new Date(ahora);
-                    hoy.setHours(0, 0, 0, 0);
-
-                    const fechaEvento = new Date(eventoCompleto.fechaEvento + 'T00:00:00');
+                    const hoyTz = getDatePartsInConfiguredTimezone(ahora);
+                    const fechaEventoString = String(eventoCompleto.fechaEvento).split('T')[0];
+                    const [eventYear, eventMonth, eventDay] = fechaEventoString
+                      .split('-')
+                      .map((part) => Number.parseInt(part, 10));
+                    const isTodayEvent =
+                      Number.isFinite(eventYear) &&
+                      Number.isFinite(eventMonth) &&
+                      Number.isFinite(eventDay) &&
+                      eventYear === hoyTz.year &&
+                      eventMonth === hoyTz.month &&
+                      eventDay === hoyTz.day;
 
                     // Calcular tiempo del recordatorio según reglas de negocio
                     let tiempoRecordatorio: Date;
 
-                    if (fechaEvento.getTime() > hoy.getTime()) {
+                    if (!isTodayEvent) {
                         // Evento futuro: recordatorio 10 minutos antes
                         tiempoRecordatorio = new Date(eventDateTime.getTime() - 10 * 60 * 1000); // 10 minutos en ms
                         console.log(`📅 Evento futuro ${eventoCompleto.idEvento} - recordatorio 10 min antes: ${tiempoRecordatorio}`);
