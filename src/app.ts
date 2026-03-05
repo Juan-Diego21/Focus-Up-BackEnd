@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import * as cron from "node-cron";
 import "reflect-metadata";
 import routes from "./routes";
 import { env } from "./config/env";
@@ -10,6 +11,9 @@ import { initializeDatabase, AppDataSource } from "./config/ormconfig";
 import logger from "./utils/logger";
 import { validateEnvironment } from "./utils/envValidation";
 import { PendingEmailScheduler } from "./jobs/pendingEmailScheduler";
+import { SessionService } from "./services/SessionService";
+import { NotificationService } from "./services/NotificationService";
+import { NotificacionesProgramadasService } from "./services/NotificacionesProgramadasService";
 
 // Validar variables de entorno al inicio
 validateEnvironment();
@@ -147,10 +151,44 @@ app.use(
 // ======================
 const PORT = env.PORT;
 const emailScheduler = new PendingEmailScheduler();
+const cronTasks: cron.ScheduledTask[] = [];
+
+const processSessionNotifications = async (): Promise<void> => {
+  try {
+    const sessionService = new SessionService();
+    const notificationService = new NotificationService();
+    const pendingSessions = await sessionService.getPendingSessionsOlderThan(7);
+
+    for (const session of pendingSessions) {
+      const scheduledAt = new Date();
+      scheduledAt.setHours(9, 0, 0, 0);
+      await notificationService.createScheduledNotification({
+        userId: session.idUsuario,
+        sessionId: session.idSesion,
+        title: "Sesión de concentración pendiente",
+        message: "Tienes una sesión de concentración pendiente desde hace más de una semana.",
+        scheduledAt,
+      });
+    }
+  } catch (error) {
+    logger.error("Error procesando recordatorios de sesiones", { error });
+  }
+};
+
+const scheduleWeeklyMotivation = async (): Promise<void> => {
+  try {
+    await NotificacionesProgramadasService.scheduleWeeklyMotivationalEmails();
+  } catch (error) {
+    logger.error("Error programando correos motivacionales semanales", { error });
+  }
+};
 const server = app.listen(PORT, async () => {
   try {
     await initializeDatabase();
     await emailScheduler.start();
+    cronTasks.push(cron.schedule("0 2 * * *", () => void processSessionNotifications()));
+    cronTasks.push(cron.schedule("0 9 * * 0", () => void scheduleWeeklyMotivation()));
+    logger.info("Cron jobs de sesiones y motivación iniciados");
 
     logger.info(`🚀 El server de la API de Focus Up está corriendo en el puerto ${PORT}`);
     logger.info(`📍 Entorno: ${env.NODE_ENV}`);
@@ -177,6 +215,7 @@ const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
 
   try {
     await emailScheduler.stop();
+    cronTasks.forEach((task) => task.stop());
 
     await new Promise<void>((resolve, reject) => {
       server.close((error) => {
