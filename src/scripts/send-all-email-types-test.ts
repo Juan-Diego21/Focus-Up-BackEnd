@@ -5,6 +5,14 @@ import nodemailer from "nodemailer";
 dotenv.config();
 
 const to = "jdmend21@gmail.com";
+const DEV_FRONTEND_URL = "http://localhost:5173";
+
+const getFrontendBaseUrl = (): string => {
+  if ((process.env.NODE_ENV || "").toLowerCase() === "production") {
+    return (process.env.FRONTEND_URL || "").trim().replace(/\/+$/, "");
+  }
+  return DEV_FRONTEND_URL;
+};
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
@@ -62,60 +70,60 @@ const emails = [
       "Recordatorio de Evento",
       "#007bff",
       `
-      <p>Hola, te recordamos que tienes un evento proximo:</p>
+      <p>Hola, te recordamos que tienes un evento próximo:</p>
       <div class="box">
-        <p><strong>Repaso de Algebra</strong></p>
+        <p><strong>Repaso de Álgebra</strong></p>
         <p>Fecha: 2026-03-06</p>
         <p>Hora: 18:30</p>
-        <p>Descripcion: Practica de ejercicios capitulo 3.</p>
-        <p class="cta"><a href="http://localhost:5173/start-session?eventId=123">Iniciar sesion de concentracion</a></p>
+        <p>Descripción: Práctica de ejercicios capítulo 3.</p>
+        <p class="cta"><a href="${getFrontendBaseUrl()}/start-session?eventId=123">Iniciar sesión de concentración</a></p>
       </div>
       <div class="highlight"><p>No pierdas el ritmo. Planifica unos minutos antes para empezar con foco.</p></div>
       `
     ),
   },
   {
-    subject: "[PRUEBA] Recordatorio: Metodo de estudio pendiente",
+    subject: "[PRUEBA] Recordatorio: Método de estudio pendiente",
     html: wrapEmailTemplate(
-      "Recordatorio de Metodo de Estudio - Focus-Up",
-      "Recordatorio de Metodo Pendiente",
+      "Recordatorio de Método de Estudio - Focus-Up",
+      "Recordatorio de Método Pendiente",
       "#ffc107",
       `
-      <p>Hola, tienes un metodo de estudio pendiente por continuar:</p>
+      <p>Hola, tienes un método de estudio pendiente por continuar:</p>
       <div class="box" style="border-left-color:#ffc107;background:#fff8e1;">
-        <p><strong>Metodo:</strong> Pomodoro</p>
+        <p><strong>Método:</strong> Pomodoro</p>
         <p><strong>Progreso actual:</strong> 45%</p>
       </div>
-      <div class="highlight"><p>Un avance corto hoy mantiene el impulso. Continua donde lo dejaste.</p></div>
+      <div class="highlight"><p>Un avance corto hoy mantiene el impulso. Continúa donde lo dejaste.</p></div>
       `
     ),
   },
   {
-    subject: "[PRUEBA] Recordatorio: Sesion de concentracion pendiente",
+    subject: "[PRUEBA] Recordatorio: Sesión de concentración pendiente",
     html: wrapEmailTemplate(
-      "Recordatorio de Sesion de Concentracion - Focus-Up",
-      "Recordatorio de Sesion Pendiente",
+      "Recordatorio de Sesión de Concentración - Focus-Up",
+      "Recordatorio de Sesión Pendiente",
       "#28a745",
       `
-      <p>Hola, tienes una sesion de concentracion pendiente:</p>
+      <p>Hola, tienes una sesión de concentración pendiente:</p>
       <div class="box" style="border-left-color:#28a745;background:#edf9f0;">
-        <p><strong>Sesion profunda - 50 minutos</strong></p>
-        <p class="cta"><a href="http://localhost:5173/events?sessionId=987">Ir a mis eventos/sesiones</a></p>
+        <p><strong>Sesión profunda - 50 minutos</strong></p>
+        <p class="cta"><a href="${getFrontendBaseUrl()}/events?sessionId=987">Ir a mis eventos/sesiones</a></p>
       </div>
-      <div class="highlight"><p>Retoma tu sesion y suma otro bloque de progreso a tu objetivo.</p></div>
+      <div class="highlight"><p>Retoma tu sesión y suma otro bloque de progreso a tu objetivo.</p></div>
       `
     ),
   },
   {
-    subject: "[PRUEBA] Motivacion semanal - Focus-Up",
+    subject: "[PRUEBA] Motivación semanal - Focus-Up",
     html: wrapEmailTemplate(
-      "Motivacion Semanal - Focus-Up",
-      "Motivacion Semanal",
+      "Motivación Semanal - Focus-Up",
+      "Motivación Semanal",
       "#6f42c1",
       `
-      <p>Hola, aqui tienes tu mensaje motivacional de la semana:</p>
+      <p>Hola, aquí tienes tu mensaje motivacional de la semana:</p>
       <div class="box" style="border-left-color:#6f42c1;background:#f4efff;">
-        <p><strong>"Cada sesion cuenta. Tu constancia hoy es tu resultado de manana."</strong></p>
+        <p><strong>"Cada sesión cuenta. Tu constancia hoy es tu resultado de mañana."</strong></p>
       </div>
       <div class="highlight"><p>Una semana a la vez, con enfoque constante y progreso real.</p></div>
       `
@@ -147,4 +155,3 @@ main().catch((error) => {
   console.error("Error enviando correos de prueba:", error);
   process.exit(1);
 });
-

@@ -66,3 +66,63 @@ export const markAsSent = async (idNotificacion: number) => {
   // Retornar true si se actualizó al menos un registro
   return result.affected && result.affected > 0;
 };
+/**
+ * Elimina notificaciones pendientes de tipo evento asociadas a un evento especifico.
+ * Usa patron sobre el JSON serializado en mensaje para localizar idEvento.
+ */
+export const deletePendingEventNotificationsByEventId = async (
+  idUsuario: number,
+  idEvento: number
+): Promise<number> => {
+  if (!Number.isFinite(idEvento) || idEvento <= 0) return 0;
+
+  const compactPattern = `%"idEvento":${idEvento}%`;
+  const spacedPattern = `%"idEvento": ${idEvento}%`;
+  const stringPattern = `%"idEvento":"${idEvento}"%`;
+
+  const result = await NotificacionesProgramadasRepository
+    .createQueryBuilder()
+    .delete()
+    .from(NotificacionesProgramadasEntity)
+    .where("id_usuario = :idUsuario", { idUsuario })
+    .andWhere("tipo = :tipo", { tipo: "evento" })
+    .andWhere("enviada = false")
+    .andWhere(
+      "(mensaje LIKE :compactPattern OR mensaje LIKE :spacedPattern OR mensaje LIKE :stringPattern)",
+      { compactPattern, spacedPattern, stringPattern }
+    )
+    .execute();
+
+  return result.affected ?? 0;
+};
+
+/**
+ * Elimina notificaciones pendientes de tipo evento usando firma legacy
+ * (titulo + fecha aproximada) para compatibilidad con mensajes antiguos sin idEvento.
+ */
+export const deletePendingEventNotificationsByLegacySignature = async (
+  idUsuario: number,
+  titulo: string,
+  fechaProgramada: Date
+): Promise<number> => {
+  if (!titulo || !fechaProgramada || Number.isNaN(fechaProgramada.getTime())) return 0;
+
+  const windowStart = new Date(fechaProgramada.getTime() - 60_000);
+  const windowEnd = new Date(fechaProgramada.getTime() + 60_000);
+
+  const result = await NotificacionesProgramadasRepository
+    .createQueryBuilder()
+    .delete()
+    .from(NotificacionesProgramadasEntity)
+    .where("id_usuario = :idUsuario", { idUsuario })
+    .andWhere("tipo = :tipo", { tipo: "evento" })
+    .andWhere("enviada = false")
+    .andWhere("titulo = :titulo", { titulo })
+    .andWhere("fecha_programada BETWEEN :windowStart AND :windowEnd", {
+      windowStart,
+      windowEnd,
+    })
+    .execute();
+
+  return result.affected ?? 0;
+};

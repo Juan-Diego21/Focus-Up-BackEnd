@@ -63,17 +63,54 @@ const asNumber = (value: unknown, fallback = 0): number => {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 };
 
+const readNumericId = (value: unknown): number => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && /^\d+$/.test(value.trim())) {
+    return Number.parseInt(value.trim(), 10);
+  }
+
+  return 0;
+};
+
+const DEV_FRONTEND_URL = "http://localhost:5173";
+
+const getFrontendBaseUrl = (): string => {
+  if ((process.env.NODE_ENV || "").toLowerCase() === "production") {
+    return (process.env.FRONTEND_URL || "").trim().replace(/\/+$/, "");
+  }
+
+  return DEV_FRONTEND_URL;
+};
+
 const getFrontendEventsUrl = (): string => {
-  if ((process.env.NODE_ENV || "").toLowerCase() === "development") {
-    return "http://localhost:5173/events";
+  return `${getFrontendBaseUrl()}/events`;
+};
+
+const getStartSessionUrl = (eventId: number): string => {
+  return `${getFrontendBaseUrl()}/start-session?eventId=${eventId}`;
+};
+
+const normalizeStartSessionLink = (rawLink: string): string => {
+  const normalized = rawLink.trim();
+  if (!normalized) return "";
+
+  const eventIdMatch = normalized.match(/[?&]eventId=(\d+)/i);
+  if (eventIdMatch?.[1]) {
+    const parsedEventId = Number.parseInt(eventIdMatch[1], 10);
+    if (!Number.isNaN(parsedEventId) && parsedEventId > 0) {
+      return getStartSessionUrl(parsedEventId);
+    }
   }
 
-  const frontendUrl = (process.env.FRONTEND_URL || "").trim();
-  if (!frontendUrl) {
-    return "http://localhost:5173/events";
-  }
+  return normalized;
+};
 
-  return `${frontendUrl.replace(/\/+$/, "")}/events`;
+const getEventDescription = (parsed: Record<string, unknown> | null): string => {
+  const description = asString(parsed?.descripcionEvento, "");
+  return description || "Sin descripción";
 };
 
 const normalizeKind = (kind: NotificationKind): NotificationKind => {
@@ -205,8 +242,15 @@ const buildEmailPayload = (kind: NotificationKind, title?: string, message?: str
     const eventName = asString(parsed?.nombreEvento, title || "Evento");
     const eventDate = asString(parsed?.fechaEvento, "");
     const eventTime = asString(parsed?.horaEvento, "");
-    const eventDescription = asString(parsed?.descripcionEvento, message || "");
-    const eventLink = asString(parsed?.link, "");
+    const eventDescription = getEventDescription(parsed);
+    const eventId = readNumericId(parsed?.idEvento);
+    const rawEventLink = asString(parsed?.link, "");
+    const eventType = asString(parsed?.tipoEvento, "").toLowerCase();
+    const isConcentrationEvent = eventType === "concentracion" || rawEventLink.includes("/start-session");
+    const eventLink = eventId > 0 && isConcentrationEvent
+      ? getStartSessionUrl(eventId)
+      : normalizeStartSessionLink(rawEventLink);
+
     return {
       subject: `Recordatorio: ${eventName}`,
       html: wrapEmailTemplate(
@@ -214,13 +258,13 @@ const buildEmailPayload = (kind: NotificationKind, title?: string, message?: str
         "Recordatorio de Evento",
         "#007bff",
         `
-          <p>Hola, te recordamos que tienes un evento proximo:</p>
+          <p>Hola, te recordamos que tienes un evento próximo:</p>
           <div class="box">
             <p><strong>${eventName}</strong></p>
             <p>Fecha: ${eventDate || "Por definir"}</p>
             <p>Hora: ${eventTime || "Por definir"}</p>
-            ${eventDescription ? `<p>Descripcion: ${eventDescription}</p>` : ""}
-            ${eventLink ? `<p class="cta"><a href="${eventLink}">Iniciar sesion de concentracion</a></p>` : ""}
+            <p>Descripción: ${eventDescription}</p>
+            ${eventLink ? `<p class="cta"><a href="${eventLink}">Iniciar sesión de concentración</a></p>` : ""}
           </div>
           <div class="highlight">
             <p>No pierdas el ritmo. Planifica unos minutos antes para empezar con foco.</p>
@@ -231,22 +275,22 @@ const buildEmailPayload = (kind: NotificationKind, title?: string, message?: str
   }
 
   if (normalizedKind === "metodo_pendiente") {
-    const methodName = asString(parsed?.nombreMetodo, "Metodo de estudio");
+    const methodName = asString(parsed?.nombreMetodo, "Método de estudio");
     const progress = asNumber(parsed?.progreso, 0);
     return {
-      subject: "Recordatorio: Metodo de estudio pendiente",
+      subject: "Recordatorio: Método de estudio pendiente",
       html: wrapEmailTemplate(
-        "Recordatorio de Metodo de Estudio - Focus-Up",
-        "Recordatorio de Metodo Pendiente",
+        "Recordatorio de Método de Estudio - Focus-Up",
+        "Recordatorio de Método Pendiente",
         "#ffc107",
         `
-          <p>Hola, tienes un metodo de estudio pendiente por continuar:</p>
+          <p>Hola, tienes un método de estudio pendiente por continuar:</p>
           <div class="box" style="border-left-color:#ffc107;background:#fff8e1;">
-            <p><strong>Metodo:</strong> ${methodName}</p>
+            <p><strong>Método:</strong> ${methodName}</p>
             <p><strong>Progreso actual:</strong> ${progress}%</p>
           </div>
           <div class="highlight">
-            <p>Un avance corto hoy mantiene el impulso. Continua donde lo dejaste.</p>
+            <p>Un avance corto hoy mantiene el impulso. Continúa donde lo dejaste.</p>
           </div>
         `
       ),
@@ -254,24 +298,24 @@ const buildEmailPayload = (kind: NotificationKind, title?: string, message?: str
   }
 
   if (normalizedKind === "sesion_pendiente") {
-    const sessionName = asString(parsed?.message, title || "Sesion de concentracion");
+    const sessionName = asString(parsed?.message, title || "Sesión de concentración");
     const sessionId = asNumber(parsed?.sessionId, 0);
     const baseEventsUrl = getFrontendEventsUrl();
     const sessionLink = sessionId > 0 ? `${baseEventsUrl}?sessionId=${sessionId}` : baseEventsUrl;
     return {
-      subject: "Recordatorio: Sesion de concentracion pendiente",
+      subject: "Recordatorio: Sesión de concentración pendiente",
       html: wrapEmailTemplate(
-        "Recordatorio de Sesion de Concentracion - Focus-Up",
-        "Recordatorio de Sesion Pendiente",
+        "Recordatorio de Sesión de Concentración - Focus-Up",
+        "Recordatorio de Sesión Pendiente",
         "#28a745",
         `
-          <p>Hola, tienes una sesion de concentracion pendiente:</p>
+          <p>Hola, tienes una sesión de concentración pendiente:</p>
           <div class="box" style="border-left-color:#28a745;background:#edf9f0;">
             <p><strong>${sessionName}</strong></p>
             <p class="cta"><a href="${sessionLink}">Ir a mis eventos/sesiones</a></p>
           </div>
           <div class="highlight">
-            <p>Retoma tu sesion y suma otro bloque de progreso a tu objetivo.</p>
+            <p>Retoma tu sesión y suma otro bloque de progreso a tu objetivo.</p>
           </div>
         `
       ),
@@ -282,13 +326,13 @@ const buildEmailPayload = (kind: NotificationKind, title?: string, message?: str
     const currentWeek = getCurrentWeekNumber();
     const motivationalMessage = getWeeklyMotivationalMessage(currentWeek);
     return {
-      subject: "Motivacion semanal - Focus-Up",
+      subject: "Motivación semanal - Focus-Up",
       html: wrapEmailTemplate(
-        "Motivacion Semanal - Focus-Up",
-        "Motivacion Semanal",
+        "Motivación Semanal - Focus-Up",
+        "Motivación Semanal",
         "#6f42c1",
         `
-          <p>Hola, aqui tienes tu mensaje motivacional de la semana:</p>
+          <p>Hola, aquí tienes tu mensaje motivacional de la semana:</p>
           <div class="box" style="border-left-color:#6f42c1;background:#f4efff;">
             <p><strong>"${motivationalMessage}"</strong></p>
           </div>
@@ -301,12 +345,12 @@ const buildEmailPayload = (kind: NotificationKind, title?: string, message?: str
   }
 
   return {
-    subject: title || "Notificacion Focus-Up",
+    subject: title || "Notificación Focus-Up",
     html: wrapEmailTemplate(
-      title || "Notificacion Focus-Up",
-      "Notificacion",
+      title || "Notificación Focus-Up",
+      "Notificación",
       "#007bff",
-      `<p>${message || "Tienes una notificacion pendiente."}</p>`
+      `<p>${message || "Tienes una notificación pendiente."}</p>`
     ),
   };
 };

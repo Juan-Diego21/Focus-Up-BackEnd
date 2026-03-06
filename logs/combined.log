@@ -14633,3 +14633,196 @@
 {"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-05 12:59:35"}
 {"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-05 12:59:35"}
 {"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-05 12:59:35"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:11:02"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:11:02"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:11:02"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:11:02"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:11:02"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:11:02"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:11:02"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:12:05"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:12:05"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:12:05"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:12:05"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:12:05"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:12:05"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:12:05"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:13:04"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:13:04"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:13:04"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:13:04"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:13:04"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:13:04"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:13:04"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:14:31"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:14:31"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:14:31"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:14:31"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:14:31"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:14:31"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:14:31"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:22:31"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:22:31"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:22:31"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:22:31"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:22:31"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:22:31"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:22:31"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:27:22"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:27:22"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:27:22"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:27:22"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:27:22"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:27:22"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:27:22"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:28:45"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:28:45"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:28:45"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:28:45"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:28:45"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:28:45"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:28:45"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:30:07"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:30:07"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:30:07"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:30:07"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:30:07"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:30:07"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:30:07"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:30:25"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:30:25"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:30:25"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:30:25"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:30:25"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:30:25"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:30:25"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:31:37"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:31:37"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:31:37"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:31:37"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:31:37"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:31:37"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:31:37"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:33:46"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:33:46"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:33:46"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:33:46"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:33:46"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:33:46"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:33:46"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:34:10"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:34:10"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:34:10"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:34:10"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:34:10"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:34:10"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:34:10"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:34:55"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:34:55"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:34:55"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:34:55"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:34:55"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:34:55"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:34:55"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:35:37"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:35:37"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:35:37"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:35:37"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:35:37"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:35:37"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:35:37"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:35:59"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:35:59"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:35:59"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:35:59"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:35:59"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:35:59"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:35:59"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:36:06"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:36:06"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:36:06"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:36:06"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:36:06"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:36:06"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:36:06"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:38:43"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:38:43"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:38:43"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:38:43"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:38:43"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:38:43"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:38:43"}
+{"batchSize":50,"intervalMs":60000,"level":"info","message":"Email scheduler iniciado","service":"focus-up-backend","timestamp":"2026-03-06 10:38:49"}
+{"level":"info","message":"Cron jobs de sesiones y motivación iniciados","service":"focus-up-backend","timestamp":"2026-03-06 10:38:49"}
+{"level":"info","message":"🚀 El server de la API de Focus Up está corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-06 10:38:49"}
+{"level":"info","message":"📍 Entorno: development","service":"focus-up-backend","timestamp":"2026-03-06 10:38:49"}
+{"level":"info","message":"🌐 Verificación de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-06 10:38:49"}
+{"level":"info","message":"📄 Documentación Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-06 10:38:49"}
+{"level":"info","message":"📊 TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-06 10:38:49"}
+{"level":"info","message":"Auth header received: present for PUT /api/v1/eventos/11","service":"focus-up-backend","timestamp":"2026-03-06 10:44:51"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-06 10:44:51"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: jdmend21@gmail.com, tokenVersion: 9","service":"focus-up-backend","timestamp":"2026-03-06 10:44:51"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:44:51"}
+{"level":"info","message":"Token validation: expires in 22h 30m","service":"focus-up-backend","timestamp":"2026-03-06 10:44:51"}
+{"level":"info","message":"Intentando crear notificación programada para usuario 2, tipo: evento","service":"focus-up-backend","timestamp":"2026-03-06 10:44:52"}
+{"level":"info","message":"Notificación programada creada exitosamente: ID 20 para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:44:53"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/eventos","service":"focus-up-backend","timestamp":"2026-03-06 10:44:53"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-06 10:44:53"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: jdmend21@gmail.com, tokenVersion: 9","service":"focus-up-backend","timestamp":"2026-03-06 10:44:53"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:44:53"}
+{"level":"info","message":"Token validation: expires in 22h 30m","service":"focus-up-backend","timestamp":"2026-03-06 10:44:53"}
+{"enviadas":1,"fallidas":0,"level":"info","message":"Email scheduler: ciclo completado","pendientesDetectadas":1,"procesadas":1,"service":"focus-up-backend","timestamp":"2026-03-06 10:45:01"}
+{"level":"info","message":"Auth header received: present for POST /api/v1/eventos/crear","service":"focus-up-backend","timestamp":"2026-03-06 10:45:31"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-06 10:45:31"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: jdmend21@gmail.com, tokenVersion: 9","service":"focus-up-backend","timestamp":"2026-03-06 10:45:31"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:45:32"}
+{"level":"info","message":"Token validation: expires in 22h 30m","service":"focus-up-backend","timestamp":"2026-03-06 10:45:32"}
+{"level":"info","message":"Intentando crear notificación programada para usuario 2, tipo: evento","service":"focus-up-backend","timestamp":"2026-03-06 10:45:33"}
+{"level":"info","message":"Notificación programada creada exitosamente: ID 21 para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:45:34"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/eventos","service":"focus-up-backend","timestamp":"2026-03-06 10:45:34"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-06 10:45:34"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: jdmend21@gmail.com, tokenVersion: 9","service":"focus-up-backend","timestamp":"2026-03-06 10:45:34"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:45:34"}
+{"level":"info","message":"Token validation: expires in 22h 30m","service":"focus-up-backend","timestamp":"2026-03-06 10:45:34"}
+{"enviadas":1,"fallidas":0,"level":"info","message":"Email scheduler: ciclo completado","pendientesDetectadas":1,"procesadas":1,"service":"focus-up-backend","timestamp":"2026-03-06 10:46:03"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/sessions/from-event/12","service":"focus-up-backend","timestamp":"2026-03-06 10:46:15"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-06 10:46:15"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: jdmend21@gmail.com, tokenVersion: 9","service":"focus-up-backend","timestamp":"2026-03-06 10:46:15"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:46:15"}
+{"level":"info","message":"Token validation: expires in 22h 29m","service":"focus-up-backend","timestamp":"2026-03-06 10:46:15"}
+{"level":"error","message":"Error convirtiendo snake_case a camelCase: Cannot set property query of #<IncomingMessage> which has only a getter","service":"focus-up-backend","stack":"TypeError: Cannot set property query of #<IncomingMessage> which has only a getter\n    at snakeToCamelCase (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\src\\middleware\\session.ts:83:16)\n    at Layer.handleRequest (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\node_modules\\router\\index.js:291:5)\n    at authenticateToken (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\src\\middleware\\auth.ts:90:5)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)","timestamp":"2026-03-06 10:46:15"}
+{"level":"info","message":"Creando sesión desde evento 12 para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:46:15"}
+{"level":"info","message":"Creando sesión desde evento 12 para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:46:15"}
+{"level":"info","message":"Sesión creada exitosamente desde evento 12","service":"focus-up-backend","sessionId":6,"timestamp":"2026-03-06 10:46:16"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/eventos","service":"focus-up-backend","timestamp":"2026-03-06 10:52:25"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-06 10:52:25"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: jdmend21@gmail.com, tokenVersion: 9","service":"focus-up-backend","timestamp":"2026-03-06 10:52:25"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:52:25"}
+{"level":"info","message":"Token validation: expires in 22h 23m","service":"focus-up-backend","timestamp":"2026-03-06 10:52:25"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/eventos","service":"focus-up-backend","timestamp":"2026-03-06 10:52:26"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-06 10:52:26"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: jdmend21@gmail.com, tokenVersion: 9","service":"focus-up-backend","timestamp":"2026-03-06 10:52:26"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:52:26"}
+{"level":"info","message":"Token validation: expires in 22h 23m","service":"focus-up-backend","timestamp":"2026-03-06 10:52:26"}
+{"level":"info","message":"Auth header received: present for POST /api/v1/eventos/crear","service":"focus-up-backend","timestamp":"2026-03-06 10:52:47"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-06 10:52:47"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: jdmend21@gmail.com, tokenVersion: 9","service":"focus-up-backend","timestamp":"2026-03-06 10:52:47"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:52:47"}
+{"level":"info","message":"Token validation: expires in 22h 22m","service":"focus-up-backend","timestamp":"2026-03-06 10:52:47"}
+{"level":"info","message":"Intentando crear notificación programada para usuario 2, tipo: evento","service":"focus-up-backend","timestamp":"2026-03-06 10:52:48"}
+{"level":"info","message":"Notificación programada creada exitosamente: ID 22 para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:52:48"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/eventos","service":"focus-up-backend","timestamp":"2026-03-06 10:52:48"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-06 10:52:48"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: jdmend21@gmail.com, tokenVersion: 9","service":"focus-up-backend","timestamp":"2026-03-06 10:52:48"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:52:48"}
+{"level":"info","message":"Token validation: expires in 22h 22m","service":"focus-up-backend","timestamp":"2026-03-06 10:52:48"}
+{"enviadas":1,"fallidas":0,"level":"info","message":"Email scheduler: ciclo completado","pendientesDetectadas":1,"procesadas":1,"service":"focus-up-backend","timestamp":"2026-03-06 10:53:14"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/sessions/from-event/12","service":"focus-up-backend","timestamp":"2026-03-06 10:54:58"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-06 10:54:58"}
+{"level":"info","message":"Token decoded successfully for userId: 2, email: jdmend21@gmail.com, tokenVersion: 9","service":"focus-up-backend","timestamp":"2026-03-06 10:54:58"}
+{"level":"info","message":"Validación de token completada para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:54:58"}
+{"level":"info","message":"Token validation: expires in 22h 20m","service":"focus-up-backend","timestamp":"2026-03-06 10:54:58"}
+{"level":"error","message":"Error convirtiendo snake_case a camelCase: Cannot set property query of #<IncomingMessage> which has only a getter","service":"focus-up-backend","stack":"TypeError: Cannot set property query of #<IncomingMessage> which has only a getter\n    at snakeToCamelCase (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\src\\middleware\\session.ts:83:16)\n    at Layer.handleRequest (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\node_modules\\router\\index.js:291:5)\n    at authenticateToken (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\src\\middleware\\auth.ts:90:5)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)","timestamp":"2026-03-06 10:54:58"}
+{"level":"info","message":"Creando sesión desde evento 12 para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:54:58"}
+{"level":"info","message":"Creando sesión desde evento 12 para usuario 2","service":"focus-up-backend","timestamp":"2026-03-06 10:54:58"}
+{"level":"error","message":"Error creando sesión desde evento 12: Ya existe una sesión para este evento","service":"focus-up-backend","stack":"Error: Ya existe una sesión para este evento\n    at SessionService.createSessionFromEvent (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\src\\services\\SessionService.ts:422:13)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at SessionController.createSessionFromEvent (C:\\Users\\juand\\OneDrive\\Documents\\Actividades Sena\\9. Proyecto\\5. Quinto Trimestre\\Focus-Up-BackEnd\\src\\controllers\\SessionController.ts:295:23)","timestamp":"2026-03-06 10:54:59"}
