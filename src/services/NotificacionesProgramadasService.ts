@@ -17,6 +17,15 @@ const EVENT_TIMEZONE_OFFSET_MINUTES = Number.parseInt(
   10
 );
 
+const parsedWeeklyMotivationDelayMs = Number.parseInt(
+  process.env.WEEKLY_MOTIVATION_DELAY_MS ?? '15000',
+  10
+);
+const WEEKLY_MOTIVATION_DELAY_MS = Number.isFinite(parsedWeeklyMotivationDelayMs) &&
+  parsedWeeklyMotivationDelayMs >= 1000
+  ? parsedWeeklyMotivationDelayMs
+  : 15000;
+
 const formatYmdFromDate = (dateValue: Date): string => {
   const year = dateValue.getUTCFullYear();
   const month = String(dateValue.getUTCMonth() + 1).padStart(2, '0');
@@ -394,7 +403,7 @@ export const NotificacionesProgramadasService = {
    * Programa emails motivacionales semanales para todos los usuarios suscritos
    * Sistema de rotación semanal: cada semana un mensaje diferente basado en el número de semana
    * Solo para usuarios que tienen habilitadas las notificaciones de motivación
-   * Regla de negocio: un email por semana exactamente 7 días después de la ejecución
+   * Regla de negocio: un email por semana, despachado segundos después de ejecutar el cron
    */
   async scheduleWeeklyMotivationalEmails() {
     try {
@@ -417,28 +426,26 @@ export const NotificacionesProgramadasService = {
 
       let programadas = 0;
       let errores = 0;
+      const now = new Date();
+      const fechaEnvio = new Date(now.getTime() + WEEKLY_MOTIVATION_DELAY_MS);
+
+      const weekStart = new Date(now);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
 
       // Para cada usuario suscrito, programar email motivacional
       for (const notificacionUsuario of usuariosSuscritos) {
         try {
-          // Calcular fecha de envío: exactamente 7 días desde ahora
-          const fechaEnvio = new Date();
-          fechaEnvio.setDate(fechaEnvio.getDate() + 7);
-
-          const weekStart = new Date(fechaEnvio);
-          weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-          weekStart.setHours(0, 0, 0, 0);
-
-          const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekEnd.getDate() + 6);
-          weekEnd.setHours(23, 59, 59, 999);
-
+          // Programar para envío inmediato (con pequeño delay para cumplir validación de fecha futura)
           const existingInWeek = await NotificacionesProgramadasRepository
             .createQueryBuilder("n")
             .where("n.idUsuario = :idUsuario", { idUsuario: notificacionUsuario.idUsuario })
             .andWhere("n.tipo = :tipo", { tipo: "motivation" })
             .andWhere("n.fechaProgramada BETWEEN :weekStart AND :weekEnd", { weekStart, weekEnd })
-            .andWhere("n.enviada = false")
             .getCount();
 
           if (existingInWeek > 0) {
@@ -447,7 +454,7 @@ export const NotificacionesProgramadasService = {
           }
 
           // Programar la notificación motivacional
-          await this.createScheduledNotification({
+          const created = await this.createScheduledNotification({
             idUsuario: notificacionUsuario.idUsuario,
             tipo: "motivation",
             titulo: "Weekly Motivation",
@@ -455,8 +462,14 @@ export const NotificacionesProgramadasService = {
             fechaProgramada: fechaEnvio
           });
 
+          if (!created.success) {
+            errores++;
+            logger.error(`Error al programar email motivacional para usuario ${notificacionUsuario.idUsuario}: ${created.error}`);
+            continue;
+          }
+
           programadas++;
-          logger.debug(`Email motivacional programado para usuario ${notificacionUsuario.idUsuario} en ${fechaEnvio}`);
+          logger.debug(`Email motivacional programado para usuario ${notificacionUsuario.idUsuario} en ${fechaEnvio.toISOString()}`);
         } catch (error) {
           errores++;
           logger.error(`Error al programar email motivacional para usuario ${notificacionUsuario.idUsuario}:`, error);

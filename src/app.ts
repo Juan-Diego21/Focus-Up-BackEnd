@@ -152,6 +152,7 @@ app.use(
 const PORT = env.PORT;
 const emailScheduler = new PendingEmailScheduler();
 const cronTasks: cron.ScheduledTask[] = [];
+const CRON_TIMEZONE = process.env.CRON_TIMEZONE || "America/Bogota";
 
 const processSessionNotifications = async (): Promise<void> => {
   try {
@@ -186,9 +187,9 @@ const server = app.listen(PORT, async () => {
   try {
     await initializeDatabase();
     await emailScheduler.start();
-    cronTasks.push(cron.schedule("0 2 * * *", () => void processSessionNotifications()));
-    cronTasks.push(cron.schedule("0 9 * * 0", () => void scheduleWeeklyMotivation()));
-    logger.info("Cron jobs de sesiones y motivación iniciados");
+    cronTasks.push(cron.schedule("0 2 * * *", () => void processSessionNotifications(), { timezone: CRON_TIMEZONE }));
+    cronTasks.push(cron.schedule("0 9 * * 0", () => void scheduleWeeklyMotivation(), { timezone: CRON_TIMEZONE }));
+    logger.info("Cron jobs de sesiones y motivación iniciados", { timezone: CRON_TIMEZONE });
 
     logger.info(`🚀 El server de la API de Focus Up está corriendo en el puerto ${PORT}`);
     logger.info(`📍 Entorno: ${env.NODE_ENV}`);

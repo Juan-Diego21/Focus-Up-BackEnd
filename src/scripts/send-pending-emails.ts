@@ -811,7 +811,7 @@ async function cleanupExpiredVerificationCodes(): Promise<void> {
  *
  * Reglas de negocio:
  * - Solo usuarios con notificaciones.motivacion = true
- * - Un email por semana exactamente 7 días después de la ejecución
+ * - Un email por semana, programado para envio inmediato tras ejecutar el cron
  * - Mensaje rotativo semanal basado en el número de semana (0-51)
  */
 async function scheduleWeeklyMotivationalEmails(): Promise<void> {
