@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
     "build": "tsc",
-    "start": "npm run build && node dist/app.js",
+    "start": "node dist/app.js",
     "send-emails": "ts-node src/scripts/send-pending-emails.ts",
     "test:db": "ts-node src/scripts/test-connection.ts",
     "test:integration": "ts-node src/scripts/test-integration.ts",
