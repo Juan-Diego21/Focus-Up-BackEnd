@@ -58,6 +58,14 @@ jobs:
       EMAIL_AUTOMATION_ENABLE_WEEKLY_MOTIVATION: true
 
     steps:
+      - name: Show scheduler logs
+        if: always()
+        run: |
+          echo "=== combined.log ==="
+          test -f logs/combined.log && tail -n 200 logs/combined.log || echo "No combined.log"
+          echo "=== error.log ==="
+          test -f logs/error.log && tail -n 200 logs/error.log || echo "No error.log"
+
       - name: Workflow metadata
         shell: bash
         run: |
