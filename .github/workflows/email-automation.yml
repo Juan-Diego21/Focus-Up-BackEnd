@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     # Necesario si los secretos se guardaron como "Environment secrets".
     # Si usas otro environment, cambia "production" por el nombre correcto.
-    environment: production
+    environment: Variables de entorno
     env:
       # Variables minimas requeridas por validacion de entorno.
       NODE_ENV: production
