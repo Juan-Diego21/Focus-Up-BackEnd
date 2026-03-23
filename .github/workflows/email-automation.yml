@@ -129,12 +129,139 @@ jobs:
       - name: Ensure logs directory exists
         run: mkdir -p logs
 
+      - name: Reset scheduler log files for this run
+        shell: bash
+        run: |
+          : > logs/combined.log
+          : > logs/error.log
+
       - name: Verify SMTP credentials
         run: |
           node -e "const nodemailer=require('nodemailer'); const transporter=nodemailer.createTransport({host:process.env.SMTP_HOST,port:Number(process.env.SMTP_PORT),secure:process.env.SMTP_SECURE==='true',auth:{user:process.env.EMAIL_USER,pass:process.env.EMAIL_PASS},tls:{rejectUnauthorized:false}}); transporter.verify().then(()=>{console.log('SMTP OK')}).catch((error)=>{console.error('SMTP FAIL:', error && error.message ? error.message : error); process.exit(1);});"
 
+      - name: Debug pending notifications (before run)
+        shell: bash
+        run: |
+          node <<'NODE'
+          const { Client } = require("pg");
+
+          const client = new Client({
+            host: process.env.PGHOST,
+            port: Number(process.env.PGPORT),
+            database: process.env.PGDATABASE,
+            user: process.env.PGUSER,
+            password: process.env.PGPASSWORD,
+            ssl:
+              process.env.PGSSLMODE === "require"
+                ? { rejectUnauthorized: false }
+                : undefined,
+          });
+
+          const main = async () => {
+            await client.connect();
+
+            const clock = await client.query(
+              "SELECT NOW() AS db_now, current_setting('TimeZone') AS db_tz"
+            );
+            console.log("[db-clock-before]", JSON.stringify(clock.rows[0]));
+
+            const pending = await client.query(`
+              SELECT
+                id_notificacion,
+                id_usuario,
+                tipo,
+                fecha_programada,
+                enviada,
+                (fecha_programada <= NOW()) AS due_now
+              FROM notificaciones_programadas
+              WHERE enviada = false
+              ORDER BY fecha_programada ASC
+              LIMIT 20
+            `);
+
+            console.log(\`[pending-before] count=\${pending.rowCount}\`);
+            for (const row of pending.rows) {
+              console.log("[pending-before-row]", JSON.stringify(row));
+            }
+          };
+
+          main()
+            .catch((error) => {
+              console.error("DB debug before failed:", error);
+              process.exit(1);
+            })
+            .finally(async () => {
+              try {
+                await client.end();
+              } catch (error) {
+                console.error("DB client close failed (before):", error);
+              }
+            });
+          NODE
+
       - name: Run email automation script
         run: npm run email:automation
+
+      - name: Debug pending notifications (after run)
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const { Client } = require("pg");
+
+          const client = new Client({
+            host: process.env.PGHOST,
+            port: Number(process.env.PGPORT),
+            database: process.env.PGDATABASE,
+            user: process.env.PGUSER,
+            password: process.env.PGPASSWORD,
+            ssl:
+              process.env.PGSSLMODE === "require"
+                ? { rejectUnauthorized: false }
+                : undefined,
+          });
+
+          const main = async () => {
+            await client.connect();
+
+            const clock = await client.query(
+              "SELECT NOW() AS db_now, current_setting('TimeZone') AS db_tz"
+            );
+            console.log("[db-clock-after]", JSON.stringify(clock.rows[0]));
+
+            const pending = await client.query(`
+              SELECT
+                id_notificacion,
+                id_usuario,
+                tipo,
+                fecha_programada,
+                enviada,
+                (fecha_programada <= NOW()) AS due_now
+              FROM notificaciones_programadas
+              WHERE enviada = false
+              ORDER BY fecha_programada ASC
+              LIMIT 20
+            `);
+
+            console.log(\`[pending-after] count=\${pending.rowCount}\`);
+            for (const row of pending.rows) {
+              console.log("[pending-after-row]", JSON.stringify(row));
+            }
+          };
+
+          main()
+            .catch((error) => {
+              console.error("DB debug after failed:", error);
+              process.exit(1);
+            })
+            .finally(async () => {
+              try {
+                await client.end();
+              } catch (error) {
+                console.error("DB client close failed (after):", error);
+              }
+            });
+          NODE
 
       - name: Show scheduler logs (post-run)
         if: always()
