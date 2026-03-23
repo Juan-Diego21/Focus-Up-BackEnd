@@ -4,7 +4,7 @@ import { runEmailAutomationCycle } from "../jobs/emailAutomationJob";
 import logger from "../utils/logger";
 
 /**
- * Cierra la conexión de TypeORM de forma segura al terminar el script.
+ * Cierra la conexion de TypeORM de forma segura al terminar el script.
  * Esto evita conexiones colgadas cuando se ejecuta en runners de CI/CD.
  */
 const closeDatabaseConnection = async (): Promise<void> => {
@@ -12,26 +12,29 @@ const closeDatabaseConnection = async (): Promise<void> => {
 
   try {
     await AppDataSource.destroy();
-    logger.info("Conexión de base de datos cerrada correctamente");
+    logger.info("Conexion de base de datos cerrada correctamente");
   } catch (error) {
-    logger.error("Error cerrando conexión de base de datos", { error });
+    logger.error("Error cerrando conexion de base de datos", { error });
   }
 };
 
 /**
- * Ejecuta un ciclo único de automatización de correos.
- * Está diseñado para ser llamado por cron externo (GitHub Actions).
+ * Ejecuta un ciclo unico de automatizacion de correos.
+ * Esta disenado para ser llamado por cron externo (GitHub Actions).
  */
 export const runEmailAutomationScript = async (): Promise<number> => {
   try {
-    // Abrimos conexión de datos y ejecutamos el ciclo de negocio desacoplado.
+    // Abrimos conexion de datos y ejecutamos el ciclo de negocio desacoplado.
     await initializeDatabase();
     const summary = await runEmailAutomationCycle();
 
-    logger.info("Script de automatización ejecutado correctamente", summary);
+    // Mostrar resumen en stdout para visibilidad directa en GitHub Actions.
+    console.log("[email-automation] summary:", JSON.stringify(summary));
+    logger.info("Script de automatizacion ejecutado correctamente", summary);
     return 0;
   } catch (error) {
-    logger.error("Fallo crítico en script de automatización de correos", {
+    console.error("[email-automation] fatal error:", error);
+    logger.error("Fallo critico en script de automatizacion de correos", {
       error,
     });
     return 1;
@@ -42,7 +45,7 @@ export const runEmailAutomationScript = async (): Promise<number> => {
 };
 
 /**
- * Permite ejecución directa desde CLI:
+ * Permite ejecucion directa desde CLI:
  * `ts-node src/scripts/email-automation.ts`
  */
 if (require.main === module) {
