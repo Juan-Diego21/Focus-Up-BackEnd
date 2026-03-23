@@ -179,7 +179,7 @@ jobs:
               LIMIT 20
             `);
 
-            console.log(\`[pending-before] count=\${pending.rowCount}\`);
+            console.log("[pending-before] count=" + pending.rowCount);
             for (const row of pending.rows) {
               console.log("[pending-before-row]", JSON.stringify(row));
             }
@@ -243,7 +243,7 @@ jobs:
               LIMIT 20
             `);
 
-            console.log(\`[pending-after] count=\${pending.rowCount}\`);
+            console.log("[pending-after] count=" + pending.rowCount);
             for (const row of pending.rows) {
               console.log("[pending-after-row]", JSON.stringify(row));
             }
