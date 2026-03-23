@@ -3,6 +3,7 @@ export declare class NotificationService {
     private notificationRepository;
     private userRepository;
     private sessionRepository;
+    private preferencesRepository;
     createScheduledNotification({ userId, sessionId, title, message, scheduledAt }: {
         userId: number;
         sessionId: number;

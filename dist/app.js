@@ -14,7 +14,6 @@ const swagger_1 = require("./config/swagger");
 const ormconfig_1 = require("./config/ormconfig");
 const logger_1 = __importDefault(require("./utils/logger"));
 const envValidation_1 = require("./utils/envValidation");
-const pendingEmailScheduler_1 = require("./jobs/pendingEmailScheduler");
 (0, envValidation_1.validateEnvironment)();
 const app = (0, express_1.default)();
 app.use((0, helmet_1.default)({
@@ -28,14 +27,16 @@ app.use((0, helmet_1.default)({
             connectSrc: ["'self'"],
         },
     },
-    hsts: env_1.env.NODE_ENV === "production" ? {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true,
-    } : false,
+    hsts: env_1.env.NODE_ENV === "production"
+        ? {
+            maxAge: 31536000,
+            includeSubDomains: true,
+            preload: true,
+        }
+        : false,
 }));
 app.use((0, cors_1.default)({
-    origin: function (origin, callback) {
+    origin: (origin, callback) => {
         if (!origin)
             return callback(null, true);
         if (env_1.env.NODE_ENV === "development") {
@@ -53,10 +54,8 @@ app.use((0, cors_1.default)({
                 return callback(null, true);
             }
         }
-        else {
-            if (origin === env_1.env.FRONTEND_URL) {
-                return callback(null, true);
-            }
+        else if (origin === env_1.env.FRONTEND_URL) {
+            return callback(null, true);
         }
         return callback(new Error("Not allowed by CORS"));
     },
@@ -71,16 +70,15 @@ app.use(express_1.default.urlencoded({ extended: true }));
 app.use(env_1.env.API_PREFIX, routes_1.default);
 if (env_1.env.NODE_ENV === "development") {
     app.use("/api-docs", swagger_1.swaggerUi.serve, swagger_1.swaggerUi.setup(swagger_1.swaggerSpec, swagger_1.swaggerUiOptions));
-    app.get("/api-docs.json", (req, res) => {
+    app.get("/api-docs.json", (_req, res) => {
         res.setHeader("Content-Type", "application/json");
         res.send(swagger_1.swaggerSpec);
     });
 }
-app.use((error, req, res, next) => {
+app.use((error, req, res, _next) => {
     logger_1.default.error("Error global:", {
-        message: error?.message,
-        stack: error?.stack,
-        status: error?.status,
+        message: error instanceof Error ? error.message : "Error desconocido",
+        stack: error instanceof Error ? error.stack : undefined,
         method: req.method,
         path: req.originalUrl,
     });
@@ -91,31 +89,28 @@ app.use((error, req, res, next) => {
     });
 });
 const PORT = env_1.env.PORT;
-const emailScheduler = new pendingEmailScheduler_1.PendingEmailScheduler();
 const server = app.listen(PORT, async () => {
     try {
         await (0, ormconfig_1.initializeDatabase)();
-        await emailScheduler.start();
-        logger_1.default.info(`🚀 El server de la API de Focus Up está corriendo en el puerto ${PORT}`);
-        logger_1.default.info(`📍 Entorno: ${env_1.env.NODE_ENV}`);
+        logger_1.default.info(`El server de la API de Focus Up está corriendo en el puerto ${PORT}`);
+        logger_1.default.info(`Entorno: ${env_1.env.NODE_ENV}`);
         if (env_1.env.NODE_ENV === "development") {
-            logger_1.default.info(`🌐 Verificación de salud: http://localhost:${PORT}${env_1.env.API_PREFIX}/health`);
-            logger_1.default.info(`📄 Documentación Swagger: http://localhost:${PORT}/api-docs`);
+            logger_1.default.info(`Verificación de salud: http://localhost:${PORT}${env_1.env.API_PREFIX}/health`);
+            logger_1.default.info(`Documentación Swagger: http://localhost:${PORT}/api-docs`);
         }
         else {
-            logger_1.default.info("✅ API iniciada correctamente");
+            logger_1.default.info("API iniciada correctamente");
         }
-        logger_1.default.info(`📊 TypeORM conectado: ${ormconfig_1.AppDataSource.isInitialized}`);
+        logger_1.default.info(`TypeORM conectado: ${ormconfig_1.AppDataSource.isInitialized}`);
     }
     catch (error) {
-        logger_1.default.error("❌ Failed to start server:", error);
+        logger_1.default.error("Failed to start server", { error });
         process.exit(1);
     }
 });
 const shutdown = async (signal) => {
-    logger_1.default.info(`🛑 Señal ${signal} recibida, iniciando apagado graceful...`);
+    logger_1.default.info(`Señal ${signal} recibida, iniciando apagado graceful...`);
     try {
-        await emailScheduler.stop();
         await new Promise((resolve, reject) => {
             server.close((error) => {
                 if (error) {
@@ -128,11 +123,11 @@ const shutdown = async (signal) => {
         if (ormconfig_1.AppDataSource.isInitialized) {
             await ormconfig_1.AppDataSource.destroy();
         }
-        logger_1.default.info("✅ Shutdown completado correctamente");
+        logger_1.default.info("Shutdown completado correctamente");
         process.exit(0);
     }
     catch (error) {
-        logger_1.default.error("❌ Error durante shutdown", { error });
+        logger_1.default.error("Error durante shutdown", { error });
         process.exit(1);
     }
 };

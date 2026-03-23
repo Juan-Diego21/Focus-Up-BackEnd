@@ -7,15 +7,168 @@ const ormconfig_1 = require("../config/ormconfig");
 const User_entity_1 = require("../models/User.entity");
 const AlbumMusica_entity_1 = require("../models/AlbumMusica.entity");
 const MetodoEstudio_entity_1 = require("../models/MetodoEstudio.entity");
+const NotificacionesUsuario_entity_1 = require("../models/NotificacionesUsuario.entity");
 const NotificacionesProgramadasService_1 = require("./NotificacionesProgramadasService");
+const NotificacionesProgramadasRepository_1 = require("../repositories/NotificacionesProgramadasRepository");
 const userRepository = ormconfig_1.AppDataSource.getRepository(User_entity_1.UserEntity);
 const albumRepository = ormconfig_1.AppDataSource.getRepository(AlbumMusica_entity_1.AlbumMusicaEntity);
+const preferenciasRepository = ormconfig_1.AppDataSource.getRepository(NotificacionesUsuario_entity_1.NotificacionesUsuarioEntity);
+const EVENT_TIMEZONE_OFFSET_MINUTES = Number.parseInt(process.env.EVENT_TIMEZONE_OFFSET_MINUTES ?? '-300', 10);
+const DEV_FRONTEND_URL = 'http://localhost:5173';
+const formatYmdFromDate = (dateValue) => {
+    const year = dateValue.getUTCFullYear();
+    const month = String(dateValue.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(dateValue.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+const getDatePartsInConfiguredTimezone = (date) => {
+    const shifted = new Date(date.getTime() + EVENT_TIMEZONE_OFFSET_MINUTES * 60000);
+    return {
+        year: shifted.getUTCFullYear(),
+        month: shifted.getUTCMonth() + 1,
+        day: shifted.getUTCDate(),
+    };
+};
+const parseLocalDateTime = (dateValue, timeValue) => {
+    const dateString = dateValue instanceof Date
+        ? formatYmdFromDate(dateValue)
+        : String(dateValue).split('T')[0];
+    const dateParts = dateString.split('-').map((part) => Number.parseInt(part, 10));
+    const timeParts = timeValue.split(':').map((part) => Number.parseInt(part, 10));
+    if (dateParts.length !== 3 || timeParts.length < 2)
+        return null;
+    const [year, month, day] = dateParts;
+    const [hour, minute, second = 0] = timeParts;
+    if (!Number.isFinite(year) ||
+        !Number.isFinite(month) ||
+        !Number.isFinite(day) ||
+        !Number.isFinite(hour) ||
+        !Number.isFinite(minute) ||
+        !Number.isFinite(second)) {
+        return null;
+    }
+    const utcFromConfiguredTimezone = new Date(Date.UTC(year, month - 1, day, hour, minute, second, 0) -
+        EVENT_TIMEZONE_OFFSET_MINUTES * 60000);
+    return Number.isNaN(utcFromConfiguredTimezone.getTime()) ? null : utcFromConfiguredTimezone;
+};
 const validarStatus = (status) => {
     return status === null || status === 'pendiente' || status === 'completado';
 };
 const validarFormatoFecha = (dateString) => {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     return dateRegex.test(dateString);
+};
+const getFrontendBaseUrl = () => {
+    const nodeEnv = (process.env.NODE_ENV || 'development').toLowerCase();
+    if (nodeEnv === 'production') {
+        return (process.env.FRONTEND_URL || '').trim().replace(/\/+$/, '');
+    }
+    return DEV_FRONTEND_URL;
+};
+const buildConcentrationSessionUrl = (idEvento) => {
+    return `${getFrontendBaseUrl()}/start-session?eventId=${idEvento}`;
+};
+const normalizeEventDescription = (descripcionEvento) => {
+    if (typeof descripcionEvento === 'string' && descripcionEvento.trim().length > 0) {
+        return descripcionEvento.trim();
+    }
+    return 'Sin descripción';
+};
+const shouldScheduleEventReminder = (evento) => {
+    return evento.estado === undefined || evento.estado === null || evento.estado === 'pendiente';
+};
+const calculateReminderTime = (evento) => {
+    const eventDateTime = parseLocalDateTime(evento.fechaEvento, evento.horaEvento);
+    if (!eventDateTime) {
+        console.error(`Fecha/hora inválida para evento ${evento.idEvento}: ${evento.fechaEvento}T${evento.horaEvento}`);
+        return null;
+    }
+    const now = new Date();
+    const todayTz = getDatePartsInConfiguredTimezone(now);
+    const fechaEventoString = String(evento.fechaEvento).split('T')[0];
+    const [eventYear, eventMonth, eventDay] = fechaEventoString
+        .split('-')
+        .map((part) => Number.parseInt(part, 10));
+    const isTodayEvent = Number.isFinite(eventYear) &&
+        Number.isFinite(eventMonth) &&
+        Number.isFinite(eventDay) &&
+        eventYear === todayTz.year &&
+        eventMonth === todayTz.month &&
+        eventDay === todayTz.day;
+    return isTodayEvent
+        ? new Date(eventDateTime)
+        : new Date(eventDateTime.getTime() - 10 * 60 * 1000);
+};
+const buildEventReminderMessage = (evento) => {
+    const message = {
+        idEvento: evento.idEvento,
+        nombreEvento: evento.nombreEvento,
+        fechaEvento: evento.fechaEvento,
+        horaEvento: evento.horaEvento,
+        descripcionEvento: normalizeEventDescription(evento.descripcionEvento),
+        tipoEvento: evento.tipoEvento,
+    };
+    if (evento.tipoEvento === 'concentracion') {
+        message.link = buildConcentrationSessionUrl(evento.idEvento);
+    }
+    return message;
+};
+const getLegacyReminderSignature = (evento) => {
+    const reminderTime = calculateReminderTime(evento);
+    if (!reminderTime)
+        return null;
+    return {
+        titulo: `Recordatorio: ${evento.nombreEvento}`,
+        fechaProgramada: reminderTime,
+    };
+};
+const clearPendingEventReminders = async (idUsuario, idEvento, legacySignature) => {
+    const deletedByEventId = await (0, NotificacionesProgramadasRepository_1.deletePendingEventNotificationsByEventId)(idUsuario, idEvento);
+    let deletedByLegacy = 0;
+    if (legacySignature) {
+        deletedByLegacy = await (0, NotificacionesProgramadasRepository_1.deletePendingEventNotificationsByLegacySignature)(idUsuario, legacySignature.titulo, legacySignature.fechaProgramada);
+    }
+    const totalDeleted = deletedByEventId + deletedByLegacy;
+    if (totalDeleted > 0) {
+        console.log(`🧹 Notificaciones pendientes limpiadas para evento ${idEvento}: ${totalDeleted}`);
+    }
+};
+const scheduleEventReminder = async (evento, idUsuario, options) => {
+    const legacySignature = options?.legacySignature ?? null;
+    try {
+        await clearPendingEventReminders(idUsuario, evento.idEvento, legacySignature);
+        const preferencias = await preferenciasRepository.findOne({
+            where: { idUsuario },
+        });
+        const eventosHabilitados = preferencias?.eventos ?? true;
+        if (!eventosHabilitados) {
+            console.log(`🔕 Notificaciones de eventos desactivadas para usuario ${idUsuario}`);
+            return;
+        }
+        if (!shouldScheduleEventReminder(evento)) {
+            console.log(`ℹ️ Recordatorio omitido para evento ${evento.idEvento} por estado ${String(evento.estado)}`);
+            return;
+        }
+        const reminderTime = calculateReminderTime(evento);
+        if (!reminderTime)
+            return;
+        const now = new Date();
+        if (reminderTime <= now) {
+            console.warn(`⚠️ Tiempo de recordatorio ${reminderTime.toISOString()} ya pasó para evento ${evento.idEvento}`);
+            return;
+        }
+        await NotificacionesProgramadasService_1.NotificacionesProgramadasService.createScheduledNotification({
+            idUsuario,
+            tipo: 'evento',
+            titulo: `Recordatorio: ${evento.nombreEvento}`,
+            mensaje: JSON.stringify(buildEventReminderMessage(evento)),
+            fechaProgramada: reminderTime,
+        });
+        console.log(`✅ Notificación programada para evento ${evento.idEvento} a las ${reminderTime.toISOString()}`);
+    }
+    catch (error) {
+        console.error(`❌ Error programando recordatorio para evento ${evento.idEvento}:`, error);
+    }
 };
 exports.EventoService = {
     async getEventosByUsuario(userId) {
@@ -151,56 +304,7 @@ exports.EventoService = {
                 throw new Error('Error al recuperar el evento creado');
             }
             console.log('🔍 Fecha recuperada de BD:', eventoCompleto.fechaEvento);
-            try {
-                const eventDateTime = new Date(`${eventoCompleto.fechaEvento}T${eventoCompleto.horaEvento}`);
-                if (isNaN(eventDateTime.getTime())) {
-                    console.error(`Fecha/hora inválida para evento ${eventoCompleto.idEvento}: ${eventoCompleto.fechaEvento}T${eventoCompleto.horaEvento}`);
-                }
-                else {
-                    const ahora = new Date();
-                    const hoy = new Date(ahora);
-                    hoy.setHours(0, 0, 0, 0);
-                    const fechaEvento = new Date(eventoCompleto.fechaEvento + 'T00:00:00');
-                    let tiempoRecordatorio;
-                    if (fechaEvento.getTime() > hoy.getTime()) {
-                        tiempoRecordatorio = new Date(eventDateTime.getTime() - 10 * 60 * 1000);
-                        console.log(`📅 Evento futuro ${eventoCompleto.idEvento} - recordatorio 10 min antes: ${tiempoRecordatorio}`);
-                    }
-                    else {
-                        tiempoRecordatorio = new Date(eventDateTime);
-                        console.log(`📅 Evento hoy ${eventoCompleto.idEvento} - recordatorio a la hora exacta: ${tiempoRecordatorio}`);
-                    }
-                    if (tiempoRecordatorio <= ahora) {
-                        console.warn(`⚠️ Tiempo de recordatorio ${tiempoRecordatorio} ya pasó para evento ${eventoCompleto.idEvento} - no se programa notificación`);
-                    }
-                    else {
-                        console.log(`✅ Programando notificación para evento ${eventoCompleto.idEvento} a las ${tiempoRecordatorio}`);
-                        let mensaje = {
-                            nombreEvento: eventoCompleto.nombreEvento,
-                            fechaEvento: eventoCompleto.fechaEvento,
-                            horaEvento: eventoCompleto.horaEvento,
-                            descripcionEvento: eventoCompleto.descripcionEvento
-                        };
-                        if (eventoCompleto.tipoEvento === 'concentracion') {
-                            mensaje = {
-                                ...mensaje,
-                                link: `http://localhost:5173/start-session?eventId=${eventoCompleto.idEvento}`
-                            };
-                        }
-                        await NotificacionesProgramadasService_1.NotificacionesProgramadasService.createScheduledNotification({
-                            idUsuario: data.idUsuario,
-                            tipo: "evento",
-                            titulo: `Recordatorio: ${eventoCompleto.nombreEvento}`,
-                            mensaje: JSON.stringify(mensaje),
-                            fechaProgramada: tiempoRecordatorio
-                        });
-                        console.log(`✅ Notificación programada exitosamente para evento ${eventoCompleto.idEvento}`);
-                    }
-                }
-            }
-            catch (error) {
-                console.error('❌ Error al programar recordatorio automático para evento:', error);
-            }
+            await scheduleEventReminder(eventoCompleto, data.idUsuario);
             const baseResponse = {
                 idEvento: eventoCompleto.idEvento,
                 nombreEvento: eventoCompleto.nombreEvento,
@@ -293,6 +397,7 @@ exports.EventoService = {
                     error: "No tienes permisos para modificar este evento"
                 };
             }
+            const legacyReminderSignature = getLegacyReminderSignature(evento);
             const updateData = {};
             if (data.nombreEvento !== undefined)
                 updateData.nombreEvento = data.nombreEvento;
@@ -356,6 +461,9 @@ exports.EventoService = {
                     error: "Error al recuperar el evento actualizado"
                 };
             }
+            await scheduleEventReminder(eventoActualizado, userId, {
+                legacySignature: legacyReminderSignature
+            });
             const baseResponse = {
                 idEvento: eventoActualizado.idEvento,
                 nombreEvento: eventoActualizado.nombreEvento,

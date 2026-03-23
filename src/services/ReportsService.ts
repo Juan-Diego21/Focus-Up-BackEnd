@@ -677,7 +677,12 @@ export class ReportsService {
               idUsuario: data.idUsuario,
               tipo: "metodo_pendiente",
               titulo: "Recordatorio de método pendiente",
-              mensaje: `Aún tienes un método sin finalizar: ${savedMetodo.metodo?.nombreMetodo || 'Método de estudio'}. ¡Continúa con tu aprendizaje!`,
+              mensaje: JSON.stringify({
+                idMetodoRealizado: savedMetodo.idMetodoRealizado,
+                idMetodo: savedMetodo.idMetodo,
+                nombreMetodo: metodo.nombreMetodo,
+                progreso: Number(savedMetodo.progreso),
+              }),
               fechaProgramada: fechaRecordatorio
             });
             logger.info(`Recordatorio programado para método ${savedMetodo.idMetodoRealizado} del usuario ${data.idUsuario} en ${fechaRecordatorio}`);

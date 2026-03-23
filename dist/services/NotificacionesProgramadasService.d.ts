@@ -22,61 +22,7 @@ export declare const NotificacionesProgramadasService: {
     }>;
     getUpcomingEventsWithNotifications(userId: number): Promise<{
         success: boolean;
-        data: ({
-            type: string;
-            idEvento: any;
-            nombreEvento: any;
-            fechaEvento: any;
-            horaEvento: any;
-            descripcionEvento: any;
-            estado: any;
-            metodoEstudio: {
-                idMetodo: any;
-                nombreMetodo: any;
-            } | null;
-            album: {
-                idAlbum: any;
-                nombreAlbum: any;
-            } | null;
-            notificationTime: string;
-            notificationRule: string;
-            idReporte?: undefined;
-            nombreMetodo?: undefined;
-            progreso?: undefined;
-            templateId?: undefined;
-        } | {
-            type: string;
-            idReporte: any;
-            nombreMetodo: any;
-            progreso: any;
-            notificationTime: string;
-            idEvento?: undefined;
-            nombreEvento?: undefined;
-            fechaEvento?: undefined;
-            horaEvento?: undefined;
-            descripcionEvento?: undefined;
-            estado?: undefined;
-            metodoEstudio?: undefined;
-            album?: undefined;
-            notificationRule?: undefined;
-            templateId?: undefined;
-        } | {
-            type: string;
-            notificationTime: string;
-            templateId: number;
-            idEvento?: undefined;
-            nombreEvento?: undefined;
-            fechaEvento?: undefined;
-            horaEvento?: undefined;
-            descripcionEvento?: undefined;
-            estado?: undefined;
-            metodoEstudio?: undefined;
-            album?: undefined;
-            notificationRule?: undefined;
-            idReporte?: undefined;
-            nombreMetodo?: undefined;
-            progreso?: undefined;
-        })[];
+        data: any[];
         error?: undefined;
     } | {
         success: boolean;
