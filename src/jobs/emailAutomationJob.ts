@@ -23,6 +23,8 @@ interface EmailAutomationConfig {
 interface SessionReminderResult {
   analyzed: number;
   scheduled: number;
+  duplicates: number;
+  skippedByPreference: number;
   errors: number;
 }
 
@@ -178,12 +180,14 @@ export const scheduleSessionReminderNotifications = async (
   );
 
   let scheduled = 0;
+  let duplicates = 0;
+  let skippedByPreference = 0;
   let errors = 0;
 
   for (const session of pendingSessions) {
     try {
       const scheduledAt = buildSessionReminderScheduledAt(new Date());
-      await notificationService.createScheduledNotification({
+      const scheduleResult = await notificationService.createScheduledNotification({
         userId: session.idUsuario,
         sessionId: session.idSesion,
         title: "Sesión de concentración pendiente",
@@ -191,6 +195,26 @@ export const scheduleSessionReminderNotifications = async (
           "Tienes una sesión de concentración pendiente desde hace más de una semana.",
         scheduledAt,
       });
+      if (!scheduleResult.success) {
+        errors++;
+        logger.error("Error de negocio programando recordatorio de sesion", {
+          sessionId: session.idSesion,
+          userId: session.idUsuario,
+          error: scheduleResult.error,
+        });
+        continue;
+      }
+
+      if (scheduleResult.skippedByPreference) {
+        skippedByPreference++;
+        continue;
+      }
+
+      if (scheduleResult.duplicated) {
+        duplicates++;
+        continue;
+      }
+
       scheduled++;
     } catch (error) {
       errors++;
@@ -205,6 +229,8 @@ export const scheduleSessionReminderNotifications = async (
   const result: SessionReminderResult = {
     analyzed: pendingSessions.length,
     scheduled,
+    duplicates,
+    skippedByPreference,
     errors,
   };
 

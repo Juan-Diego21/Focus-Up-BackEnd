@@ -1,37 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -41,6 +8,7 @@ const UserService_1 = require("../services/UserService");
 const jwt_1 = require("../utils/jwt");
 const responseBuilder_1 = require("../utils/responseBuilder");
 const logger_1 = __importDefault(require("../utils/logger"));
+const PasswordResetService_1 = require("../services/PasswordResetService");
 class UserController {
     async createUser(req, res) {
         try {
@@ -125,12 +93,17 @@ class UserController {
                 };
                 return res.status(401).json(response);
             }
-            const userRepository = (await Promise.resolve().then(() => __importStar(require("../config/ormconfig")))).AppDataSource.getRepository((await Promise.resolve().then(() => __importStar(require("../models/User.entity")))).UserEntity);
-            await userRepository.increment({ idUsuario: result.user.id_usuario }, "tokenVersion", 1);
-            const updatedUser = await userRepository.findOne({
-                where: { idUsuario: result.user.id_usuario }
-            });
-            const tokenVersion = updatedUser.tokenVersion;
+            const tokenVersionResult = await UserService_1.userService.bumpTokenVersion(result.user.id_usuario);
+            if (!tokenVersionResult.success || tokenVersionResult.tokenVersion === undefined) {
+                const response = {
+                    success: false,
+                    message: "No se pudo completar el inicio de sesion",
+                    error: tokenVersionResult.error || "Error actualizando tokenVersion",
+                    timestamp: new Date(),
+                };
+                return res.status(500).json(response);
+            }
+            const tokenVersion = tokenVersionResult.tokenVersion;
             logger_1.default.info(`Token version incremented to ${tokenVersion} for user ${result.user.id_usuario}`);
             const tokenPayload = {
                 userId: result.user.id_usuario,
@@ -330,8 +303,7 @@ class UserController {
                 };
                 return res.status(400).json(response);
             }
-            const { passwordResetService } = await Promise.resolve().then(() => __importStar(require("../services/PasswordResetService")));
-            const result = await passwordResetService.requestPasswordReset(emailOrUsername);
+            const result = await PasswordResetService_1.passwordResetService.requestPasswordReset(emailOrUsername);
             const response = {
                 success: result.success,
                 message: result.message,
@@ -360,8 +332,7 @@ class UserController {
                 };
                 return res.status(400).json(response);
             }
-            const { passwordResetService } = await Promise.resolve().then(() => __importStar(require("../services/PasswordResetService")));
-            const result = await passwordResetService.verifyResetCodeAndResetPassword(email, code, newPassword);
+            const result = await PasswordResetService_1.passwordResetService.verifyResetCodeAndResetPassword(email, code, newPassword);
             const response = {
                 success: result.success,
                 message: result.message,

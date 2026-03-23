@@ -4,6 +4,7 @@ import { ApiResponse } from "../types/ApiResponse";
 import { JwtUtils, JwtPayload, TokenBlacklistService } from "../utils/jwt";
 import { ResponseBuilder } from "../utils/responseBuilder";
 import logger from "../utils/logger";
+import { passwordResetService } from "../services/PasswordResetService";
 
 type IdParams = { id: string };
 
@@ -128,24 +129,23 @@ export class UserController {
         return res.status(401).json(response);
       }
 
-      // Increment token version to invalidate previous tokens
-      const userRepository = (await import("../config/ormconfig")).AppDataSource.getRepository(
-        (await import("../models/User.entity")).UserEntity
+      const tokenVersionResult = await userService.bumpTokenVersion(
+        result.user!.id_usuario!
       );
+      if (!tokenVersionResult.success || tokenVersionResult.tokenVersion === undefined) {
+        const response: ApiResponse = {
+          success: false,
+          message: "No se pudo completar el inicio de sesion",
+          error: tokenVersionResult.error || "Error actualizando tokenVersion",
+          timestamp: new Date(),
+        };
+        return res.status(500).json(response);
+      }
 
-      await userRepository.increment(
-        { idUsuario: result.user!.id_usuario! },
-        "tokenVersion",
-        1
+      const tokenVersion = tokenVersionResult.tokenVersion;
+      logger.info(
+        `Token version incremented to ${tokenVersion} for user ${result.user!.id_usuario}`
       );
-
-      // Get updated user with new token version
-      const updatedUser = await userRepository.findOne({
-        where: { idUsuario: result.user!.id_usuario! }
-      });
-
-      const tokenVersion = updatedUser!.tokenVersion;
-      logger.info(`Token version incremented to ${tokenVersion} for user ${result.user!.id_usuario}`);
 
       // Generar token con token_version
       const tokenPayload = {
@@ -408,7 +408,6 @@ export class UserController {
         return res.status(400).json(response);
       }
 
-      const { passwordResetService } = await import("../services/PasswordResetService");
       const result = await passwordResetService.requestPasswordReset(emailOrUsername);
 
       const response: ApiResponse = {
@@ -449,7 +448,6 @@ export class UserController {
         return res.status(400).json(response);
       }
 
-      const { passwordResetService } = await import("../services/PasswordResetService");
       const result = await passwordResetService.verifyResetCodeAndResetPassword(email, code, newPassword);
 
       const response: ApiResponse = {

@@ -42,6 +42,7 @@ const validation_1 = require("../utils/validation");
 const UsuarioIntereses_entity_1 = require("../models/UsuarioIntereses.entity");
 const UsuarioDistracciones_entity_1 = require("../models/UsuarioDistracciones.entity");
 const User_entity_1 = require("../models/User.entity");
+const ormconfig_1 = require("../config/ormconfig");
 const logger_1 = __importDefault(require("../utils/logger"));
 class UserService {
     static async hashPassword(password) {
@@ -53,7 +54,7 @@ class UserService {
         return bcrypt.compare(plainPassword, hashedPassword);
     }
     async createUser(userData) {
-        const queryRunner = (await Promise.resolve().then(() => __importStar(require("../config/ormconfig")))).AppDataSource.createQueryRunner();
+        const queryRunner = ormconfig_1.AppDataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
         try {
@@ -190,8 +191,7 @@ class UserService {
         }
     }
     async updateUser(id, updateData) {
-        const { AppDataSource } = await Promise.resolve().then(() => __importStar(require("../config/ormconfig")));
-        const queryRunner = AppDataSource.createQueryRunner();
+        const queryRunner = ormconfig_1.AppDataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
         try {
@@ -286,6 +286,23 @@ class UserService {
             return { success: false, error: "Error al verificar credenciales" };
         }
     }
+    async bumpTokenVersion(userId) {
+        try {
+            const userEntityRepository = ormconfig_1.AppDataSource.getRepository(User_entity_1.UserEntity);
+            await userEntityRepository.increment({ idUsuario: userId }, "tokenVersion", 1);
+            const updatedUser = await userEntityRepository.findOne({
+                where: { idUsuario: userId },
+            });
+            if (!updatedUser) {
+                return { success: false, error: "Usuario no encontrado" };
+            }
+            return { success: true, tokenVersion: updatedUser.tokenVersion };
+        }
+        catch (error) {
+            logger_1.default.error("Error en UserService.bumpTokenVersion:", { error, userId });
+            return { success: false, error: "No se pudo actualizar tokenVersion" };
+        }
+    }
     async getAllUsers() {
         try {
             const users = await UserRepository_1.userRepository.findAll();
@@ -297,8 +314,7 @@ class UserService {
         }
     }
     async insertUserInterests(userId, interestIds) {
-        const { AppDataSource } = await Promise.resolve().then(() => __importStar(require("../config/ormconfig")));
-        const usuarioInteresesRepo = AppDataSource.getRepository(UsuarioIntereses_entity_1.UsuarioInteresesEntity);
+        const usuarioInteresesRepo = ormconfig_1.AppDataSource.getRepository(UsuarioIntereses_entity_1.UsuarioInteresesEntity);
         const inserts = interestIds.map((interestId) => ({
             usuario: { idUsuario: userId },
             interes: { idInteres: interestId },
@@ -306,8 +322,7 @@ class UserService {
         await usuarioInteresesRepo.save(inserts);
     }
     async insertUserDistractions(userId, distractionIds) {
-        const { AppDataSource } = await Promise.resolve().then(() => __importStar(require("../config/ormconfig")));
-        const usuarioDistraccionesRepo = AppDataSource.getRepository(UsuarioDistracciones_entity_1.UsuarioDistraccionesEntity);
+        const usuarioDistraccionesRepo = ormconfig_1.AppDataSource.getRepository(UsuarioDistracciones_entity_1.UsuarioDistraccionesEntity);
         const inserts = distractionIds.map((distractionId) => ({
             usuario: { idUsuario: userId },
             distraccion: { idDistraccion: distractionId },
@@ -410,8 +425,7 @@ class UserService {
         }
     }
     async deleteUser(id) {
-        const { AppDataSource } = await Promise.resolve().then(() => __importStar(require("../config/ormconfig")));
-        const queryRunner = AppDataSource.createQueryRunner();
+        const queryRunner = ormconfig_1.AppDataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
         try {

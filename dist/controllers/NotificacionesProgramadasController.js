@@ -1,7 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificacionesProgramadasController = void 0;
 const NotificacionesProgramadasService_1 = require("../services/NotificacionesProgramadasService");
+const logger_1 = __importDefault(require("../utils/logger"));
 class NotificacionesProgramadasController {
     constructor() {
         this.notificacionesService = NotificacionesProgramadasService_1.NotificacionesProgramadasService;
@@ -38,7 +42,7 @@ class NotificacionesProgramadasController {
             res.status(201).json(result);
         }
         catch (error) {
-            console.error('Error en createScheduledNotification:', error);
+            logger_1.default.error('Error en createScheduledNotification', { error });
             res.status(500).json({
                 success: false,
                 error: 'Error interno del servidor'
@@ -56,7 +60,7 @@ class NotificacionesProgramadasController {
             res.status(200).json(result);
         }
         catch (error) {
-            console.error('Error en getScheduledNotifications:', error);
+            logger_1.default.error('Error en getScheduledNotifications', { error });
             res.status(500).json({
                 success: false,
                 error: 'Error interno del servidor'
@@ -82,7 +86,7 @@ class NotificacionesProgramadasController {
             res.status(200).json(result);
         }
         catch (error) {
-            console.error('Error en markAsSent:', error);
+            logger_1.default.error('Error en markAsSent', { error });
             res.status(500).json({
                 success: false,
                 error: 'Error interno del servidor'

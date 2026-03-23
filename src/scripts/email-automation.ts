@@ -1,7 +1,6 @@
 import "reflect-metadata";
 import { AppDataSource, initializeDatabase } from "../config/ormconfig";
 import { runEmailAutomationCycle } from "../jobs/emailAutomationJob";
-import { validateEnvironment } from "../utils/envValidation";
 import logger from "../utils/logger";
 
 /**
@@ -25,9 +24,6 @@ const closeDatabaseConnection = async (): Promise<void> => {
  */
 export const runEmailAutomationScript = async (): Promise<number> => {
   try {
-    // Validamos variables de entorno antes de tocar BD/SMTP.
-    validateEnvironment();
-
     // Abrimos conexión de datos y ejecutamos el ciclo de negocio desacoplado.
     await initializeDatabase();
     const summary = await runEmailAutomationCycle();

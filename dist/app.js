@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.startServer = void 0;
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
@@ -13,8 +14,7 @@ const env_1 = require("./config/env");
 const swagger_1 = require("./config/swagger");
 const ormconfig_1 = require("./config/ormconfig");
 const logger_1 = __importDefault(require("./utils/logger"));
-const envValidation_1 = require("./utils/envValidation");
-(0, envValidation_1.validateEnvironment)();
+const HttpError_1 = require("./utils/HttpError");
 const app = (0, express_1.default)();
 app.use((0, helmet_1.default)({
     contentSecurityPolicy: {
@@ -76,50 +76,45 @@ if (env_1.env.NODE_ENV === "development") {
     });
 }
 app.use((error, req, res, _next) => {
-    logger_1.default.error("Error global:", {
+    const isHttpError = error instanceof HttpError_1.HttpError;
+    const statusCode = isHttpError ? error.statusCode : 500;
+    const message = isHttpError
+        ? error.message
+        : "Error interno del servidor";
+    logger_1.default.error("Error global", {
         message: error instanceof Error ? error.message : "Error desconocido",
         stack: error instanceof Error ? error.stack : undefined,
         method: req.method,
         path: req.originalUrl,
+        statusCode,
     });
-    res.status(500).json({
+    res.status(statusCode).json({
         success: false,
-        message: "Error interno del servidor",
+        message,
         timestamp: new Date(),
     });
 });
 const PORT = env_1.env.PORT;
-const server = app.listen(PORT, async () => {
-    try {
-        await (0, ormconfig_1.initializeDatabase)();
-        logger_1.default.info(`El server de la API de Focus Up está corriendo en el puerto ${PORT}`);
-        logger_1.default.info(`Entorno: ${env_1.env.NODE_ENV}`);
-        if (env_1.env.NODE_ENV === "development") {
-            logger_1.default.info(`Verificación de salud: http://localhost:${PORT}${env_1.env.API_PREFIX}/health`);
-            logger_1.default.info(`Documentación Swagger: http://localhost:${PORT}/api-docs`);
-        }
-        else {
-            logger_1.default.info("API iniciada correctamente");
-        }
-        logger_1.default.info(`TypeORM conectado: ${ormconfig_1.AppDataSource.isInitialized}`);
-    }
-    catch (error) {
-        logger_1.default.error("Failed to start server", { error });
-        process.exit(1);
-    }
-});
+let server = null;
+let shuttingDown = false;
 const shutdown = async (signal) => {
+    if (shuttingDown)
+        return;
+    shuttingDown = true;
     logger_1.default.info(`Señal ${signal} recibida, iniciando apagado graceful...`);
     try {
-        await new Promise((resolve, reject) => {
-            server.close((error) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                resolve();
+        if (server) {
+            await new Promise((resolve, reject) => {
+                server?.close((error) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve();
+                });
             });
-        });
+            server = null;
+        }
         if (ormconfig_1.AppDataSource.isInitialized) {
             await ormconfig_1.AppDataSource.destroy();
         }
@@ -131,10 +126,47 @@ const shutdown = async (signal) => {
         process.exit(1);
     }
 };
-process.on("SIGTERM", () => {
-    void shutdown("SIGTERM");
-});
-process.on("SIGINT", () => {
-    void shutdown("SIGINT");
-});
+const startServer = async () => {
+    if (server) {
+        return server;
+    }
+    try {
+        await (0, ormconfig_1.initializeDatabase)();
+    }
+    catch (error) {
+        logger_1.default.error("No fue posible inicializar la base de datos al arrancar", {
+            error,
+        });
+        throw error;
+    }
+    server = await new Promise((resolve, reject) => {
+        const instance = app.listen(PORT, () => {
+            logger_1.default.info(`El server de la API de Focus Up esta corriendo en el puerto ${PORT}`);
+            logger_1.default.info(`Entorno: ${env_1.env.NODE_ENV}`);
+            if (env_1.env.NODE_ENV === "development") {
+                logger_1.default.info(`Verificacion de salud: http://localhost:${PORT}${env_1.env.API_PREFIX}/health`);
+                logger_1.default.info(`Documentacion Swagger: http://localhost:${PORT}/api-docs`);
+            }
+            logger_1.default.info(`TypeORM conectado: ${ormconfig_1.AppDataSource.isInitialized}`);
+            resolve(instance);
+        });
+        instance.on("error", (error) => {
+            reject(error);
+        });
+    });
+    process.on("SIGTERM", () => {
+        void shutdown("SIGTERM");
+    });
+    process.on("SIGINT", () => {
+        void shutdown("SIGINT");
+    });
+    return server;
+};
+exports.startServer = startServer;
 exports.default = app;
+if (require.main === module) {
+    void (0, exports.startServer)().catch((error) => {
+        logger_1.default.error("Fallo critico durante el arranque de la API", { error });
+        process.exit(1);
+    });
+}

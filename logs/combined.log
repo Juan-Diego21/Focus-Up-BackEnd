@@ -16481,3 +16481,174 @@
 {"level":"debug","message":"Registry config for pomodoro: {\"validCreationProgress\":[0,20],\"validUpdateProgress\":[0,20,40,50,60,80,100],\"validResumeProgress\":[0,20,40,50,60,80],\"statusMap\":{\"0\":\"en_progreso\",\"20\":\"en_progreso\",\"40\":\"en_progreso\",\"50\":\"en_progreso\",\"60\":\"en_progreso\",\"80\":\"en_progreso\",\"100\":\"completado\"}}","service":"focus-up-backend","timestamp":"2026-03-23 02:05:26"}
 {"level":"debug","message":"Progress validation for pomodoro: received=100, normalized=100, allowed=[0,20,40,50,60,80,100], isValid=true","service":"focus-up-backend","timestamp":"2026-03-23 02:05:26"}
 {"level":"debug","message":"Registry config for pomodoro: {\"validCreationProgress\":[0,20],\"validUpdateProgress\":[0,20,40,50,60,80,100],\"validResumeProgress\":[0,20,40,50,60,80],\"statusMap\":{\"0\":\"en_progreso\",\"20\":\"en_progreso\",\"40\":\"en_progreso\",\"50\":\"en_progreso\",\"60\":\"en_progreso\",\"80\":\"en_progreso\",\"100\":\"completado\"}}","service":"focus-up-backend","timestamp":"2026-03-23 02:05:27"}
+{"level":"info","message":"Auth header received: present for POST /api/v1/auth/logout","service":"focus-up-backend","timestamp":"2026-03-23 02:07:34"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:07:34"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 2","service":"focus-up-backend","timestamp":"2026-03-23 02:07:34"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:07:34"}
+{"level":"info","message":"Token validation: expires in 20h 3m","service":"focus-up-backend","timestamp":"2026-03-23 02:07:34"}
+{"level":"info","message":"Token revocado exitosamente para logout del usuario: 1","service":"focus-up-backend","timestamp":"2026-03-23 02:07:34"}
+{"level":"info","message":"Token version incremented to 3 for user 1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:51"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/metodos-estudio","service":"focus-up-backend","timestamp":"2026-03-23 02:09:53"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:09:53"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 3","service":"focus-up-backend","timestamp":"2026-03-23 02:09:53"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:53"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-03-23 02:09:53"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/metodos-estudio","service":"focus-up-backend","timestamp":"2026-03-23 02:09:53"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:09:53"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 3","service":"focus-up-backend","timestamp":"2026-03-23 02:09:53"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:53"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-03-23 02:09:53"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/metodos-estudio/1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:54"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:09:54"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 3","service":"focus-up-backend","timestamp":"2026-03-23 02:09:54"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:54"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-03-23 02:09:54"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/metodos-estudio/1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:55"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:09:55"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 3","service":"focus-up-backend","timestamp":"2026-03-23 02:09:55"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:55"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-03-23 02:09:55"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/metodos-estudio/1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:56"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:09:56"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 3","service":"focus-up-backend","timestamp":"2026-03-23 02:09:56"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:56"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-03-23 02:09:56"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/metodos-estudio/1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:57"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:09:57"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 3","service":"focus-up-backend","timestamp":"2026-03-23 02:09:57"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:57"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-03-23 02:09:57"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/reports/methods","service":"focus-up-backend","timestamp":"2026-03-23 02:09:57"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:09:57"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 3","service":"focus-up-backend","timestamp":"2026-03-23 02:09:57"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"info","message":"Buscando reportes de métodos para usuario ID:","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"info","message":"Encontrados 4 métodos realizados para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"info","message":"Auth header received: present for POST /api/v1/reports/active-methods","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 3","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"info","message":"Token validation: expires in 23h 59m","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"estado":"en_progreso","id_metodo":1,"id_usuario":1,"level":"info","message":"POST /reports/active-methods payload","progreso":20,"service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"estado":"en_progreso","id_metodo":1,"id_usuario":1,"level":"info","message":"createActiveMethod payload","progreso":20,"service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"id_metodo":1,"level":"info","message":"createActiveMethod method mapping","nombre_metodo_db":"Método Pomodoro","service":"focus-up-backend","slug":"pomodoro","timestamp":"2026-03-23 02:09:58"}
+{"level":"debug","message":"Registry config for pomodoro: {\"validCreationProgress\":[0,20],\"validUpdateProgress\":[0,20,40,50,60,80,100],\"validResumeProgress\":[0,20,40,50,60,80],\"statusMap\":{\"0\":\"en_progreso\",\"20\":\"en_progreso\",\"40\":\"en_progreso\",\"50\":\"en_progreso\",\"60\":\"en_progreso\",\"80\":\"en_progreso\",\"100\":\"completado\"}}","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"debug","message":"Registry config for pomodoro: {\"validCreationProgress\":[0,20],\"validUpdateProgress\":[0,20,40,50,60,80,100],\"validResumeProgress\":[0,20,40,50,60,80],\"statusMap\":{\"0\":\"en_progreso\",\"20\":\"en_progreso\",\"40\":\"en_progreso\",\"50\":\"en_progreso\",\"60\":\"en_progreso\",\"80\":\"en_progreso\",\"100\":\"completado\"}}","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"debug","message":"Registry config for pomodoro: {\"validCreationProgress\":[0,20],\"validUpdateProgress\":[0,20,40,50,60,80,100],\"validResumeProgress\":[0,20,40,50,60,80],\"statusMap\":{\"0\":\"en_progreso\",\"20\":\"en_progreso\",\"40\":\"en_progreso\",\"50\":\"en_progreso\",\"60\":\"en_progreso\",\"80\":\"en_progreso\",\"100\":\"completado\"}}","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"debug","message":"Status validation: input=\"en_progreso\" -> normalized=\"en_progreso\", expected=\"en_progreso\"","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"debug","message":"Status validation result: VALID","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"info","message":"Intentando crear notificación programada para usuario 1, tipo: metodo_pendiente","service":"focus-up-backend","timestamp":"2026-03-23 02:09:58"}
+{"level":"info","message":"Notificación programada creada exitosamente: ID 8 para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:09:59"}
+{"level":"info","message":"Recordatorio programado para método 6 del usuario 1 en Mon Mar 30 2026 07:09:50 GMT-0500 (hora estándar de Colombia)","service":"focus-up-backend","timestamp":"2026-03-23 02:09:59"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/reports/sessions","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 3","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/reports/methods","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 3","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Token validation: expires in 23h 57m","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Buscando reportes de sesiones para usuario ID:","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Token validation: expires in 23h 57m","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Buscando reportes de métodos para usuario ID:","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Encontrados 5 métodos realizados para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Encontradas 3 sesiones para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/reports/methods","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 3","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Auth header received: present for GET /api/v1/reports/sessions","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Token extracted: present","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Token decoded successfully for userId: 1, email: jdmend21@gmail.com, tokenVersion: 3","service":"focus-up-backend","timestamp":"2026-03-23 02:11:56"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:11:57"}
+{"level":"info","message":"Token validation: expires in 23h 57m","service":"focus-up-backend","timestamp":"2026-03-23 02:11:57"}
+{"level":"info","message":"Buscando reportes de métodos para usuario ID:","service":"focus-up-backend","timestamp":"2026-03-23 02:11:57"}
+{"level":"info","message":"Validación de token completada para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:11:57"}
+{"level":"info","message":"Token validation: expires in 23h 57m","service":"focus-up-backend","timestamp":"2026-03-23 02:11:57"}
+{"level":"info","message":"Buscando reportes de sesiones para usuario ID:","service":"focus-up-backend","timestamp":"2026-03-23 02:11:57"}
+{"level":"info","message":"Encontrados 5 métodos realizados para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:11:57"}
+{"level":"info","message":"Encontradas 3 sesiones para usuario 1","service":"focus-up-backend","timestamp":"2026-03-23 02:11:57"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:15:20"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:15:20"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:15:20"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:15:20"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:15:20"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:15:37","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:15:37"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:15:37"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:15:37"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:15:37"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:15:37"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:16:39","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:16:39"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:16:39"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:16:39"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:16:39"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:16:39"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:18:31","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:18:31"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:18:31"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:18:31"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:18:31"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:18:31"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:19:34","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:19:34"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:19:34"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:19:34"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:19:34"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:19:34"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:20:23","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:20:23"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:20:23"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:20:23"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:20:23"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:20:23"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:21:02","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:21:02"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:21:02"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:21:02"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:21:02"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:21:02"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:21:39","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:21:39"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:21:39"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:21:39"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:21:39"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:21:39"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:22:10","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:22:10"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:22:10"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:22:10"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:22:10"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:22:10"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:22:53","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:22:53"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:22:53"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:22:53"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:22:53"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:22:53"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:23:15","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:23:15"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:23:15"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:23:15"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:23:15"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:23:15"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:25:20","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:25:20"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:25:20"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:25:20"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:25:20"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:25:20"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:26:21","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:26:21"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:26:21"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:26:21"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:26:21"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:26:21"}
+{"database":"neondb","entities":18,"host":"ep-steep-waterfall-a880kg3a-pooler.eastus2.azure.neon.tech","level":"info","message":"TypeORM conectado a PostgreSQL correctamente","service":"focus-up-backend","sslMode":"require","timestamp":"2026-03-23 02:28:06","user":"neondb_owner"}
+{"level":"info","message":"El server de la API de Focus Up esta corriendo en el puerto 3001","service":"focus-up-backend","timestamp":"2026-03-23 02:28:06"}
+{"level":"info","message":"Entorno: development","service":"focus-up-backend","timestamp":"2026-03-23 02:28:06"}
+{"level":"info","message":"Verificacion de salud: http://localhost:3001/api/v1/health","service":"focus-up-backend","timestamp":"2026-03-23 02:28:06"}
+{"level":"info","message":"Documentacion Swagger: http://localhost:3001/api-docs","service":"focus-up-backend","timestamp":"2026-03-23 02:28:06"}
+{"level":"info","message":"TypeORM conectado: true","service":"focus-up-backend","timestamp":"2026-03-23 02:28:06"}

@@ -3,17 +3,15 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import "reflect-metadata";
+import { Server } from "http";
 import routes from "./routes";
 import { env } from "./config/env";
 import { swaggerSpec, swaggerUi, swaggerUiOptions } from "./config/swagger";
 import { initializeDatabase, AppDataSource } from "./config/ormconfig";
 import logger from "./utils/logger";
-import { validateEnvironment } from "./utils/envValidation";
+import { HttpError } from "./utils/HttpError";
 
-// Validamos variables de entorno al inicio para fallar temprano.
-validateEnvironment();
-
-// Creamos aplicación Express.
+// Creamos la aplicacion Express sin efectos secundarios de arranque.
 const app = express();
 
 // ======================
@@ -120,16 +118,23 @@ app.use(
     res: express.Response,
     _next: express.NextFunction
   ) => {
-    logger.error("Error global:", {
+    const isHttpError = error instanceof HttpError;
+    const statusCode = isHttpError ? error.statusCode : 500;
+    const message = isHttpError
+      ? error.message
+      : "Error interno del servidor";
+
+    logger.error("Error global", {
       message: error instanceof Error ? error.message : "Error desconocido",
       stack: error instanceof Error ? error.stack : undefined,
       method: req.method,
       path: req.originalUrl,
+      statusCode,
     });
 
-    res.status(500).json({
+    res.status(statusCode).json({
       success: false,
-      message: "Error interno del servidor",
+      message,
       timestamp: new Date(),
     });
   }
@@ -139,46 +144,32 @@ app.use(
 // INICIAR SERVIDOR
 // ======================
 const PORT = env.PORT;
-const server = app.listen(PORT, async () => {
-  try {
-    await initializeDatabase();
-
-    logger.info(`El server de la API de Focus Up está corriendo en el puerto ${PORT}`);
-    logger.info(`Entorno: ${env.NODE_ENV}`);
-
-    if (env.NODE_ENV === "development") {
-      logger.info(
-        `Verificación de salud: http://localhost:${PORT}${env.API_PREFIX}/health`
-      );
-      logger.info(`Documentación Swagger: http://localhost:${PORT}/api-docs`);
-    } else {
-      logger.info("API iniciada correctamente");
-    }
-
-    logger.info(`TypeORM conectado: ${AppDataSource.isInitialized}`);
-  } catch (error) {
-    logger.error("Failed to start server", { error });
-    process.exit(1);
-  }
-});
+let server: Server | null = null;
+let shuttingDown = false;
 
 /**
  * Apagado graceful del servidor HTTP y de la conexión a base de datos.
  * Ya no se gestionan cron internos aquí; toda automatización vive fuera de la API.
  */
 const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
   logger.info(`Señal ${signal} recibida, iniciando apagado graceful...`);
 
   try {
-    await new Promise<void>((resolve, reject) => {
-      server.close((error) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
+    if (server) {
+      await new Promise<void>((resolve, reject) => {
+        server?.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
       });
-    });
+      server = null;
+    }
 
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();
@@ -192,13 +183,63 @@ const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
   }
 };
 
-process.on("SIGTERM", () => {
-  void shutdown("SIGTERM");
-});
+/**
+ * Inicializa recursos externos (BD) y luego abre el puerto HTTP.
+ * Esto evita aceptar trafico antes de que la aplicacion este lista.
+ */
+export const startServer = async (): Promise<Server> => {
+  if (server) {
+    return server;
+  }
 
-process.on("SIGINT", () => {
-  void shutdown("SIGINT");
-});
+  try {
+    await initializeDatabase();
+  } catch (error) {
+    logger.error("No fue posible inicializar la base de datos al arrancar", {
+      error,
+    });
+    throw error;
+  }
+
+  server = await new Promise<Server>((resolve, reject) => {
+    const instance = app.listen(PORT, () => {
+      logger.info(
+        `El server de la API de Focus Up esta corriendo en el puerto ${PORT}`
+      );
+      logger.info(`Entorno: ${env.NODE_ENV}`);
+
+      if (env.NODE_ENV === "development") {
+        logger.info(
+          `Verificacion de salud: http://localhost:${PORT}${env.API_PREFIX}/health`
+        );
+        logger.info(`Documentacion Swagger: http://localhost:${PORT}/api-docs`);
+      }
+
+      logger.info(`TypeORM conectado: ${AppDataSource.isInitialized}`);
+      resolve(instance);
+    });
+
+    instance.on("error", (error) => {
+      reject(error);
+    });
+  });
+
+  process.on("SIGTERM", () => {
+    void shutdown("SIGTERM");
+  });
+  process.on("SIGINT", () => {
+    void shutdown("SIGINT");
+  });
+
+  return server;
+};
 
 // Exportamos app para testing.
 export default app;
+
+if (require.main === module) {
+  void startServer().catch((error) => {
+    logger.error("Fallo critico durante el arranque de la API", { error });
+    process.exit(1);
+  });
+}

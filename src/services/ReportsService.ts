@@ -7,8 +7,7 @@ import { UserEntity } from "../models/User.entity";
 import { MetodoEstudioEntity } from "../models/MetodoEstudio.entity";
 import { EventoEntity } from "../models/Evento.entity";
 import { MusicaEntity } from "../models/Musica.entity";
-import { NotificacionesUsuarioEntity } from "../models/NotificacionesUsuario.entity";
-import { NotificacionesProgramadasService } from "./NotificacionesProgramadasService";
+import { MethodReminderService } from "./MethodReminderService";
 import logger from "../utils/logger";
 import { studyMethodRegistry, methodAliases } from "../config/methods.config";
 import { ICreateActiveMethod } from "../interfaces/domain/reports/ICreateActiveMethod";
@@ -331,7 +330,7 @@ export class ReportsService {
   private userRepository = AppDataSource.getRepository(UserEntity);
   private metodoRepository = AppDataSource.getRepository(MetodoEstudioEntity);
   private musicaRepository = AppDataSource.getRepository(MusicaEntity);
-  private preferenciasRepository = AppDataSource.getRepository(NotificacionesUsuarioEntity);
+  private methodReminderService = new MethodReminderService();
 
   /**
     * Obtiene información para reanudar un método específico
@@ -650,46 +649,32 @@ export class ReportsService {
       // Esto motiva a los usuarios a completar sus métodos de estudio pendientes
       if (savedMetodo.progreso < MetodoProgreso.COMPLETADO) {
         try {
-          const preferencias = await this.preferenciasRepository.findOne({
-            where: { idUsuario: data.idUsuario }
-          });
-          const metodosHabilitados = preferencias?.metodosPendientes ?? true;
-          if (!metodosHabilitados) {
-            logger.info(`Notificaciones de métodos pendientes desactivadas para usuario ${data.idUsuario}`);
-            return {
-              success: true,
-              metodoRealizado: savedMetodo,
-              message: "Método activo creado exitosamente"
-            };
-          }
-
-          // Calcular fecha del recordatorio: fecha de creación + 7 días
-          const fechaRecordatorio = new Date(savedMetodo.fechaCreacion);
-          fechaRecordatorio.setDate(fechaRecordatorio.getDate() + 7);
-
-          // Verificar que la fecha del recordatorio esté en el futuro
-          const ahora = new Date();
-          if (fechaRecordatorio <= ahora) {
-            logger.warn(`Fecha de recordatorio calculada ${fechaRecordatorio} no está en el futuro para método ${savedMetodo.idMetodoRealizado}`);
-          } else {
-            // Programar notificación automática
-            await NotificacionesProgramadasService.createScheduledNotification({
-              idUsuario: data.idUsuario,
-              tipo: "metodo_pendiente",
-              titulo: "Recordatorio de método pendiente",
-              mensaje: JSON.stringify({
-                idMetodoRealizado: savedMetodo.idMetodoRealizado,
-                idMetodo: savedMetodo.idMetodo,
-                nombreMetodo: metodo.nombreMetodo,
-                progreso: Number(savedMetodo.progreso),
-              }),
-              fechaProgramada: fechaRecordatorio
+          const reminderResult =
+            await this.methodReminderService.scheduleIncompleteMethodReminder({
+              userId: data.idUsuario,
+              methodReportId: savedMetodo.idMetodoRealizado,
+              methodId: savedMetodo.idMetodo,
+              methodName: metodo.nombreMetodo,
+              progress: Number(savedMetodo.progreso),
+              createdAt: savedMetodo.fechaCreacion,
             });
-            logger.info(`Recordatorio programado para método ${savedMetodo.idMetodoRealizado} del usuario ${data.idUsuario} en ${fechaRecordatorio}`);
+
+          if (reminderResult.error) {
+            logger.error(
+              "Error de negocio al programar recordatorio de metodo pendiente",
+              {
+                methodReportId: savedMetodo.idMetodoRealizado,
+                userId: data.idUsuario,
+                error: reminderResult.error,
+              }
+            );
           }
         } catch (error) {
-          // Loggear error pero no fallar la creación del método
-          logger.error('Error al programar recordatorio automático para método:', error);
+          // El fallo de notificacion no debe revertir la creacion del metodo.
+          logger.error(
+            "Error inesperado al programar recordatorio automatico de metodo",
+            { error, methodReportId: savedMetodo.idMetodoRealizado }
+          );
         }
       }
 
@@ -1274,3 +1259,4 @@ export class ReportsService {
 }
 
 export const reportsService = new ReportsService();
+

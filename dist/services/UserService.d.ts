@@ -33,6 +33,11 @@ export declare class UserService implements IUserService {
         user?: User;
         error?: string;
     }>;
+    bumpTokenVersion(userId: number): Promise<{
+        success: boolean;
+        tokenVersion?: number;
+        error?: string;
+    }>;
     getAllUsers(): Promise<{
         success: boolean;
         users?: User[];

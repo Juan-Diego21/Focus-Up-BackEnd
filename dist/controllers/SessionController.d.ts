@@ -17,7 +17,6 @@ type DaysQuery = {
 };
 export declare class SessionController {
     private sessionService;
-    private notificationService;
     createSession(req: Request, res: Response): Promise<void>;
     getSession(req: Request<SessionIdParams>, res: Response): Promise<void>;
     listUserSessions(req: Request<UserIdParams, {}, {}, PaginationQuery>, res: Response): Promise<void>;

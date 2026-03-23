@@ -18,7 +18,7 @@ export declare class ReportsService {
     private userRepository;
     private metodoRepository;
     private musicaRepository;
-    private preferenciasRepository;
+    private methodReminderService;
     getResumeInfo(methodType: string, progress: number): {
         route: string;
         currentStep?: number;

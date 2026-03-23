@@ -5,6 +5,7 @@ import { UsuarioInteresesEntity } from "../models/UsuarioIntereses.entity";
 import { UsuarioDistraccionesEntity } from "../models/UsuarioDistracciones.entity";
 import { UserEntity } from "../models/User.entity";
 import { IUserService } from "../interfaces/domain/services/IUserService";
+import { AppDataSource } from "../config/ormconfig";
 import logger from "../utils/logger";
 
 /**
@@ -48,9 +49,7 @@ export class UserService implements IUserService {
     message?: string;
     error?: string;
   }> {
-    const queryRunner = (
-      await import("../config/ormconfig")
-    ).AppDataSource.createQueryRunner();
+    const queryRunner = AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
@@ -245,7 +244,6 @@ async updateUser(
   id: number,
   updateData: UserUpdateInput
 ): Promise<{ success: boolean; user?: User; error?: string }> {
-  const { AppDataSource } = await import("../config/ormconfig");
   const queryRunner = AppDataSource.createQueryRunner();
   await queryRunner.connect();
   await queryRunner.startTransaction();
@@ -371,8 +369,39 @@ user ??= await userRepository.findByUsername(identifier);
   }
 
   /**
-   * Obtiene lista completa de todos los usuarios del sistema
-   * Método destinado únicamente para funcionalidades administrativas
+   * Incrementa el tokenVersion para invalidar tokens anteriores.
+   * Esto centraliza la logica de seguridad de autenticacion en la capa de servicio.
+   */
+  async bumpTokenVersion(
+    userId: number
+  ): Promise<{ success: boolean; tokenVersion?: number; error?: string }> {
+    try {
+      const userEntityRepository = AppDataSource.getRepository(UserEntity);
+
+      await userEntityRepository.increment(
+        { idUsuario: userId },
+        "tokenVersion",
+        1
+      );
+
+      const updatedUser = await userEntityRepository.findOne({
+        where: { idUsuario: userId },
+      });
+
+      if (!updatedUser) {
+        return { success: false, error: "Usuario no encontrado" };
+      }
+
+      return { success: true, tokenVersion: updatedUser.tokenVersion };
+    } catch (error) {
+      logger.error("Error en UserService.bumpTokenVersion:", { error, userId });
+      return { success: false, error: "No se pudo actualizar tokenVersion" };
+    }
+  }
+
+  /**
+   * Obtiene lista completa de todos los usuarios del sistema.
+   * Metodo destinado unicamente para funcionalidades administrativas.
    */
   async getAllUsers(): Promise<{
     success: boolean;
@@ -396,7 +425,6 @@ user ??= await userRepository.findByUsername(identifier);
     userId: number,
     interestIds: number[]
   ): Promise<void> {
-    const { AppDataSource } = await import("../config/ormconfig");
     const usuarioInteresesRepo = AppDataSource.getRepository(
       UsuarioInteresesEntity
     );
@@ -417,7 +445,6 @@ user ??= await userRepository.findByUsername(identifier);
     userId: number,
     distractionIds: number[]
   ): Promise<void> {
-    const { AppDataSource } = await import("../config/ormconfig");
     const usuarioDistraccionesRepo = AppDataSource.getRepository(
       UsuarioDistraccionesEntity
     );
@@ -601,7 +628,6 @@ user ??= await userRepository.findByUsername(identifier);
    * gracias a las constraints CASCADE configuradas
    */
   async deleteUser(id: number): Promise<{ success: boolean; error?: string }> {
-    const { AppDataSource } = await import("../config/ormconfig");
     const queryRunner = AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -678,3 +704,4 @@ user ??= await userRepository.findByUsername(identifier);
 }
 
 export const userService = new UserService();
+

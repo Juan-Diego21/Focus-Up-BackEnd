@@ -1,8 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initializeDatabase = exports.AppDataSource = void 0;
 const typeorm_1 = require("typeorm");
 const env_1 = require("./env");
+const logger_1 = __importDefault(require("../utils/logger"));
 const User_entity_1 = require("../models/User.entity");
 const Interest_entity_1 = require("../models/Interest.entity");
 const Distraction_entity_1 = require("../models/Distraction.entity");
@@ -61,50 +65,21 @@ exports.AppDataSource = new typeorm_1.DataSource({
     },
 });
 const initializeDatabase = async () => {
+    if (exports.AppDataSource.isInitialized) {
+        return;
+    }
     try {
         await exports.AppDataSource.initialize();
-        console.log("✅ TypeORM conectado a PostgreSQL correctamente");
-        console.log(`👤 Conectado como usuario: ${env_1.env.PGUSER}`);
-        console.log(`🗄️ Base de datos: ${env_1.env.PGDATABASE}`);
-        const entityMetadatas = exports.AppDataSource.entityMetadatas;
-        console.log(`📊 Entidades cargadas por TypeORM: ${entityMetadatas.length}`);
-        entityMetadatas.forEach(entity => {
-            console.log(`  - ${entity.name} -> tabla: ${entity.tableName} (schema: ${entity.schema || 'public'})`);
+        logger_1.default.info("TypeORM conectado a PostgreSQL correctamente", {
+            host: env_1.env.PGHOST,
+            database: env_1.env.PGDATABASE,
+            user: env_1.env.PGUSER,
+            sslMode: env_1.env.PGSSLMODE,
+            entities: exports.AppDataSource.entityMetadatas.length,
         });
-        const queryRunner = exports.AppDataSource.createQueryRunner();
-        try {
-            const schemaResult = await queryRunner.query('SELECT current_schema() as schema, current_user as user');
-            console.log(`📍 Schema actual: ${schemaResult[0].schema}`);
-            console.log(`👤 Usuario de BD: ${schemaResult[0].user}`);
-            const tableCheck = await queryRunner.query(`
-        SELECT schemaname, tablename, tableowner
-        FROM pg_tables
-        WHERE tablename = 'usuario'
-        AND schemaname = 'public'
-      `);
-            if (tableCheck.length > 0) {
-                console.log(`✅ Tabla 'usuario' encontrada en schema '${tableCheck[0].schemaname}' - Owner: ${tableCheck[0].tableowner}`);
-            }
-            else {
-                console.log(`❌ Tabla 'usuario' NO encontrada en schema 'public'`);
-                const allTables = await queryRunner.query(`
-          SELECT schemaname, tablename, tableowner
-          FROM pg_tables
-          WHERE schemaname = 'public'
-          ORDER BY tablename
-        `);
-                console.log(`📋 Tablas disponibles en schema 'public':`);
-                allTables.forEach((table) => {
-                    console.log(`  - ${table.tablename} (owner: ${table.tableowner})`);
-                });
-            }
-        }
-        finally {
-            await queryRunner.release();
-        }
     }
     catch (error) {
-        console.error("❌ Error conectando TypeORM a PostgreSQL:", error);
+        logger_1.default.error("Error conectando TypeORM a PostgreSQL", { error });
         throw error;
     }
 };

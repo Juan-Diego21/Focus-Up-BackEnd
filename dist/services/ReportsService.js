@@ -11,8 +11,7 @@ const SesionConcentracion_entity_1 = require("../models/SesionConcentracion.enti
 const User_entity_1 = require("../models/User.entity");
 const MetodoEstudio_entity_1 = require("../models/MetodoEstudio.entity");
 const Musica_entity_1 = require("../models/Musica.entity");
-const NotificacionesUsuario_entity_1 = require("../models/NotificacionesUsuario.entity");
-const NotificacionesProgramadasService_1 = require("./NotificacionesProgramadasService");
+const MethodReminderService_1 = require("./MethodReminderService");
 const logger_1 = __importDefault(require("../utils/logger"));
 const methods_config_1 = require("../config/methods.config");
 function normalizeProgress(progress) {
@@ -199,7 +198,7 @@ class ReportsService {
         this.userRepository = ormconfig_1.AppDataSource.getRepository(User_entity_1.UserEntity);
         this.metodoRepository = ormconfig_1.AppDataSource.getRepository(MetodoEstudio_entity_1.MetodoEstudioEntity);
         this.musicaRepository = ormconfig_1.AppDataSource.getRepository(Musica_entity_1.MusicaEntity);
-        this.preferenciasRepository = ormconfig_1.AppDataSource.getRepository(NotificacionesUsuario_entity_1.NotificacionesUsuarioEntity);
+        this.methodReminderService = new MethodReminderService_1.MethodReminderService();
     }
     getResumeInfo(methodType, progress) {
         return getResumeInfo(methodType, progress);
@@ -450,42 +449,24 @@ class ReportsService {
             const savedMetodo = await this.metodoRealizadoRepository.save(metodoRealizado);
             if (savedMetodo.progreso < MetodoRealizado_entity_1.MetodoProgreso.COMPLETADO) {
                 try {
-                    const preferencias = await this.preferenciasRepository.findOne({
-                        where: { idUsuario: data.idUsuario }
+                    const reminderResult = await this.methodReminderService.scheduleIncompleteMethodReminder({
+                        userId: data.idUsuario,
+                        methodReportId: savedMetodo.idMetodoRealizado,
+                        methodId: savedMetodo.idMetodo,
+                        methodName: metodo.nombreMetodo,
+                        progress: Number(savedMetodo.progreso),
+                        createdAt: savedMetodo.fechaCreacion,
                     });
-                    const metodosHabilitados = preferencias?.metodosPendientes ?? true;
-                    if (!metodosHabilitados) {
-                        logger_1.default.info(`Notificaciones de métodos pendientes desactivadas para usuario ${data.idUsuario}`);
-                        return {
-                            success: true,
-                            metodoRealizado: savedMetodo,
-                            message: "Método activo creado exitosamente"
-                        };
-                    }
-                    const fechaRecordatorio = new Date(savedMetodo.fechaCreacion);
-                    fechaRecordatorio.setDate(fechaRecordatorio.getDate() + 7);
-                    const ahora = new Date();
-                    if (fechaRecordatorio <= ahora) {
-                        logger_1.default.warn(`Fecha de recordatorio calculada ${fechaRecordatorio} no está en el futuro para método ${savedMetodo.idMetodoRealizado}`);
-                    }
-                    else {
-                        await NotificacionesProgramadasService_1.NotificacionesProgramadasService.createScheduledNotification({
-                            idUsuario: data.idUsuario,
-                            tipo: "metodo_pendiente",
-                            titulo: "Recordatorio de método pendiente",
-                            mensaje: JSON.stringify({
-                                idMetodoRealizado: savedMetodo.idMetodoRealizado,
-                                idMetodo: savedMetodo.idMetodo,
-                                nombreMetodo: metodo.nombreMetodo,
-                                progreso: Number(savedMetodo.progreso),
-                            }),
-                            fechaProgramada: fechaRecordatorio
+                    if (reminderResult.error) {
+                        logger_1.default.error("Error de negocio al programar recordatorio de metodo pendiente", {
+                            methodReportId: savedMetodo.idMetodoRealizado,
+                            userId: data.idUsuario,
+                            error: reminderResult.error,
                         });
-                        logger_1.default.info(`Recordatorio programado para método ${savedMetodo.idMetodoRealizado} del usuario ${data.idUsuario} en ${fechaRecordatorio}`);
                     }
                 }
                 catch (error) {
-                    logger_1.default.error('Error al programar recordatorio automático para método:', error);
+                    logger_1.default.error("Error inesperado al programar recordatorio automatico de metodo", { error, methodReportId: savedMetodo.idMetodoRealizado });
                 }
             }
             return {
