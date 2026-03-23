@@ -1,7 +1,7 @@
 name: Email Automation Scheduler
 
 on:
-  # Ejecución periódica; GitHub Actions interpreta cron en UTC.
+  # Ejecucion periodica; GitHub Actions interpreta cron en UTC.
   schedule:
     - cron: "*/5 * * * *"
   # Permite correrlo manualmente para pruebas/control operativo.
@@ -15,7 +15,56 @@ concurrency:
 jobs:
   run-email-automation:
     runs-on: ubuntu-latest
+    # Necesario si los secretos se guardaron como "Environment secrets".
+    # Si usas otro environment, cambia "production" por el nombre correcto.
+    environment: production
+    env:
+      # Variables minimas requeridas por validacion de entorno.
+      NODE_ENV: production
+      PORT: 3001
+      API_PREFIX: /api/v1
+      LOG_LEVEL: info
+
+      # Configuracion de BD (usar Secrets del repositorio).
+      PGHOST: ${{ secrets.PGHOST }}
+      PGPORT: ${{ secrets.PGPORT }}
+      PGDATABASE: ${{ secrets.PGDATABASE }}
+      PGUSER: ${{ secrets.PGUSER }}
+      PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      PGSSLMODE: ${{ secrets.PGSSLMODE }}
+
+      # Configuracion JWT (requerida por carga de env actual).
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+      JWT_ACCESS_EXPIRES_IN: 24h
+      JWT_REFRESH_EXPIRES_IN: 7d
+      BCRYPT_SALT_ROUNDS: 12
+
+      # Configuracion SMTP para envio de correos.
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_SECURE: ${{ secrets.SMTP_SECURE }}
+      EMAIL_USER: ${{ secrets.EMAIL_USER }}
+      EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+
+      # URL frontend y zona horaria para reglas de negocio.
+      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+      CRON_TIMEZONE: America/Bogota
+
+      # Parametros del orquestador externo.
+      EMAIL_AUTOMATION_WINDOW_MINUTES: 5
+      EMAIL_AUTOMATION_ENABLE_PENDING: true
+      EMAIL_AUTOMATION_ENABLE_SESSION_REMINDERS: true
+      EMAIL_AUTOMATION_ENABLE_WEEKLY_MOTIVATION: true
+
     steps:
+      - name: Workflow metadata
+        shell: bash
+        run: |
+          echo "Workflow revision: email-automation-v2-2026-03-23"
+          echo "Ref: $GITHUB_REF"
+          echo "SHA: $GITHUB_SHA"
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -28,43 +77,52 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate required environment variables
+        shell: bash
+        run: |
+          required_vars=(
+            PGHOST
+            PGPORT
+            PGDATABASE
+            PGUSER
+            PGPASSWORD
+            PGSSLMODE
+            JWT_SECRET
+            JWT_REFRESH_SECRET
+            SMTP_HOST
+            SMTP_PORT
+            SMTP_SECURE
+            EMAIL_USER
+            EMAIL_PASS
+            FRONTEND_URL
+          )
+
+          missing_vars=()
+          for var_name in "${required_vars[@]}"; do
+            value="${!var_name:-}"
+            if [ -z "$value" ] || [[ "$value" =~ ^[[:space:]]*$ ]]; then
+              missing_vars+=("$var_name")
+            fi
+          done
+
+          if [ "${#missing_vars[@]}" -gt 0 ]; then
+            echo "::error title=Faltan variables de entorno::No se recibieron: ${missing_vars[*]}"
+            echo "Configuralas en Settings > Secrets and variables > Actions."
+            echo "Si las guardaste como Environment secrets, asigna ese environment al job."
+            exit 1
+          fi
+
+          if ! [[ "$PGPORT" =~ ^[0-9]+$ ]] || [ "$PGPORT" -le 0 ]; then
+            echo "::error title=PGPORT invalido::PGPORT debe ser un entero positivo. Valor recibido: '$PGPORT'"
+            exit 1
+          fi
+
+          if [ "$PGSSLMODE" != "require" ] && [ "$PGSSLMODE" != "disable" ]; then
+            echo "::error title=PGSSLMODE invalido::PGSSLMODE debe ser 'require' o 'disable'. Valor recibido: '$PGSSLMODE'"
+            exit 1
+          fi
+
+          echo "Variables de entorno requeridas presentes."
+
       - name: Run email automation script
         run: npm run email:automation
-        env:
-          # Variables mínimas requeridas por validación de entorno.
-          NODE_ENV: production
-          PORT: 3001
-          API_PREFIX: /api/v1
-          LOG_LEVEL: info
-
-          # Configuración de BD (usar Secrets del repositorio).
-          PGHOST: ${{ secrets.PGHOST }}
-          PGPORT: ${{ secrets.PGPORT }}
-          PGDATABASE: ${{ secrets.PGDATABASE }}
-          PGUSER: ${{ secrets.PGUSER }}
-          PGPASSWORD: ${{ secrets.PGPASSWORD }}
-          PGSSLMODE: ${{ secrets.PGSSLMODE }}
-
-          # Configuración JWT (requerida por carga de env actual).
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
-          JWT_ACCESS_EXPIRES_IN: 24h
-          JWT_REFRESH_EXPIRES_IN: 7d
-          BCRYPT_SALT_ROUNDS: 12
-
-          # Configuración SMTP para envío de correos.
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_SECURE: ${{ secrets.SMTP_SECURE }}
-          EMAIL_USER: ${{ secrets.EMAIL_USER }}
-          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
-
-          # URL frontend y zona horaria para reglas de negocio.
-          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-          CRON_TIMEZONE: America/Bogota
-
-          # Parámetros del orquestador externo.
-          EMAIL_AUTOMATION_WINDOW_MINUTES: 5
-          EMAIL_AUTOMATION_ENABLE_PENDING: true
-          EMAIL_AUTOMATION_ENABLE_SESSION_REMINDERS: true
-          EMAIL_AUTOMATION_ENABLE_WEEKLY_MOTIVATION: true
