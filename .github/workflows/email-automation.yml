@@ -58,14 +58,6 @@ jobs:
       EMAIL_AUTOMATION_ENABLE_WEEKLY_MOTIVATION: true
 
     steps:
-      - name: Show scheduler logs
-        if: always()
-        run: |
-          echo "=== combined.log ==="
-          test -f logs/combined.log && tail -n 200 logs/combined.log || echo "No combined.log"
-          echo "=== error.log ==="
-          test -f logs/error.log && tail -n 200 logs/error.log || echo "No error.log"
-
       - name: Workflow metadata
         shell: bash
         run: |
@@ -134,5 +126,21 @@ jobs:
 
           echo "Variables de entorno requeridas presentes."
 
+      - name: Ensure logs directory exists
+        run: mkdir -p logs
+
+      - name: Verify SMTP credentials
+        run: |
+          node -e "const nodemailer=require('nodemailer'); const transporter=nodemailer.createTransport({host:process.env.SMTP_HOST,port:Number(process.env.SMTP_PORT),secure:process.env.SMTP_SECURE==='true',auth:{user:process.env.EMAIL_USER,pass:process.env.EMAIL_PASS},tls:{rejectUnauthorized:false}}); transporter.verify().then(()=>{console.log('SMTP OK')}).catch((error)=>{console.error('SMTP FAIL:', error && error.message ? error.message : error); process.exit(1);});"
+
       - name: Run email automation script
         run: npm run email:automation
+
+      - name: Show scheduler logs (post-run)
+        if: always()
+        shell: bash
+        run: |
+          echo "=== combined.log ==="
+          test -f logs/combined.log && tail -n 200 logs/combined.log || echo "No combined.log"
+          echo "=== error.log ==="
+          test -f logs/error.log && tail -n 200 logs/error.log || echo "No error.log"
