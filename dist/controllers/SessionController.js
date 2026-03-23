@@ -5,12 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SessionController = void 0;
 const SessionService_1 = require("../services/SessionService");
-const NotificationService_1 = require("../services/NotificationService");
 const logger_1 = __importDefault(require("../utils/logger"));
 class SessionController {
     constructor() {
         this.sessionService = new SessionService_1.SessionService();
-        this.notificationService = new NotificationService_1.NotificationService();
     }
     async createSession(req, res) {
         try {

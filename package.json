@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "send-emails": "ts-node src/scripts/send-pending-emails.ts",
+    "email:automation": "ts-node src/scripts/email-automation.ts",
     "test:db": "ts-node src/scripts/test-connection.ts",
     "test:integration": "ts-node src/scripts/test-integration.ts",
     "test:orm": "ts-node src/scripts/test-integration.ts",

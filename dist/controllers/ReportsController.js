@@ -11,6 +11,12 @@ class ReportsController {
         try {
             const userPayload = req.user;
             const { id_metodo, estado, progreso } = req.body;
+            logger_1.default.info("POST /reports/active-methods payload", {
+                id_metodo,
+                progreso,
+                estado,
+                id_usuario: userPayload.userId,
+            });
             const metodoId = Number(id_metodo);
             if (!id_metodo || isNaN(metodoId)) {
                 const response = {
@@ -22,18 +28,41 @@ class ReportsController {
             }
             const result = await ReportsService_1.reportsService.createActiveMethod({
                 idMetodo: metodoId,
-                estado: estado || "en_progreso",
-                progreso: progreso || 0,
+                estado: estado ?? "en_progreso",
+                progreso: progreso ?? 0,
                 idUsuario: userPayload.userId,
             });
             if (!result.success) {
+                const statusCode = result.statusCode ?? 400;
+                logger_1.default.warn("POST /reports/active-methods rejected", {
+                    id_metodo,
+                    progreso,
+                    estado,
+                    id_usuario: userPayload.userId,
+                    status_code: statusCode,
+                    error_code: result.errorCode,
+                    motivo: result.error || result.message,
+                });
                 const response = {
                     success: false,
                     message: result.message || "Error al crear método activo",
-                    error: result.error,
+                    error: result.errorCode || result.error,
+                    data: result.existingMethod
+                        ? {
+                            id_metodo_realizado: result.existingMethod.idMetodoRealizado,
+                            id_usuario: result.existingMethod.idUsuario,
+                            id_metodo: result.existingMethod.idMetodo,
+                            progreso: result.existingMethod.progreso,
+                            estado: result.existingMethod.estado,
+                            fecha_inicio: result.existingMethod.fechaInicio,
+                            fecha_fin: result.existingMethod.fechaFin,
+                            fecha_creacion: result.existingMethod.fechaCreacion,
+                            fecha_actualizacion: result.existingMethod.fechaActualizacion,
+                        }
+                        : undefined,
                     timestamp: new Date(),
                 };
-                return res.status(400).json(response);
+                return res.status(statusCode).json(response);
             }
             const metodoData = result.metodoRealizado;
             if (!metodoData) {
@@ -63,7 +92,13 @@ class ReportsController {
             res.status(201).json(response);
         }
         catch (error) {
-            logger_1.default.error("Error en ReportsController.createActiveMethod:", JSON.stringify(error));
+            logger_1.default.error("Error en ReportsController.createActiveMethod:", {
+                id_metodo: req.body?.id_metodo,
+                progreso: req.body?.progreso,
+                estado: req.body?.estado,
+                id_usuario: req?.user?.userId,
+                motivo: error.message,
+            });
             const response = {
                 success: false,
                 message: "Error interno del servidor",

@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { SessionService } from "../services/SessionService";
-import { NotificationService } from "../services/NotificationService";
-import { CreateSessionDto, UpdateSessionDto, SessionFilters } from "../types/Session";
+import { CreateSessionDto, UpdateSessionDto } from "../types/Session";
 import { IApiResponse } from "../interfaces/shared/IApiResponse";
 import logger from "../utils/logger";
 
@@ -17,7 +16,6 @@ type DaysQuery = { days?: string };
  */
 export class SessionController {
   private sessionService = new SessionService();
-  private notificationService = new NotificationService();
 
   /**
    * Crea una nueva sesión de concentración

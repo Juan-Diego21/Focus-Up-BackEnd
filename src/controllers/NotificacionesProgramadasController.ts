@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { NotificacionesProgramadasService } from '../services/NotificacionesProgramadasService';
+import logger from "../utils/logger";
 
 type IdParams = { id: string };
 
@@ -59,7 +60,7 @@ export class NotificacionesProgramadasController {
       res.status(201).json(result);
     } catch (error) {
       // Loggear error interno para debugging
-      console.error('Error en createScheduledNotification:', error);
+      logger.error('Error en createScheduledNotification', { error });
       // Retornar error genérico del servidor
       res.status(500).json({
         success: false,
@@ -90,7 +91,7 @@ export class NotificacionesProgramadasController {
       res.status(200).json(result);
     } catch (error) {
       // Loggear error para debugging
-      console.error('Error en getScheduledNotifications:', error);
+      logger.error('Error en getScheduledNotifications', { error });
       // Retornar error genérico
       res.status(500).json({
         success: false,
@@ -131,7 +132,7 @@ export class NotificacionesProgramadasController {
       res.status(200).json(result);
     } catch (error) {
       // Loggear error para debugging
-      console.error('Error en markAsSent:', error);
+      logger.error('Error en markAsSent', { error });
       // Retornar error genérico
       res.status(500).json({
         success: false,

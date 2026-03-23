@@ -1,94 +1,58 @@
 import dotenv from "dotenv";
+import { z } from "zod";
 
 /**
- * Configuración centralizada de variables de entorno
- * Carga y valida todas las variables necesarias para la aplicación
+ * Configuracion centralizada de variables de entorno.
+ * Este archivo es la unica fuente de verdad para validar y tipar el entorno.
  */
-
-// Cambio productivo: cargar variables sin ruta absoluta para compatibilidad en Render/Railway y entornos containerizados.
 dotenv.config();
 
-/**
- * Interface para tipar las variables de entorno de la aplicación
- */
-interface Env {
-  // Server Configuration
-  PORT: number;
-  NODE_ENV: string;
-  API_PREFIX: string;
-  FRONTEND_URL: string;
+const envSchema = z
+  .object({
+    // Server
+    PORT: z.coerce.number().int().positive().default(3001),
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+    API_PREFIX: z.string().trim().min(1).default("/api/v1"),
+    FRONTEND_URL: z.string().trim().optional(),
 
-  // Database Configuration (Neon.tech PostgreSQL)
-  PGHOST: string;
-  PGPORT: number;
-  PGDATABASE: string;
-  PGUSER: string;
-  PGPASSWORD: string;
-  PGSSLMODE: string;
+    // Logging
+    LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("info"),
 
-  // JWT Configuration
-  JWT_SECRET: string;
-  JWT_REFRESH_SECRET: string;
-  JWT_ACCESS_EXPIRES_IN: string;
-  JWT_REFRESH_EXPIRES_IN: string;
+    // Database
+    PGHOST: z.string().trim().min(1, "PGHOST es requerido"),
+    PGPORT: z.coerce.number().int().positive().default(5432),
+    PGDATABASE: z.string().trim().min(1, "PGDATABASE es requerido"),
+    PGUSER: z.string().trim().min(1, "PGUSER es requerido"),
+    PGPASSWORD: z.string().trim().min(1, "PGPASSWORD es requerido"),
+    PGSSLMODE: z.enum(["require", "disable"]).default("require"),
 
-  // Bcrypt Configuration
-  BCRYPT_SALT_ROUNDS: number;
+    // JWT
+    JWT_SECRET: z.string().trim().min(1, "JWT_SECRET es requerido"),
+    JWT_REFRESH_SECRET: z.string().trim().min(1, "JWT_REFRESH_SECRET es requerido"),
+    JWT_ACCESS_EXPIRES_IN: z.string().trim().min(1).default("24h"),
+    JWT_REFRESH_EXPIRES_IN: z.string().trim().min(1).default("7d"),
+
+    // Security
+    BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(8).default(12),
+  })
+  .superRefine((parsed, ctx) => {
+    // En produccion exigimos URL de frontend para CORS estricto.
+    if (parsed.NODE_ENV === "production" && !parsed.FRONTEND_URL) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["FRONTEND_URL"],
+        message: "FRONTEND_URL es requerido en produccion",
+      });
+    }
+  });
+
+const parsedEnv = envSchema.safeParse(process.env);
+if (!parsedEnv.success) {
+  const details = parsedEnv.error.issues
+    .map((issue) => `${issue.path.join(".") || "env"}: ${issue.message}`)
+    .join("; ");
+  throw new Error(`Variables de entorno invalidas: ${details}`);
 }
 
-// Validar y exportar variables de entorno con tipado fuerte
-export const env: Env = {
-  // Server Configuration
-  PORT: parseInt(process.env.PORT || "3001", 10),
-  NODE_ENV: process.env.NODE_ENV || "development",
-  API_PREFIX: process.env.API_PREFIX || "/api/v1",
-  FRONTEND_URL: process.env.FRONTEND_URL || "",
-
-  // Database Configuration
-  PGHOST: process.env.PGHOST || "",
-  PGPORT: parseInt(process.env.PGPORT || "5432", 10),
-  PGDATABASE: process.env.PGDATABASE || "",
-  PGUSER: process.env.PGUSER || "",
-  PGPASSWORD: process.env.PGPASSWORD || "",
-  PGSSLMODE: process.env.PGSSLMODE || "require",
-
-  // JWT Configuration
-  // Cambio productivo: secretos JWT obligatorios sin fallback inseguro.
-  JWT_SECRET: process.env.JWT_SECRET || "",
-  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "",
-  JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
-  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
-
-  // Bcrypt Configuration
-  BCRYPT_SALT_ROUNDS: parseInt(process.env.BCRYPT_SALT_ROUNDS || "12"),
-};
-
-// Debug: Verificar que las variables se cargan (solo en desarrollo)
-if (env.NODE_ENV === "development") {
-  console.log("🔍 Variables de entorno cargadas:");
-  console.log("PORT:", env.PORT);
-  console.log("NODE_ENV:", env.NODE_ENV);
-  console.log("API_PREFIX:", env.API_PREFIX);
-  console.log("PGHOST:", env.PGHOST ? "✅ Presente" : "❌ Faltante");
-  console.log("PGDATABASE:", env.PGDATABASE ? "✅ Presente" : "❌ Faltante");
-  console.log("PGUSER:", env.PGUSER ? "✅ Presente" : "❌ Faltante");
-  console.log("PGPASSWORD:", env.PGPASSWORD ? "✅ Presente" : "❌ Faltante");
-}
-
-// Validación de variables críticas
-if (!env.PGHOST) throw new Error("❌ PGHOST no está configurada en .env");
-if (!env.PGDATABASE)
-  throw new Error("❌ PGDATABASE no está configurada en .env");
-if (!env.PGUSER) throw new Error("❌ PGUSER no está configurada en .env");
-if (!env.PGPASSWORD)
-  throw new Error("❌ PGPASSWORD no está configurada en .env");
-// Cambio productivo: fallar al inicio si secretos críticos no están definidos.
-if (!env.JWT_SECRET)
-  throw new Error("❌ JWT_SECRET no está configurada en .env");
-if (!env.JWT_REFRESH_SECRET)
-  throw new Error("❌ JWT_REFRESH_SECRET no está configurada en .env");
-// Cambio productivo: en producción el frontend oficial debe estar definido para CORS estricto.
-if (env.NODE_ENV === "production" && !env.FRONTEND_URL)
-  throw new Error("❌ FRONTEND_URL no está configurada en producción");
-
-console.log("✅ Configuración de entorno cargada correctamente");
+export type Env = z.infer<typeof envSchema>;
+export const env: Env = parsedEnv.data;

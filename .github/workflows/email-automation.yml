@@ -1,0 +1,70 @@
+name: Email Automation Scheduler
+
+on:
+  # Ejecución periódica; GitHub Actions interpreta cron en UTC.
+  schedule:
+    - cron: "*/5 * * * *"
+  # Permite correrlo manualmente para pruebas/control operativo.
+  workflow_dispatch:
+
+concurrency:
+  # Evita ejecuciones superpuestas del mismo workflow.
+  group: email-automation-scheduler
+  cancel-in-progress: false
+
+jobs:
+  run-email-automation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run email automation script
+        run: npm run email:automation
+        env:
+          # Variables mínimas requeridas por validación de entorno.
+          NODE_ENV: production
+          PORT: 3001
+          API_PREFIX: /api/v1
+          LOG_LEVEL: info
+
+          # Configuración de BD (usar Secrets del repositorio).
+          PGHOST: ${{ secrets.PGHOST }}
+          PGPORT: ${{ secrets.PGPORT }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGSSLMODE: ${{ secrets.PGSSLMODE }}
+
+          # Configuración JWT (requerida por carga de env actual).
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          JWT_ACCESS_EXPIRES_IN: 24h
+          JWT_REFRESH_EXPIRES_IN: 7d
+          BCRYPT_SALT_ROUNDS: 12
+
+          # Configuración SMTP para envío de correos.
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_SECURE: ${{ secrets.SMTP_SECURE }}
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+
+          # URL frontend y zona horaria para reglas de negocio.
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          CRON_TIMEZONE: America/Bogota
+
+          # Parámetros del orquestador externo.
+          EMAIL_AUTOMATION_WINDOW_MINUTES: 5
+          EMAIL_AUTOMATION_ENABLE_PENDING: true
+          EMAIL_AUTOMATION_ENABLE_SESSION_REMINDERS: true
+          EMAIL_AUTOMATION_ENABLE_WEEKLY_MOTIVATION: true

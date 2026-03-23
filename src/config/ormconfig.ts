@@ -1,5 +1,6 @@
 import { DataSource } from "typeorm";
 import { env } from "./env";
+import logger from "../utils/logger";
 
 /**
  * Configuración de TypeORM para conexión a PostgreSQL
@@ -88,58 +89,21 @@ export const AppDataSource = new DataSource({
  * Verifica la conectividad, esquema y existencia de tablas principales
  */
 export const initializeDatabase = async (): Promise<void> => {
+  if (AppDataSource.isInitialized) {
+    return;
+  }
+
   try {
     await AppDataSource.initialize();
-    console.log("✅ TypeORM conectado a PostgreSQL correctamente");
-
-    // Log connection details
-    console.log(`👤 Conectado como usuario: ${env.PGUSER}`);
-    console.log(`🗄️ Base de datos: ${env.PGDATABASE}`);
-
-    // Log entities loaded
-    const entityMetadatas = AppDataSource.entityMetadatas;
-    console.log(`📊 Entidades cargadas por TypeORM: ${entityMetadatas.length}`);
-    entityMetadatas.forEach(entity => {
-      console.log(`  - ${entity.name} -> tabla: ${entity.tableName} (schema: ${entity.schema || 'public'})`);
+    logger.info("TypeORM conectado a PostgreSQL correctamente", {
+      host: env.PGHOST,
+      database: env.PGDATABASE,
+      user: env.PGUSER,
+      sslMode: env.PGSSLMODE,
+      entities: AppDataSource.entityMetadatas.length,
     });
-
-    // Test basic connection and schema
-    const queryRunner = AppDataSource.createQueryRunner();
-    try {
-      const schemaResult = await queryRunner.query('SELECT current_schema() as schema, current_user as user');
-      console.log(`📍 Schema actual: ${schemaResult[0].schema}`);
-      console.log(`👤 Usuario de BD: ${schemaResult[0].user}`);
-
-      // Test if usuario table exists
-      const tableCheck = await queryRunner.query(`
-        SELECT schemaname, tablename, tableowner
-        FROM pg_tables
-        WHERE tablename = 'usuario'
-        AND schemaname = 'public'
-      `);
-
-      if (tableCheck.length > 0) {
-        console.log(`✅ Tabla 'usuario' encontrada en schema '${tableCheck[0].schemaname}' - Owner: ${tableCheck[0].tableowner}`);
-      } else {
-        console.log(`❌ Tabla 'usuario' NO encontrada en schema 'public'`);
-        // List all tables in public schema
-        const allTables = await queryRunner.query(`
-          SELECT schemaname, tablename, tableowner
-          FROM pg_tables
-          WHERE schemaname = 'public'
-          ORDER BY tablename
-        `);
-        console.log(`📋 Tablas disponibles en schema 'public':`);
-        allTables.forEach((table: any) => {
-          console.log(`  - ${table.tablename} (owner: ${table.tableowner})`);
-        });
-      }
-    } finally {
-      await queryRunner.release();
-    }
-
   } catch (error) {
-    console.error("❌ Error conectando TypeORM a PostgreSQL:", error);
+    logger.error("Error conectando TypeORM a PostgreSQL", { error });
     throw error;
   }
 };

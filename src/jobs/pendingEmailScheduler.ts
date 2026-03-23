@@ -1,19 +1,51 @@
-﻿import nodemailer from "nodemailer";
+import nodemailer from "nodemailer";
 import { AppDataSource } from "../config/ormconfig";
-import { getWeeklyMotivationalMessage, getCurrentWeekNumber } from "../config/motivationalMessages";
-import { getPendingNotifications, markAsSent } from "../repositories/NotificacionesProgramadasRepository";
+import {
+  getWeeklyMotivationalMessage,
+  getCurrentWeekNumber,
+} from "../config/motivationalMessages";
+import {
+  getPendingNotifications,
+  markAsSent,
+} from "../repositories/NotificacionesProgramadasRepository";
+import { MetodoRealizadoEntity } from "../models/MetodoRealizado.entity";
 import logger from "../utils/logger";
 
-type NotificationKind = "evento" | "metodo_pendiente" | "sesion_pendiente" | "motivation" | string;
+type NotificationKind =
+  | "evento"
+  | "metodo_pendiente"
+  | "sesion_pendiente"
+  | "motivation"
+  | string;
 
 interface EmailPayload {
   subject: string;
   html: string;
 }
 
-const DEFAULT_INTERVAL_MS = 60_000;
+interface PendingEmailProcessorOptions {
+  batchSize?: number;
+  advisoryLockKey?: number;
+}
+
+interface MethodReminderSnapshot {
+  methodName: string;
+  progress: number;
+  accentColor: string;
+  reportsUrl: string;
+}
+
+export interface PendingEmailProcessorResult {
+  lockAcquired: boolean;
+  pendingDetected: number;
+  processed: number;
+  sent: number;
+  failed: number;
+  skipped: number;
+}
+
 const DEFAULT_BATCH_SIZE = 50;
-const ADVISORY_LOCK_KEY = 8_775_311;
+const DEFAULT_ADVISORY_LOCK_KEY = 8_775_311;
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
@@ -34,19 +66,13 @@ const parseInteger = (value: string | undefined, fallback: number): number => {
   return Number.isNaN(parsed) || parsed <= 0 ? fallback : parsed;
 };
 
-const parseBoolean = (value: string | undefined, fallback: boolean): boolean => {
-  if (!value) return fallback;
-  const normalized = value.trim().toLowerCase();
-  if (normalized === "true" || normalized === "1") return true;
-  if (normalized === "false" || normalized === "0") return false;
-  return fallback;
-};
-
 const isTestRecipient = (email: string): boolean => {
   return email === "john@example.com" || email === "test@example.com";
 };
 
-const parseMessageAsJson = (message?: string): Record<string, unknown> | null => {
+const parseMessageAsJson = (
+  message?: string
+): Record<string, unknown> | null => {
   if (!message) return null;
   try {
     return JSON.parse(message) as Record<string, unknown>;
@@ -60,7 +86,12 @@ const asString = (value: unknown, fallback = ""): string => {
 };
 
 const asNumber = (value: unknown, fallback = 0): number => {
-  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value.trim(), 10);
+    return Number.isNaN(parsed) ? fallback : parsed;
+  }
+  return fallback;
 };
 
 const readNumericId = (value: unknown): number => {
@@ -89,8 +120,134 @@ const getFrontendEventsUrl = (): string => {
   return `${getFrontendBaseUrl()}/events`;
 };
 
+const getFrontendReportsUrl = (): string => {
+  return `${getFrontendBaseUrl()}/reports`;
+};
+
 const getStartSessionUrl = (eventId: number): string => {
   return `${getFrontendBaseUrl()}/start-session?eventId=${eventId}`;
+};
+
+// Mapa de colores para correos de recordatorio de métodos.
+const METHOD_REMINDER_COLORS: Record<string, string> = {
+  "metodo pomodoro": "#E53935",
+  "pomodoro": "#E53935",
+  "mapas mentales": "#10B981",
+  "repaso espaciado": "#7E57C2",
+  "practica activa": "#43A047",
+  "metodo feynman": "#FFD54F",
+  "feynman": "#FFD54F",
+  "metodo cornell": "#3B82F6",
+  "cornell": "#3B82F6",
+};
+
+const DEFAULT_METHOD_REMINDER_COLOR = "#FFC107";
+
+const normalizeTextForLookup = (value: string): string => {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const getMethodReminderColor = (methodName: string): string => {
+  const normalized = normalizeTextForLookup(methodName);
+  return METHOD_REMINDER_COLORS[normalized] || DEFAULT_METHOD_REMINDER_COLOR;
+};
+
+const clampProgress = (value: number): number => {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(100, Math.max(0, Math.round(value)));
+};
+
+const extractMethodNameFromLegacyMessage = (message?: string): string => {
+  if (!message) return "";
+  const normalizedMessage = normalizeTextForLookup(message);
+  const marker = "metodo sin finalizar:";
+  const markerIndex = normalizedMessage.indexOf(marker);
+  if (markerIndex < 0) return "";
+
+  const extracted = normalizedMessage.slice(markerIndex + marker.length).trim();
+  if (!extracted) return "";
+
+  return extracted.split(".")[0]?.trim() || "";
+};
+
+/**
+ * Obtiene el estado real del método recordado.
+ * Si existe `idMetodoRealizado`, consulta BD para evitar usar progreso stale.
+ * Si no existe, usa el payload recibido como fallback.
+ */
+const resolveMethodReminderSnapshot = async (
+  parsed: Record<string, unknown> | null,
+  rawMessage: string | undefined,
+  userId: number
+): Promise<MethodReminderSnapshot> => {
+  const parsedMethodName = asString(parsed?.nombreMetodo, "");
+  const parsedProgress = clampProgress(asNumber(parsed?.progreso, 0));
+  const methodReportId = readNumericId(
+    parsed?.idMetodoRealizado ?? parsed?.id_metodo_realizado
+  );
+
+  let resolvedName = parsedMethodName;
+  let resolvedProgress = parsedProgress;
+
+  try {
+    const methodRepository = AppDataSource.getRepository(MetodoRealizadoEntity);
+
+    // Caso preferido: notificación apunta al método exacto por id.
+    if (methodReportId > 0) {
+      const method = await methodRepository
+        .createQueryBuilder("mr")
+        .leftJoinAndSelect("mr.metodo", "metodo")
+        .where("mr.idMetodoRealizado = :methodReportId", { methodReportId })
+        .andWhere("mr.idUsuario = :userId", { userId })
+        .getOne();
+
+      if (method) {
+        resolvedName = method.metodo?.nombreMetodo || resolvedName;
+        resolvedProgress = clampProgress(Number(method.progreso));
+      }
+    } else if (userId > 0) {
+      // Fallback para payloads legacy sin id: toma el último método incompleto.
+      const latestIncompleteMethod = await methodRepository
+        .createQueryBuilder("mr")
+        .leftJoinAndSelect("mr.metodo", "metodo")
+        .where("mr.idUsuario = :userId", { userId })
+        .andWhere("mr.progreso < :completed", { completed: 100 })
+        .orderBy("mr.fechaActualizacion", "DESC")
+        .addOrderBy("mr.fechaCreacion", "DESC")
+        .getOne();
+
+      if (latestIncompleteMethod) {
+        resolvedName = latestIncompleteMethod.metodo?.nombreMetodo || resolvedName;
+        resolvedProgress = clampProgress(Number(latestIncompleteMethod.progreso));
+      }
+    }
+  } catch (error) {
+    logger.warn(
+      "Email scheduler: no se pudo resolver estado real de método desde BD",
+      {
+        methodReportId,
+        userId,
+        error,
+      }
+    );
+  }
+
+  if (!resolvedName) {
+    resolvedName =
+      extractMethodNameFromLegacyMessage(rawMessage) || "Método de estudio";
+  }
+
+  return {
+    methodName: resolvedName,
+    progress: resolvedProgress,
+    accentColor: getMethodReminderColor(resolvedName),
+    reportsUrl: getFrontendReportsUrl(),
+  };
 };
 
 const normalizeStartSessionLink = (rawLink: string): string => {
@@ -108,7 +265,9 @@ const normalizeStartSessionLink = (rawLink: string): string => {
   return normalized;
 };
 
-const getEventDescription = (parsed: Record<string, unknown> | null): string => {
+const getEventDescription = (
+  parsed: Record<string, unknown> | null
+): string => {
   const description = asString(parsed?.descripcionEvento, "");
   return description || "Sin descripción";
 };
@@ -118,7 +277,12 @@ const normalizeKind = (kind: NotificationKind): NotificationKind => {
   return kind;
 };
 
-const wrapEmailTemplate = (title: string, subtitle: string, accentColor: string, content: string): string => {
+const wrapEmailTemplate = (
+  title: string,
+  subtitle: string,
+  accentColor: string,
+  content: string
+): string => {
   return `
     <!DOCTYPE html>
     <html lang="es">
@@ -226,7 +390,7 @@ const wrapEmailTemplate = (title: string, subtitle: string, accentColor: string,
           ${content}
         </div>
         <div class="footer">
-          <p>Este es un mensaje autom&aacute;tico de Focus-Up.</p>
+          <p>Este es un mensaje automático de Focus-Up.</p>
         </div>
       </div>
     </body>
@@ -234,7 +398,12 @@ const wrapEmailTemplate = (title: string, subtitle: string, accentColor: string,
   `;
 };
 
-const buildEmailPayload = (kind: NotificationKind, title?: string, message?: string): EmailPayload => {
+const buildEmailPayload = async (
+  kind: NotificationKind,
+  title?: string,
+  message?: string,
+  userId = 0
+): Promise<EmailPayload> => {
   const normalizedKind = normalizeKind(kind);
   const parsed = parseMessageAsJson(message);
 
@@ -246,10 +415,12 @@ const buildEmailPayload = (kind: NotificationKind, title?: string, message?: str
     const eventId = readNumericId(parsed?.idEvento);
     const rawEventLink = asString(parsed?.link, "");
     const eventType = asString(parsed?.tipoEvento, "").toLowerCase();
-    const isConcentrationEvent = eventType === "concentracion" || rawEventLink.includes("/start-session");
-    const eventLink = eventId > 0 && isConcentrationEvent
-      ? getStartSessionUrl(eventId)
-      : normalizeStartSessionLink(rawEventLink);
+    const isConcentrationEvent =
+      eventType === "concentracion" || rawEventLink.includes("/start-session");
+    const eventLink =
+      eventId > 0 && isConcentrationEvent
+        ? getStartSessionUrl(eventId)
+        : normalizeStartSessionLink(rawEventLink);
 
     return {
       subject: `Recordatorio: ${eventName}`,
@@ -258,13 +429,13 @@ const buildEmailPayload = (kind: NotificationKind, title?: string, message?: str
         "Recordatorio de Evento",
         "#007bff",
         `
-          <p>Hola, te recordamos que tienes un evento próximo:</p>
+          <p>Hola, te recordamos que tienes un evento proximo:</p>
           <div class="box">
             <p><strong>${eventName}</strong></p>
             <p>Fecha: ${eventDate || "Por definir"}</p>
             <p>Hora: ${eventTime || "Por definir"}</p>
-            <p>Descripción: ${eventDescription}</p>
-            ${eventLink ? `<p class="cta"><a href="${eventLink}">Iniciar sesión de concentración</a></p>` : ""}
+            <p>Descripcion: ${eventDescription}</p>
+            ${eventLink ? `<p class="cta"><a href="${eventLink}">Iniciar sesion de concentracion</a></p>` : ""}
           </div>
           <div class="highlight">
             <p>No pierdas el ritmo. Planifica unos minutos antes para empezar con foco.</p>
@@ -275,22 +446,23 @@ const buildEmailPayload = (kind: NotificationKind, title?: string, message?: str
   }
 
   if (normalizedKind === "metodo_pendiente") {
-    const methodName = asString(parsed?.nombreMetodo, "Método de estudio");
-    const progress = asNumber(parsed?.progreso, 0);
+    const methodSnapshot = await resolveMethodReminderSnapshot(parsed, message, userId);
+
     return {
-      subject: "Recordatorio: Método de estudio pendiente",
+      subject: "Recordatorio: Metodo de estudio pendiente",
       html: wrapEmailTemplate(
-        "Recordatorio de Método de Estudio - Focus-Up",
-        "Recordatorio de Método Pendiente",
-        "#ffc107",
+        "Recordatorio de Metodo de Estudio - Focus-Up",
+        "Recordatorio de Metodo Pendiente",
+        methodSnapshot.accentColor,
         `
-          <p>Hola, tienes un método de estudio pendiente por continuar:</p>
-          <div class="box" style="border-left-color:#ffc107;background:#fff8e1;">
-            <p><strong>Método:</strong> ${methodName}</p>
-            <p><strong>Progreso actual:</strong> ${progress}%</p>
+          <p>Hola, tienes un metodo de estudio pendiente por continuar:</p>
+          <div class="box">
+            <p><strong>Metodo:</strong> ${methodSnapshot.methodName}</p>
+            <p><strong>Progreso actual:</strong> ${methodSnapshot.progress}%</p>
+            <p class="cta"><a href="${methodSnapshot.reportsUrl}">Ver metodo de estudio pendiente</a></p>
           </div>
           <div class="highlight">
-            <p>Un avance corto hoy mantiene el impulso. Continúa donde lo dejaste.</p>
+            <p>Un avance corto hoy mantiene el impulso. Continua donde lo dejaste.</p>
           </div>
         `
       ),
@@ -298,24 +470,25 @@ const buildEmailPayload = (kind: NotificationKind, title?: string, message?: str
   }
 
   if (normalizedKind === "sesion_pendiente") {
-    const sessionName = asString(parsed?.message, title || "Sesión de concentración");
+    const sessionName = asString(parsed?.message, title || "Sesion de concentracion");
     const sessionId = asNumber(parsed?.sessionId, 0);
     const baseEventsUrl = getFrontendEventsUrl();
-    const sessionLink = sessionId > 0 ? `${baseEventsUrl}?sessionId=${sessionId}` : baseEventsUrl;
+    const sessionLink =
+      sessionId > 0 ? `${baseEventsUrl}?sessionId=${sessionId}` : baseEventsUrl;
     return {
-      subject: "Recordatorio: Sesión de concentración pendiente",
+      subject: "Recordatorio: Sesion de concentracion pendiente",
       html: wrapEmailTemplate(
-        "Recordatorio de Sesión de Concentración - Focus-Up",
-        "Recordatorio de Sesión Pendiente",
+        "Recordatorio de Sesion de Concentracion - Focus-Up",
+        "Recordatorio de Sesion Pendiente",
         "#28a745",
         `
-          <p>Hola, tienes una sesión de concentración pendiente:</p>
+          <p>Hola, tienes una sesion de concentracion pendiente:</p>
           <div class="box" style="border-left-color:#28a745;background:#edf9f0;">
             <p><strong>${sessionName}</strong></p>
             <p class="cta"><a href="${sessionLink}">Ir a mis eventos/sesiones</a></p>
           </div>
           <div class="highlight">
-            <p>Retoma tu sesión y suma otro bloque de progreso a tu objetivo.</p>
+            <p>Retoma tu sesion y suma otro bloque de progreso a tu objetivo.</p>
           </div>
         `
       ),
@@ -326,13 +499,13 @@ const buildEmailPayload = (kind: NotificationKind, title?: string, message?: str
     const currentWeek = getCurrentWeekNumber();
     const motivationalMessage = getWeeklyMotivationalMessage(currentWeek);
     return {
-      subject: "Motivación semanal - Focus-Up",
+      subject: "Motivacion semanal - Focus-Up",
       html: wrapEmailTemplate(
-        "Motivación Semanal - Focus-Up",
-        "Motivación Semanal",
+        "Motivacion Semanal - Focus-Up",
+        "Motivacion Semanal",
         "#6f42c1",
         `
-          <p>Hola, aquí tienes tu mensaje motivacional de la semana:</p>
+          <p>Hola, aqui tienes tu mensaje motivacional de la semana:</p>
           <div class="box" style="border-left-color:#6f42c1;background:#f4efff;">
             <p><strong>"${motivationalMessage}"</strong></p>
           </div>
@@ -345,12 +518,12 @@ const buildEmailPayload = (kind: NotificationKind, title?: string, message?: str
   }
 
   return {
-    subject: title || "Notificación Focus-Up",
+    subject: title || "Notificacion Focus-Up",
     html: wrapEmailTemplate(
-      title || "Notificación Focus-Up",
-      "Notificación",
+      title || "Notificacion Focus-Up",
+      "Notificacion",
       "#007bff",
-      `<p>${message || "Tienes una notificación pendiente."}</p>`
+      `<p>${message || "Tienes una notificacion pendiente."}</p>`
     ),
   };
 };
@@ -376,168 +549,157 @@ const sendEmail = async (to: string, payload: EmailPayload): Promise<boolean> =>
   }
 };
 
-export class PendingEmailScheduler {
-  private readonly intervalMs: number;
-  private readonly batchSize: number;
-  private readonly enabled: boolean;
-  private timer: ReturnType<typeof setTimeout> | null = null;
-  private started = false;
-  private stopping = false;
-  private running = false;
-  private currentRun: Promise<void> | null = null;
-
-  constructor() {
-    this.intervalMs = parseInteger(process.env.EMAIL_SCHEDULER_INTERVAL_MS, DEFAULT_INTERVAL_MS);
-    this.batchSize = parseInteger(process.env.EMAIL_SCHEDULER_BATCH_SIZE, DEFAULT_BATCH_SIZE);
-    this.enabled = parseBoolean(process.env.EMAIL_SCHEDULER_ENABLED, true);
+/**
+ * Procesa una tanda de notificaciones pendientes y las marca como enviadas.
+ * Este método ejecuta un único ciclo y está pensado para invocación externa
+ * (por ejemplo, desde un script ejecutado por GitHub Actions).
+ */
+export const processPendingEmailNotifications = async (
+  options: PendingEmailProcessorOptions = {}
+): Promise<PendingEmailProcessorResult> => {
+  if (!AppDataSource.isInitialized) {
+    throw new Error(
+      "AppDataSource no está inicializado. Debes abrir la conexión a BD antes de procesar correos."
+    );
   }
 
-  public async start(): Promise<void> {
-    if (this.started) return;
+  const batchSize = options.batchSize ?? parseInteger(
+    process.env.EMAIL_SCHEDULER_BATCH_SIZE,
+    DEFAULT_BATCH_SIZE
+  );
+  const advisoryLockKey = options.advisoryLockKey ?? DEFAULT_ADVISORY_LOCK_KEY;
 
-    if (!this.enabled) {
-      logger.info("Email scheduler deshabilitado por configuracion");
-      return;
-    }
-
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      logger.warn("Email scheduler deshabilitado: faltan EMAIL_USER/EMAIL_PASS");
-      return;
-    }
-
-    this.started = true;
-    this.stopping = false;
-    logger.info("Email scheduler iniciado", {
-      intervalMs: this.intervalMs,
-      batchSize: this.batchSize,
-    });
-
-    this.scheduleNext(1_000);
+  // Validamos credenciales SMTP antes de comenzar para evitar reintentos vacíos.
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    logger.warn(
+      "Email scheduler: envío omitido porque faltan EMAIL_USER/EMAIL_PASS"
+    );
+    return {
+      lockAcquired: false,
+      pendingDetected: 0,
+      processed: 0,
+      sent: 0,
+      failed: 0,
+      skipped: 0,
+    };
   }
 
-  public async stop(): Promise<void> {
-    if (!this.started) return;
+  const queryRunner = AppDataSource.createQueryRunner();
+  let lockAcquired = false;
 
-    this.stopping = true;
-    this.started = false;
+  try {
+    await queryRunner.connect();
 
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
+    // Lock global para evitar doble ejecución cuando dos runners coinciden.
+    const lockRows = await queryRunner.query(
+      "SELECT pg_try_advisory_lock($1) AS locked",
+      [advisoryLockKey]
+    );
+    lockAcquired = Boolean(lockRows?.[0]?.locked);
+    if (!lockAcquired) {
+      logger.info(
+        "Email scheduler: lock global no adquirido, se omite este ciclo"
+      );
+      return {
+        lockAcquired: false,
+        pendingDetected: 0,
+        processed: 0,
+        sent: 0,
+        failed: 0,
+        skipped: 0,
+      };
     }
 
-    if (this.currentRun) {
-      await this.currentRun;
+    // Leemos pendientes en orden cronológico y procesamos sólo el batch configurado.
+    const allPending = await getPendingNotifications();
+    const pending = allPending.slice(0, batchSize);
+
+    if (pending.length === 0) {
+      logger.info("Email scheduler: no hay notificaciones pendientes por enviar");
+      return {
+        lockAcquired: true,
+        pendingDetected: 0,
+        processed: 0,
+        sent: 0,
+        failed: 0,
+        skipped: 0,
+      };
     }
 
-    logger.info("Email scheduler detenido");
-  }
+    let sent = 0;
+    let failed = 0;
+    let skipped = 0;
 
-  private scheduleNext(delayMs: number): void {
-    if (this.stopping) return;
-
-    const timer = setTimeout(() => {
-      void this.tick();
-    }, delayMs);
-    this.timer = timer;
-  }
-
-  private async tick(): Promise<void> {
-    if (this.stopping) return;
-
-    if (this.running) {
-      logger.warn("Email scheduler: ciclo omitido porque el anterior sigue en ejecucion");
-      this.scheduleNext(this.intervalMs);
-      return;
-    }
-
-    this.running = true;
-    this.currentRun = this.processCycle();
-
-    try {
-      await this.currentRun;
-    } finally {
-      this.running = false;
-      this.currentRun = null;
-      this.scheduleNext(this.intervalMs);
-    }
-  }
-
-  private async processCycle(): Promise<void> {
-    const queryRunner = AppDataSource.createQueryRunner();
-    let lockAcquired = false;
-
-    try {
-      await queryRunner.connect();
-      const lockRows = await queryRunner.query("SELECT pg_try_advisory_lock($1) AS locked", [ADVISORY_LOCK_KEY]);
-      lockAcquired = Boolean(lockRows?.[0]?.locked);
-      if (!lockAcquired) {
-        logger.info("Email scheduler: lock global no adquirido, se omite este ciclo");
-        return;
+    for (const notification of pending) {
+      const to = notification.usuario?.correo;
+      if (!to) {
+        failed++;
+        logger.error("Email scheduler: notificación sin correo de usuario", {
+          idNotificacion: notification.idNotificacion,
+          idUsuario: notification.idUsuario,
+        });
+        continue;
       }
 
-      const allPending = await getPendingNotifications();
-      const pending = allPending.slice(0, this.batchSize);
+      const payload = await buildEmailPayload(
+        notification.tipo,
+        notification.titulo,
+        notification.mensaje,
+        notification.idUsuario
+      );
+      const delivered = await sendEmail(to, payload);
 
-      if (pending.length === 0) return;
+      if (!delivered) {
+        failed++;
+        continue;
+      }
 
-      let sent = 0;
-      let failed = 0;
+      // Sólo marcamos como enviada si el transporte reporta éxito.
+      const marked = await markAsSent(notification.idNotificacion);
+      if (!marked) {
+        failed++;
+        logger.error(
+          "Email scheduler: no se pudo marcar notificación como enviada",
+          { idNotificacion: notification.idNotificacion }
+        );
+        continue;
+      }
 
-      for (const notification of pending) {
-        const to = notification.usuario?.correo;
-        if (!to) {
-          failed++;
-          logger.error("Email scheduler: notificacion sin correo de usuario", {
-            idNotificacion: notification.idNotificacion,
-            idUsuario: notification.idUsuario,
-          });
-          continue;
-        }
-
-        const payload = buildEmailPayload(notification.tipo, notification.titulo, notification.mensaje);
-        const delivered = await sendEmail(to, payload);
-
-        if (!delivered) {
-          failed++;
-          continue;
-        }
-
-        const marked = await markAsSent(notification.idNotificacion);
-        if (!marked) {
-          failed++;
-          logger.error("Email scheduler: no se pudo marcar notificacion como enviada", {
-            idNotificacion: notification.idNotificacion,
-          });
-          continue;
-        }
-
+      if (isTestRecipient(to)) {
+        skipped++;
+      } else {
         sent++;
       }
+    }
 
-      logger.info("Email scheduler: ciclo completado", {
-        pendientesDetectadas: allPending.length,
-        procesadas: pending.length,
-        enviadas: sent,
-        fallidas: failed,
-      });
-    } catch (error) {
-      logger.error("Email scheduler: error en ciclo de procesamiento", { error });
-    } finally {
-      if (lockAcquired) {
-        try {
-          await queryRunner.query("SELECT pg_advisory_unlock($1)", [ADVISORY_LOCK_KEY]);
-        } catch (unlockError) {
-          logger.error("Email scheduler: error liberando lock global", { unlockError });
-        }
-      }
+    const result: PendingEmailProcessorResult = {
+      lockAcquired: true,
+      pendingDetected: allPending.length,
+      processed: pending.length,
+      sent,
+      failed,
+      skipped,
+    };
 
+    logger.info("Email scheduler: ciclo completado", result);
+    return result;
+  } finally {
+    if (lockAcquired) {
       try {
-        await queryRunner.release();
-      } catch (releaseError) {
-        logger.error("Email scheduler: error liberando query runner", { releaseError });
+        await queryRunner.query("SELECT pg_advisory_unlock($1)", [advisoryLockKey]);
+      } catch (unlockError) {
+        logger.error("Email scheduler: error liberando lock global", {
+          unlockError,
+        });
       }
     }
-  }
-}
 
+    try {
+      await queryRunner.release();
+    } catch (releaseError) {
+      logger.error("Email scheduler: error liberando query runner", {
+        releaseError,
+      });
+    }
+  }
+};

@@ -3,12 +3,22 @@ import { ICreateActiveMethod } from "../interfaces/domain/reports/ICreateActiveM
 import { IUpdateMethodProgress } from "../interfaces/domain/reports/IUpdateMethodProgress";
 import { IUpdateSessionProgress } from "../interfaces/domain/reports/IUpdateSessionProgress";
 import { IReportData } from "../interfaces/domain/reports/IReportData";
+type CreateActiveMethodResult = {
+    success: boolean;
+    metodoRealizado?: MetodoRealizadoEntity;
+    existingMethod?: MetodoRealizadoEntity;
+    message?: string;
+    error?: string;
+    errorCode?: string;
+    statusCode?: number;
+};
 export declare class ReportsService {
     private metodoRealizadoRepository;
     private sesionRepository;
     private userRepository;
     private metodoRepository;
     private musicaRepository;
+    private methodReminderService;
     getResumeInfo(methodType: string, progress: number): {
         route: string;
         currentStep?: number;
@@ -25,12 +35,7 @@ export declare class ReportsService {
         methods?: any[];
         error?: string;
     }>;
-    createActiveMethod(data: ICreateActiveMethod): Promise<{
-        success: boolean;
-        metodoRealizado?: MetodoRealizadoEntity;
-        message?: string;
-        error?: string;
-    }>;
+    createActiveMethod(data: ICreateActiveMethod): Promise<CreateActiveMethodResult>;
     getUserReports(userId: number): Promise<{
         success: boolean;
         reports?: IReportData;
@@ -66,3 +71,4 @@ export declare class ReportsService {
     }>;
 }
 export declare const reportsService: ReportsService;
+export {};
